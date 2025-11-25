@@ -9,7 +9,7 @@ export const useLogin = () => {
     try {
       setLoading(true);
       setError(null);
-
+      
       const { data } = await loginRequest(credenciales);
 
       return data; // <- regresa el usuario/token

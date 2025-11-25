@@ -1,15 +1,17 @@
 import { useLogin } from "./hooks/useLogin";
 import { LoginForm } from "./components/LoginForm";
-// import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 const LoginPage = () => {
   const { login, loading, error } = useLogin();
-//   const navigate = useNavigate();
 
   const handleLogin = async (form) => {
     const user = await login(form);
     if (user) {
-    //   navigate("/dashboard");
+      toast.success("¡Login exitoso!");
+      // navigate("/dashboard");
+    } else {
+      toast.error(error || "Error al iniciar sesión");
     }
   };
 
@@ -18,7 +20,7 @@ const LoginPage = () => {
       <LoginForm
         onSubmit={handleLogin}
         loading={loading}
-        error={error}
+        error={error} // opcional, ahora también usamos toast
       />
     </div>
   );
