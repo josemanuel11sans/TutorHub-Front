@@ -1,29 +1,24 @@
-import { useLogin } from "./hooks/useLogin";
+import { useContext } from "react";
+import { AuthContext } from "../../context/AuthContext";
 import { LoginForm } from "./components/LoginForm";
+import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
 const LoginPage = () => {
-  const { login, loading, error } = useLogin();
+  const { handleLogin, loading, error } = useContext(AuthContext);
+  const navigate = useNavigate();
 
-  const handleLogin = async (form) => {
-    const user = await login(form);
-    if (user) {
+  const onSubmit = async ({ email, password }) => {
+    const usuario = await handleLogin(email, password);
+    if (usuario) {
       toast.success("¡Login exitoso!");
-      // navigate("/dashboard");
+      navigate("/home");
     } else {
-      toast.error(error || "Error al iniciar sesión");
+      toast.error(error);
     }
   };
 
-  return (
-    <div className="login-page">
-      <LoginForm
-        onSubmit={handleLogin}
-        loading={loading}
-        error={error} // opcional, ahora también usamos toast
-      />
-    </div>
-  );
+  return <LoginForm onSubmit={onSubmit} loading={loading} error={error} />;
 };
 
 export default LoginPage;

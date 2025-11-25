@@ -3,14 +3,8 @@ import { useState } from "react";
 export const LoginForm = ({ onSubmit, loading, error }) => {
   const [form, setForm] = useState({ email: "", password: "" });
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSubmit(form);
-  };
+  const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleSubmit = e => { e.preventDefault(); onSubmit(form); };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#f5f9ff]">
@@ -51,7 +45,7 @@ export const LoginForm = ({ onSubmit, loading, error }) => {
           </div>
 
           {error && (
-            <p></p>
+            <p className="text-red-500 text-sm text-center">{error}</p>
           )}
 
           <button
