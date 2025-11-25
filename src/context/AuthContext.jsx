@@ -1,111 +1,71 @@
-// import { createContext, useState, useMemo, useEffect, useContext } from 'react';
-// // 1. Asumo que tu archivo de API exporta la instancia de axios
-// //    (Si no lo hace, deberías crear un archivo api/axios.js que la exporte)
-// import { api, login as api_login, register as api_register } from '../api/auth.api';
-// import { useNavigate } from 'react-router-dom';
+import React, { createContext, useState, useEffect } from "react";
+// import React, {  useState, useEffect } from "react";
+import { login } from "../api/auth.api";
 
-// export const AuthContext = createContext();
+ export const AuthContext = createContext();
 
-// export const AuthProvider = ({ children }) => {
-//   const navigate = useNavigate();
-//   const [user, setUser] = useState(null);
-//   // Opcional, pero recomendado:
-//   const [loading, setLoading] = useState(true);
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(() => {
+    const storedUser = localStorage.getItem("user");
+    const storedJwt = localStorage.getItem("jwt");
+    const storedExpiration = localStorage.getItem("expiration");
+    // Si tenemos un usuario almacenado y el JWT no ha expirado, lo recuperamos
+    if (storedUser && storedJwt && storedExpiration) {
+      const currentTime = Date.now();
+      if (currentTime < storedExpiration) {
+        return JSON.parse(storedUser);
+      } else {
+        // Si el token ha expirado, limpiar y devolver null
+        localStorage.removeItem("user");
+        localStorage.removeItem("jwt");
+        localStorage.removeItem("expiration");
+        return null;
+      }
+    }
+    return null;
+  });
+  const [error, setError] = useState(null);
+  // Función para manejar el login
+  const handleLogin = async (correo, password) => {
+    try {
+      const response = await login({ correo, password });
+      if (response.status === 200) {
+        // Guardar el JWT y el usuario en el localStorage
+        const { jwt, username, expiration } = response.data;
+        localStorage.setItem("jwt", jwt);
+        localStorage.setItem("user", JSON.stringify({username}));
+        localStorage.setItem("expiration", Date.now() + expiration); // Guardar el tiempo de expiración
+        setUser({username});
+        setError(null);
+      } 
+    } catch (err) {
+      console.error("Error en la conexión:", err);
+      setError(true);
+      setUser(null);
+    }
+  };
+  // Función para manejar el logout
+  const handleLogout = () => {
+    setUser(null);
+    localStorage.removeItem("user");
+    localStorage.removeItem("jwt");
+    localStorage.removeItem("expiration");
 
-//   useEffect(() => {
-//     // 2. Revisar *ambas* cosas en localStorage
-//     const storedUser = JSON.parse(localStorage.getItem("user"));
-//     const storedToken = localStorage.getItem("token");
-
-//     if (storedUser && storedToken) {
-//       setUser(storedUser);
-//       // 3. ¡Lo más importante! Sincronizar el token con axios
-//       api.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
-//     }
-//     setLoading(false); // <--- Dejar de cargar
-//   }, []);
-
-//   const login = async (credentials) => {
-//   try {
-//       const response = await api_login(credentials);
-//       console.log("Login response:", response);
-
-//       // 4. Configurar el token en axios
-//       api.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
-      
-//       setUser(response.data.user);
-//       localStorage.setItem("user", JSON.stringify(response.data.user));
-//       localStorage.setItem("token", response.data.token);
-      
-//       if (response.data.user.userType === "enterprise" || response.data.user.role === "enterprise") {
-//         navigate("/home/enterprise");
-//         return;
-//       }
-
-//       navigate("/user/home");
-//     } catch (error) {
-//       console.error("Error en login:", error.response?.data?.message || error.message);
-//       throw error;
-//     }
-//   };
-
-//   const logout = () => {
-//     try {
-//       // 5. Eliminar el token de axios
-//       delete api.defaults.headers.common['Authorization'];
-
-//       localStorage.removeItem("user");
-//       localStorage.removeItem("token");
-//       setUser(null);
-//     } catch (error) {
-//       console.error("Error en logout:", error);
-//     }
-//   };
-
-//   const register = async (userData) => {
-//     try {
-//       const response = await api_register(userData);
-//       console.log("Register response:", response);
-
-//       // 6. Configurar el token en axios
-//       api.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
-      
-//       setUser(response.data.user);
-//       localStorage.setItem("user", JSON.stringify(response.data.user));
-//       localStorage.setItem("token", response.data.token);
-//     } catch (error) {
-//       console.error("Error en registro:", error.response?.data?.message || error.message);
-//       throw error;
-//     }
-//   };
-
-//   const value = useMemo(
-//     () => ({
-//       user,
-//       loading, // <--- Exportar 'loading'
-//       login,
-//       logout,
-//       register
-//     }),
-//     [user, loading] // <--- Añadir 'loading'
-//   );
-
-//   return (
-//     <AuthContext.Provider value={value}>
-//       {/* Si 'loading' es true, no renderizar los hijos (App)
-//         previene un "parpadeo" donde se ve la app como "deslogueado"
-//         por un instante antes de que el useEffect termine.
-//       */}
-//       {!loading && children}
-//     </AuthContext.Provider>
-//   );
-// };
-
-// // Tu hook 'useAuth' está perfecto, no necesita cambios
-// export const useAuth = () => {
-//   const context = useContext(AuthContext);
-//   if (!context) {
-//     throw new Error("useAuth must be used within an AuthProvider");
-//   }
-//   return context;
-// };
+  };
+  // Comprobar si el token ha expirado al cargar la aplicación
+  useEffect(() => {
+    const checkTokenExpiration = () => {
+      const storedExpiration = localStorage.getItem("expiration");
+      const currentTime = Date.now();
+      if (storedExpiration && currentTime > storedExpiration) {
+        handleLogout();
+      }
+    };
+    checkTokenExpiration();
+  }, []);
+  return (
+    <AuthContext.Provider value={{ user, handleLogout, handleLogin, error }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};

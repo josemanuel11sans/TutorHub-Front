@@ -9,36 +9,30 @@ const api = axios.create({
     },
 });
 
-
 api.interceptors.request.use(
-    (config) => {
-        const token = localStorage.getItem("token");
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-    },
-    (error) => {
-        console.error("Error en la solicitud:", error);
-        return Promise.reject(error);
+  (config) => {
+    const token = localStorage.getItem("jwt");
+    // console.log("Token en el request interceptor:", token);
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
+    return config;
+  },
+  (error) => {
+    // console.error("Error en la solicitud:", error);
+    return Promise.reject(error);
+  }
 );
 
 api.interceptors.response.use(
-    (response) => {
-        return response;
-    },
-    (error) => {
-        if (error.response && error.response.status === 401) {
-            console.warn("Sesión expirada o no autorizada, cerrando sesión...");
-            localStorage.removeItem("token");
-            localStorage.removeItem("user");
-            window.location.href = "/login";
-        }
-
-        console.error("Error en la respuesta:", error);
-        return Promise.reject(error);
-    }
+  (response) => {
+    // console.log("Respuesta de la API:", response);
+    return response;
+  },
+  (error) => {
+    // console.error("Error en la respuesta de la API:", error);
+    return Promise.reject(error);
+  }
 );
 
 export default api;
