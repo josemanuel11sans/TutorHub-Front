@@ -12,7 +12,8 @@ const LoginPage = () => {
     const usuario = await handleLogin(email, password);
     if (usuario) {
       toast.success("¡Login exitoso!");
-      navigate("/alumno");
+      const destino = usuario?.rol === "alumno" ? "/alumno" : "/home";
+      navigate(destino);
     } else {
       toast.error(error);
     }

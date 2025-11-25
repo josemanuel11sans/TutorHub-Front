@@ -1,24 +1,7 @@
 "use client"
 
-import { createContext, useContext, useState } from "react"
-
-const AuthContext = createContext(null)
-
-export function AuthProvider({ children }) {
-  const [user, setUser] = useState({
-    id: 1,
-    nombre: "Juan",
-    apellido_paterno: "Pérez",
-    email: "alumno@example.com",
-    rol: "alumno",
-  })
-
-  const logout = () => {
-    setUser(null)
-  }
-
-  return <AuthContext.Provider value={{ user, setUser, logout }}>{children}</AuthContext.Provider>
-}
+import { useContext } from "react"
+import { AuthContext } from "../../../context/AuthContext"
 
 export function useAuth() {
   const context = useContext(AuthContext)
