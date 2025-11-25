@@ -12,7 +12,7 @@ const LoginPage = () => {
     const usuario = await handleLogin(email, password);
     if (usuario) {
       toast.success("¡Login exitoso!");
-      navigate("/home");
+      navigate("/alumno");
     } else {
       toast.error(error);
     }
