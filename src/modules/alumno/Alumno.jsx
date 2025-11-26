@@ -18,6 +18,7 @@ export default function AlumnoPage() {
   const { toast, toasts } = useToast()
   const [descargas, setDescargas] = useState(mockDescargas)
   const [searchTerm, setSearchTerm] = useState("")
+  const [isModalOpen, setIsModalOpen] = useState(false); // Estado para el modal
 
   const misAccesos = mockAccesosEspacios.filter((a) => a.alumno_id === user?.id && a.activo)
   const misEspaciosIds = misAccesos.map((a) => a.espacio_id)
@@ -27,6 +28,32 @@ export default function AlumnoPage() {
 
   const misDescargasIds = descargas.filter((d) => d.alumno_id === user?.id).map((d) => d.material_id)
   const materialesDescargados = mockMateriales.filter((m) => misDescargasIds.includes(m.id))
+
+  // Estado para manejar el modal
+  const [isModalOpen2, setIsModalOpen2] = useState(false); 
+  const [espacioSeleccionado, setEspacioSeleccionado] = useState(null); // Estado para el espacio seleccionado
+
+  // Función para abrir el modal y mostrar los materiales de un espacio
+  const openModal2 = (espacioId) => {
+    const espacio = mockEspacios.find((e) => e.id === espacioId);
+    setEspacioSeleccionado(espacio);
+    setIsModalOpen2(true);
+  }
+
+  // Función para cerrar el modal
+  const closeModal2 = () => {
+    setIsModalOpen2(false);
+    setEspacioSeleccionado(null);
+  }
+
+
+  // Para el apartado de asesorías
+  const [materia, setMateria] = useState("");
+  const [motivo, setMotivo] = useState("");
+  const [fecha, setFecha] = useState("");
+  const [tutor, setTutor] = useState("");
+  const [misAsesorias, setMisAsesorias] = useState([]); // Guardar las asesorías registradas
+
 
   const filteredMateriales = materialesDisponibles.filter(
     (material) =>
@@ -80,6 +107,46 @@ export default function AlumnoPage() {
     return descargas.some((d) => d.material_id === materialId && d.alumno_id === user?.id)
   }
 
+  // Para asesorias
+  const handleRegistrarAsesoria = (e) => {
+    e.preventDefault();
+    
+    const nuevaAsesoria = {
+      id: misAsesorias.length + 1,
+      materia,
+      motivo,
+      fecha,
+      tutorId: tutor,
+    };
+
+    setMisAsesorias([...misAsesorias, nuevaAsesoria]);
+
+    toast({
+      title: "Asesoría registrada",
+      description: `Has registrado una nueva asesoría en ${materia}.`,
+    });
+
+    // Limpiar los campos del formulario
+    setMateria("");
+    setMotivo("");
+    setFecha("");
+    setTutor("");
+
+    // Cerrar el modal después de registrar la asesoría
+    setIsModalOpen(false);
+  };
+
+  // Función para abrir el modal
+  const openModal = () => {
+    setIsModalOpen(true);
+  }
+
+  // Función para cerrar el modal
+  const closeModal = () => {
+    setIsModalOpen(false);
+  }
+
+
   return (
     <ProtectedRoute allowedRoles={["alumno"]}>
       <div className="min-h-screen bg-gray-50">
@@ -130,6 +197,7 @@ export default function AlumnoPage() {
               <TabsTrigger value="disponibles">Materiales Disponibles</TabsTrigger>
               <TabsTrigger value="espacios">Mis Espacios</TabsTrigger>
               <TabsTrigger value="historial">Historial de Descargas</TabsTrigger>
+              <TabsTrigger value="asesorias">Asesorias</TabsTrigger>
             </TabsList>
 
             <TabsContent value="disponibles" className="space-y-4">
@@ -212,7 +280,7 @@ export default function AlumnoPage() {
                         (m) => m.espacio_id === espacio.id,
                       ).length
                       return (
-                        <Card key={espacio.id}>
+                        <Card key={espacio.id} onClick={() => openModal2(espacio.id)} className="hover:cursor-pointer">
                           <CardHeader>
                             <DoorOpen className="h-8 w-8 text-blue-600 mb-2" />
                             <CardTitle className="text-lg">{espacio.nombre}</CardTitle>
@@ -285,7 +353,201 @@ export default function AlumnoPage() {
                 </CardContent>
               </Card>
             </TabsContent>
+            
+            <TabsContent value="asesorias" className="space-y-4">
+              <Card>
+                <CardHeader className="flex items-center justify-between">
+                  <CardTitle>Asesorías</CardTitle>
+                  <Button onClick={openModal}>+ Nueva Asesoría</Button>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {/* Mostrar Asesorías Registradas */}
+                    {misAsesorias.length === 0 ? (
+                      <p className="text-gray-600">No tienes asesorías programadas.</p>
+                    ) : (
+                      <div className="space-y-4">
+                        {misAsesorias.map((asesoria) => (
+                          <Card key={asesoria.id}>
+                            <CardHeader>
+                              <CardTitle>{asesoria.materia}</CardTitle>
+                              <CardDescription>{asesoria.motivo}</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-3">
+                              <div className="flex items-center justify-between">
+                                <span className="text-gray-600">Fecha:</span>
+                                <span className="font-medium">{formatDate(asesoria.fecha)}</span>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-gray-600">Tutor:</span>
+                                <span className="font-medium">{getTutorName(asesoria.tutorId)}</span>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
           </Tabs>
+          
+          {/* Modal */}
+            {isModalOpen && (
+              <div 
+                className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 p-4 backdrop-blur-sm"
+                style={{ zIndex: 9999 }}
+                onClick={closeModal}
+              >
+                <div 
+                  className="bg-white rounded-xl w-full max-w-md shadow-2xl overflow-hidden animate-in"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {/* Header */}
+                  <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4">
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-xl font-bold text-white">Nueva Asesoría</h2>
+                      <button
+                        onClick={closeModal}
+                        className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-1 transition-colors"
+                      >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                    <p className="text-blue-100 text-sm mt-1">Registra tu solicitud de asesoría académica</p>
+                  </div>
+
+                  {/* Body */}
+                  <form onSubmit={handleRegistrarAsesoria} className="p-6 space-y-5">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Materia <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        value={materia}
+                        onChange={(e) => setMateria(e.target.value)}
+                        required
+                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white text-gray-900"
+                      >
+                        <option value="">Selecciona una materia</option>
+                        <option value="Matemáticas">Matemáticas</option>
+                        <option value="Física">Física</option>
+                        <option value="Química">Química</option>
+                        <option value="Programación">Programación</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Motivo <span className="text-red-500">*</span>
+                      </label>
+                      <textarea
+                        value={motivo}
+                        onChange={(e) => setMotivo(e.target.value)}
+                        placeholder="Describe brevemente el tema que necesitas revisar..."
+                        required
+                        rows={3}
+                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Fecha <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="date"
+                        value={fecha}
+                        onChange={(e) => setFecha(e.target.value)}
+                        required
+                        min={new Date().toISOString().split('T')[0]}
+                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Tutor <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        value={tutor}
+                        onChange={(e) => setTutor(e.target.value)}
+                        required
+                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white text-gray-900"
+                      >
+                        <option value="">Selecciona un tutor</option>
+                        <option value="tutor1">Juan Pérez</option>
+                        <option value="tutor2">Ana Gómez</option>
+                        <option value="tutor3">Carlos Rodríguez</option>
+                      </select>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="flex gap-3 pt-4">
+                      <Button 
+                        type="button" 
+                        variant="ghost" 
+                        onClick={closeModal}
+                        className="flex-1"
+                      >
+                        Cancelar
+                      </Button>
+                      <Button 
+                        type="submit"
+                        className="flex-1 bg-blue-600 hover:bg-blue-700"
+                      >
+                        Registrar Asesoría
+                      </Button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
+
+            {/* Modal para mostrar los materiales de un espacio */}
+            {isModalOpen2 && espacioSeleccionado && (
+              <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 p-4 backdrop-blur-sm">
+                <div className="bg-white rounded-xl w-full max-w-md shadow-2xl overflow-hidden">
+                  <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4">
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-xl font-bold text-white">{espacioSeleccionado.nombre}</h2>
+                      <button
+                        onClick={closeModal2}
+                        className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-1 transition-colors"
+                      >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Cuerpo del Modal */}
+                  <div className="p-6 space-y-4">
+                    <h3 className="text-lg font-semibold mb-2">Materiales Publicados</h3>
+                    <div>
+                      {materialesDisponibles
+                        .filter((material) => material.espacio_id === espacioSeleccionado.id)
+                        .map((material) => (
+                          <div key={material.id} className="flex items-center justify-between p-2 border-b">
+                            <div className="flex items-center">
+                              <FileText className="h-6 w-6 text-blue-600 mr-2" />
+                              <span className="text-sm font-medium">{material.titulo}</span>
+                            </div>
+                            <Button size="sm" onClick={() => handleDownload(material)}>
+                              Descargar
+                            </Button>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
         </main>
         <ToastContainer toasts={toasts} />
       </div>
