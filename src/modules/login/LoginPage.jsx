@@ -12,8 +12,14 @@ const LoginPage = () => {
     const usuario = await handleLogin(email, password);
     if (usuario) {
       toast.success("¡Login exitoso!");
-      const destino = usuario?.rol === "alumno" ? "/alumno" : "/home";
-      navigate(destino);
+      // Redirigir según rol normalizado (mapeado en AuthContext)
+      if (usuario?.rol === "coordinador") {
+        navigate("/coordinador/gestion");
+      } else if (usuario?.rol === "alumno") {
+        navigate("/alumno");
+      } else {
+        navigate("/home");
+      }
     } else {
       toast.error(error);
     }

@@ -6,7 +6,17 @@ export const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
     const storedUser = localStorage.getItem("user");
-    return storedUser ? JSON.parse(storedUser) : null;
+    if (!storedUser) return null;
+    try {
+      const parsed = JSON.parse(storedUser);
+      // Asegurar que exista la propiedad `rol` usada por la UI
+      if (parsed && !parsed.rol) {
+        return { ...parsed, rol: mapRole(parsed.role) || mapRole(parsed.rol) };
+      }
+      return parsed;
+    } catch (e) {
+      return null;
+    }
   });
 
   const [loading, setLoading] = useState(false);
@@ -32,7 +42,12 @@ export const AuthProvider = ({ children }) => {
     if (match) {
       setLoading(true);
       setError(null);
-      const usuario = match.usuario;
+      const raw = match.usuario;
+      // Normalizar la propiedad de rol a `rol` (valores en español usados por la UI)
+      const usuario = {
+        ...raw,
+        rol: raw.rol || mapRole(raw.role) || "alumno",
+      };
       setUser(usuario);
       localStorage.setItem("user", JSON.stringify(usuario));
       setLoading(false);
@@ -45,7 +60,12 @@ export const AuthProvider = ({ children }) => {
       setError(null);
       const response = await loginRequest({ email, password });
       // loginRequest devuelve response (según api), intentamos obtener usuario
-      const usuario = response?.data?.usuario || response?.data || response;
+      const raw = response?.data?.usuario || response?.data || response;
+      const usuario = {
+        ...raw,
+        // Normalizar roles del backend (ej. 'student','coordinator') a valores que usa la UI ('alumno','coordinador',...)
+        rol: raw?.rol || mapRole(raw?.role) || mapRole(raw?.rol) || "alumno",
+      };
       setUser(usuario);
       try { localStorage.setItem("user", JSON.stringify(usuario)); } catch (e) {}
       return usuario;
@@ -57,6 +77,28 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
     }
   };
+
+  // Helper para mapear roles del backend (en inglés) a los roles que usa la UI (en español)
+  function mapRole(r) {
+    if (!r) return undefined;
+    const rLower = String(r).toLowerCase();
+    switch (rLower) {
+      case "student":
+      case "alumno":
+        return "alumno";
+      case "tutor":
+      case "profesor":
+        return "profesor";
+      case "coordinator":
+      case "coordinador":
+        return "coordinador";
+      case "admin":
+      case "administrador":
+        return "admin";
+      default:
+        return rLower;
+    }
+  }
 
   const handleLogout = async () => {
     await logoutRequest();
