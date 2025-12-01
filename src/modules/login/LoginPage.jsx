@@ -17,6 +17,8 @@ const LoginPage = () => {
         navigate("/coordinador/gestion");
       } else if (usuario?.rol === "alumno") {
         navigate("/alumno");
+      } else if (usuario?.rol === "tutor") {
+        navigate("/tutor");
       } else {
         navigate("/home");
       }

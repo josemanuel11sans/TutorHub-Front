@@ -33,7 +33,7 @@ export const AuthProvider = ({ children }) => {
       {
         email: "profe@utez.edu.mx",
         password: "profe123",
-        usuario: { id: 2, nombre: "Profesor", apellido_paterno: "Demo", email: "profe@utez.edu.mx", rol: "profesor" },
+        usuario: { id: 2, nombre: "Tutor", apellido_paterno: "Demo", email: "profe@utez.edu.mx", rol: "tutor" },
       },
     ];
 
@@ -87,8 +87,9 @@ export const AuthProvider = ({ children }) => {
       case "alumno":
         return "alumno";
       case "tutor":
+        return "tutor";
       case "profesor":
-        return "profesor";
+        return "tutor";
       case "coordinator":
       case "coordinador":
         return "coordinador";
