@@ -1,5 +1,18 @@
 import { useState } from "react"
 import { Users, Building, DoorOpen, BookOpen, FolderTree, UserCog, BarChart3 } from "lucide-react"
+import { useAuth } from "./hooks/useAuth"
+
+function LogoutButton() {
+  const { logout } = useAuth()
+  return (
+    <button
+      onClick={logout}
+      className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+    >
+      Cerrar Sesión
+    </button>
+  )
+}
 
 import UsuariosTable from "./UsuariosTable"
 import EspaciosTable from "./EspaciosTable"
@@ -41,8 +54,12 @@ export default function PanelCoordinador() {
                 <p className="text-xs text-gray-500">Coordinador</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 text-sm">
-              <span className="font-medium">CR</span>
+            <div className="flex items-center gap-4 text-sm">
+              <div className="text-sm">
+                <span className="text-gray-600">Bienvenido, </span>
+                <span className="font-semibold text-gray-900">CR</span>
+              </div>
+              <LogoutButton />
             </div>
           </div>
         </div>

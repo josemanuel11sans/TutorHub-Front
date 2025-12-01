@@ -102,12 +102,20 @@ export const AuthProvider = ({ children }) => {
   }
 
   const handleLogout = async () => {
-    await logoutRequest();
+    try {
+      await logoutRequest();
+    } catch (e) {
+      // Ignorar errores en la petición de logout al backend
+    }
     setUser(null);
+    try { localStorage.removeItem("user"); } catch (e) {}
+    if (typeof window !== "undefined") {
+      window.location.href = "/";
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ user, handleLogin, handleLogout, loading, error }}>
+    <AuthContext.Provider value={{ user, handleLogin, handleLogout, logout: handleLogout, loading, error }}>
       {children}
     </AuthContext.Provider>
   );

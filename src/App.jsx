@@ -1,11 +1,14 @@
 import { RoutesConfig } from "./routes/RoutesConfig";
 import { AuthProvider } from "./context/AuthContext.jsx";
+import { ToastProvider } from "./context/ToastContext.jsx";
+
 function App() {
   return (
-
-    <AuthProvider>
-      <RoutesConfig />
-    </AuthProvider>
+    <ToastProvider>
+      <AuthProvider>
+        <RoutesConfig />
+      </AuthProvider>
+    </ToastProvider>
   );
 }
 
