@@ -1,8 +1,10 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Search, Plus, Edit, Trash2 } from "lucide-react"
 import { AddMateriaModal } from "../modales/AddMateriaModal"
 import { EditMateriaModal } from "../modales/EditMateriaModal"
 import { DeleteMateriaModal } from "../modales/DeleteMateriaModal"
+import * as materiasAPI from "../../../api/materias.api"
+import * as carrerasAPI from "../../../api/carreras.api"
 
 // Botón compacto
 const Button = ({ children, onClick, variant = "default", size = "sm", className = "" }) => {
@@ -52,40 +54,50 @@ const Badge = ({ children, variant = "default" }) => {
     )
 }
 
-// Datos de prueba
-const MATERIAS_MOCK = [
-    {
-        id: 1,
-        nombre: "Matemáticas I",
-        objetivo: "Desarrollar habilidades de cálculo y razonamiento matemático",
-        estado: true,
-    },
-    {
-        id: 2,
-        nombre: "Física",
-        objetivo: "Comprender los principios fundamentales de la física",
-        estado: true,
-    },
-    {
-        id: 3,
-        nombre: "Química Orgánica",
-        objetivo: "Estudiar la estructura y reactividad de compuestos orgánicos",
-        estado: false,
-    }
-]
-
 export default function MateriasTable() {
-    const [materias, setMaterias] = useState(MATERIAS_MOCK)
+    const [materias, setMaterias] = useState([])
+    const [carreras, setCarreras] = useState([])
     const [searchTerm, setSearchTerm] = useState("")
     const [showAddModal, setShowAddModal] = useState(false)
     const [showEditModal, setShowEditModal] = useState(false)
     const [showDeleteModal, setShowDeleteModal] = useState(false)
     const [selectedMateria, setSelectedMateria] = useState(null)
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState(null)
+
+    // Cargar datos iniciales
+    useEffect(() => {
+        loadMaterias()
+        loadCarreras()
+    }, [])
+
+    const loadMaterias = async () => {
+        try {
+            setLoading(true)
+            const data = await materiasAPI.getMaterias()
+            setMaterias(data)
+            setError(null)
+        } catch (err) {
+            setError("Error al cargar las materias")
+            console.error(err)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const loadCarreras = async () => {
+        try {
+            const data = await carrerasAPI.getCarreras() // Necesitarás crear este servicio
+            setCarreras(data)
+        } catch (err) {
+            console.error("Error al cargar carreras:", err)
+        }
+    }
 
     // Filtrar materias
     const filteredMaterias = materias.filter(materia =>
-        materia.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        materia.objetivo.toLowerCase().includes(searchTerm.toLowerCase())
+        materia.nombre_materia?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        materia.descripcion?.toLowerCase().includes(searchTerm.toLowerCase())
     )
 
     const handleEdit = (materia) => {
@@ -98,22 +110,80 @@ export default function MateriasTable() {
         setShowDeleteModal(true)
     }
 
-    const handleAddMateria = (newMateria) => {
-        setMaterias([...materias, { ...newMateria, id: Date.now() }])
-        setShowAddModal(false)
+    const handleAddMateria = async (newMateria) => {
+        try {
+            const created = await materiasAPI.createMateria({
+                nombre_materia: newMateria.nombre,
+                descripcion: newMateria.objetivo,
+                activo: newMateria.estado,
+                carrera_id: newMateria.carrera_id
+            })
+            setMaterias([...materias, created])
+            setShowAddModal(false)
+        } catch (err) {
+            console.error("Error al crear materia:", err)
+            alert("Error al crear la materia")
+        }
     }
 
-    const handleUpdateMateria = (updatedMateria) => {
-        setMaterias(materias.map(m =>
-            m.id === updatedMateria.id ? updatedMateria : m
-        ))
-        setShowEditModal(false)
+    const handleUpdateMateria = async (updatedMateria) => {
+        try {
+            const updated = await materiasAPI.updateMateria(selectedMateria.id_materia, {
+                nombre_materia: updatedMateria.nombre,
+                descripcion: updatedMateria.objetivo,
+                activo: updatedMateria.estado,
+                carrera_id: updatedMateria.carrera_id
+            })
+            setMaterias(materias.map(m =>
+                m.id_materia === updated.id_materia ? updated : m
+            ))
+            setShowEditModal(false)
+        } catch (err) {
+            console.error("Error al actualizar materia:", err)
+            alert("Error al actualizar la materia")
+        }
     }
 
-    const handleConfirmDelete = () => {
-        setMaterias(materias.filter(m => m.id !== selectedMateria.id))
-        setShowDeleteModal(false)
-        setSelectedMateria(null)
+    const handleConfirmDelete = async () => {
+        try {
+            await materiasAPI.deleteMateria(selectedMateria.id_materia)
+            setMaterias(materias.filter(m => m.id_materia !== selectedMateria.id_materia))
+            setShowDeleteModal(false)
+            setSelectedMateria(null)
+        } catch (err) {
+            console.error("Error al eliminar materia:", err)
+            alert("Error al eliminar la materia")
+        }
+    }
+
+    const getCarreraNombre = (carreraId) => {
+        const carrera = carreras.find(c => c.id_carrera === carreraId)
+        return carrera ? carrera.nombre_carrera : "Sin carrera"
+    }
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                    <p className="mt-2 text-sm text-gray-600">Cargando materias...</p>
+                </div>
+            </div>
+        )
+    }
+
+    if (error) {
+        return (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <p className="text-red-600">{error}</p>
+                <button
+                    onClick={loadMaterias}
+                    className="mt-2 px-3 py-1 bg-red-100 text-red-700 rounded text-sm hover:bg-red-200"
+                >
+                    Reintentar
+                </button>
+            </div>
+        )
     }
 
     return (
@@ -126,7 +196,7 @@ export default function MateriasTable() {
                             Gestión de Materias
                         </h2>
                         <p className="text-sm text-gray-500">
-                            Administra las materias del sistema
+                            Total: {materias.length} materias
                         </p>
                     </div>
                     <Button onClick={() => setShowAddModal(true)}>
@@ -138,7 +208,7 @@ export default function MateriasTable() {
                 {/* Buscador */}
                 <div className="bg-white rounded-lg border border-gray-200 p-4">
                     <Input
-                        placeholder="Buscar materias..."
+                        placeholder="Buscar por nombre o descripción..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         icon
@@ -155,7 +225,10 @@ export default function MateriasTable() {
                                         Nombre
                                     </th>
                                     <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">
-                                        Objetivo
+                                        Descripción
+                                    </th>
+                                    <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">
+                                        Carrera
                                     </th>
                                     <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">
                                         Estado
@@ -168,7 +241,7 @@ export default function MateriasTable() {
                             <tbody className="bg-white divide-y divide-gray-200">
                                 {filteredMaterias.length === 0 ? (
                                     <tr>
-                                        <td colSpan="4" className="px-6 py-12 text-center">
+                                        <td colSpan="5" className="px-6 py-12 text-center">
                                             <div className="text-gray-500">
                                                 <p className="text-sm">No se encontraron materias</p>
                                                 <p className="text-xs mt-1">Intenta con otros términos de búsqueda</p>
@@ -178,18 +251,21 @@ export default function MateriasTable() {
                                 ) : (
                                     filteredMaterias.map((materia) => (
                                         <tr
-                                            key={materia.id}
+                                            key={materia.id_materia}
                                             className="hover:bg-gray-50 transition-colors"
                                         >
                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                {materia.nombre}
+                                                {materia.nombre_materia}
+                                            </td>
+                                            <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">
+                                                {materia.descripcion}
                                             </td>
                                             <td className="px-6 py-4 text-sm text-gray-600">
-                                                {materia.objetivo}
+                                                {getCarreraNombre(materia.carrera_id)}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <Badge variant={materia.estado ? "active" : "inactive"}>
-                                                    {materia.estado ? "Activo" : "Inactivo"}
+                                                <Badge variant={materia.activo ? "active" : "inactive"}>
+                                                    {materia.activo ? "Activo" : "Inactivo"}
                                                 </Badge>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-center">
@@ -197,12 +273,14 @@ export default function MateriasTable() {
                                                     <button
                                                         onClick={() => handleEdit(materia)}
                                                         className="text-gray-600 hover:text-gray-900 p-1"
+                                                        title="Editar"
                                                     >
                                                         <Edit className="h-4 w-4" />
                                                     </button>
                                                     <button
                                                         onClick={() => handleDelete(materia)}
                                                         className="text-gray-600 hover:text-red-600 p-1"
+                                                        title="Eliminar"
                                                     >
                                                         <Trash2 className="h-4 w-4" />
                                                     </button>
@@ -220,6 +298,7 @@ export default function MateriasTable() {
             {/* Modales */}
             {showAddModal && (
                 <AddMateriaModal
+                    carreras={carreras}
                     onClose={() => setShowAddModal(false)}
                     onAdd={handleAddMateria}
                 />
@@ -228,6 +307,7 @@ export default function MateriasTable() {
             {showEditModal && selectedMateria && (
                 <EditMateriaModal
                     materia={selectedMateria}
+                    carreras={carreras}
                     onClose={() => setShowEditModal(false)}
                     onUpdate={handleUpdateMateria}
                 />

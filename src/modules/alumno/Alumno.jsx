@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { ProtectedRoute } from "./components/ProtectedRoute";
 import { Navbar } from "./components/Navbar";
 import {
   Card,
@@ -176,7 +175,6 @@ export default function AlumnoPage() {
   };
 
   return (
-    <ProtectedRoute allowedRoles={["alumno"]}>
       <div className="min-h-screen bg-white">
         <Navbar />
         <main className="container mx-auto p-6 space-y-6">
@@ -715,6 +713,5 @@ export default function AlumnoPage() {
         </main>
         <ToastContainer toasts={toasts} />
       </div>
-    </ProtectedRoute>
   );
 }

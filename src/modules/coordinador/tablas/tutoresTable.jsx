@@ -1,185 +1,331 @@
-import { useState } from "react"
-import { Search, Plus, Edit, Trash2 } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Search, Plus, Edit, Trash2, AlertCircle, Loader2 } from "lucide-react"
 import { AddTutorModal } from "../modales/AddTutorModal"
 import { EditTutorModal } from "../modales/EditTutorModal"
-import { DeleteTutorModal } from "../modales/DeleteTutorModal"
+import { DeleteConfirmModal } from "../modales/DeleteConfirmModal"
+import { 
+  getTutores, 
+  createTutor, 
+  updateTutor, 
+  deleteTutor 
+} from "../../../api/tutores.api"
 
-// Botón compacto
-const Button = ({ children, onClick, variant = "default", size = "sm", className = "" }) => {
-    const baseStyles = "inline-flex items-center justify-center rounded-md font-medium transition-colors"
-    const variants = {
-        default: "bg-blue-600 text-white hover:bg-blue-700",
-        ghost: "hover:bg-gray-100 text-gray-700",
-    }
-    const sizes = {
-        sm: "px-2 py-1 text-xs",
-        xs: "px-1.5 py-0.5 text-[10px]",
-    }
+// Componentes UI reutilizables
+const Button = ({ children, onClick, variant = "default", size = "sm", className = "", disabled = false }) => {
+  const baseStyles = "inline-flex items-center justify-center rounded-md font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+  const variants = {
+    default: "bg-blue-600 text-white hover:bg-blue-700",
+    ghost: "hover:bg-gray-100 text-gray-700",
+  }
+  const sizes = {
+    sm: "px-3 py-2 text-sm",
+    xs: "px-2 py-1 text-xs",
+  }
 
-    return (
-        <button
-            onClick={onClick}
-            className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
-        >
-            {children}
-        </button>
-    )
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
+    >
+      {children}
+    </button>
+  )
 }
 
 const Input = ({ className = "", icon, ...props }) => (
-    <div className="relative w-full">
-        {icon && <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />}
-        <input
-            className={`flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${icon ? 'pl-10' : ''} ${className}`}
-            {...props}
-        />
-    </div>
+  <div className="relative w-full">
+    {icon && (
+      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+    )}
+    <input
+      className={`flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${icon ? 'pl-10' : ''} ${className}`}
+      {...props}
+    />
+  </div>
 )
 
-const Badge = ({ children, variant = "default" }) => {
-    const variants = {
-        active: "bg-green-100 text-green-800",
-        inactive: "bg-gray-100 text-gray-500",
-        default: "bg-gray-200 text-gray-700"
-    }
+const ErrorAlert = ({ message, onRetry }) => (
+  <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
+    <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+    <div className="flex-1">
+      <h3 className="text-sm font-semibold text-red-800">Error al cargar tutores</h3>
+      <p className="text-sm text-red-600 mt-1">{message}</p>
+      {onRetry && (
+        <button
+          onClick={onRetry}
+          className="mt-2 text-sm text-red-700 hover:text-red-800 font-medium underline"
+        >
+          Intentar nuevamente
+        </button>
+      )}
+    </div>
+  </div>
+)
 
-    return (
-        <span className={`inline-flex items-center rounded px-2.5 py-0.5 text-xs font-medium ${variants[variant]}`}>
-            {children}
-        </span>
-    )
-}
-
-// Datos de prueba
-const TUTORES_MOCK = [
-    { id: 1, nombre: "Carlos", apellido: "Rodriguez García", correo: "carlos.rodriguez@escuela.edu", telefono: "123456789", estado: true },
-    { id: 2, nombre: "María", apellido: "López Sánchez", correo: "maria.lopez@escuela.edu", telefono: "987654321", estado: true },
-    { id: 3, nombre: "Juan", apellido: "Pérez Martínez", correo: "juan.perez@escuela.edu", telefono: "555444333", estado: false }
-]
+const LoadingSpinner = () => (
+  <div className="flex flex-col items-center justify-center py-12">
+    <Loader2 className="h-8 w-8 text-blue-600 animate-spin" />
+    <p className="text-sm text-gray-500 mt-2">Cargando tutores...</p>
+  </div>
+)
 
 export default function TutoresTable() {
-    const [tutores, setTutores] = useState(TUTORES_MOCK)
-    const [searchTerm, setSearchTerm] = useState("")
-    const [showAddModal, setShowAddModal] = useState(false)
-    const [showEditModal, setShowEditModal] = useState(false)
-    const [showDeleteModal, setShowDeleteModal] = useState(false)
-    const [selectedTutor, setSelectedTutor] = useState(null)
+  const [tutores, setTutores] = useState([])
+  const [searchTerm, setSearchTerm] = useState("")
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [selectedTutor, setSelectedTutor] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [actionLoading, setActionLoading] = useState(false)
 
-    const filteredTutores = tutores.filter(t =>
-        t.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        t.apellido.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        t.correo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        t.telefono.includes(searchTerm)
-    )
+  // Cargar tutores al montar el componente
+  useEffect(() => {
+    loadTutores()
+  }, [])
 
-    const handleEdit = (tutor) => {
-        setSelectedTutor(tutor)
-        setShowEditModal(true)
+  const loadTutores = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const data = await getTutores()
+      setTutores(data)
+    } catch (err) {
+      console.error("Error al cargar tutores:", err)
+      setError(err.response?.data?.message || "Error al conectar con el servidor")
+    } finally {
+      setLoading(false)
     }
+  }
 
-    const handleDelete = (tutor) => {
-        setSelectedTutor(tutor)
-        setShowDeleteModal(true)
-    }
-
-    const handleAddTutor = (newTutor) => {
-        setTutores([...tutores, { ...newTutor, id: Date.now() }])
-        setShowAddModal(false)
-    }
-
-    const handleUpdateTutor = (updatedTutor) => {
-        setTutores(tutores.map(t => t.id === updatedTutor.id ? updatedTutor : t))
-        setShowEditModal(false)
-    }
-
-    const handleConfirmDelete = () => {
-        setTutores(tutores.filter(t => t.id !== selectedTutor.id))
-        setShowDeleteModal(false)
-        setSelectedTutor(null)
-    }
-
+  // Filtrar tutores
+  const filteredTutores = tutores.filter(tutor => {
+    const searchLower = searchTerm.toLowerCase()
+    const fullName = `${tutor.nombre || ''} ${tutor.apellido_paterno || ''} ${tutor.apellido_materno || ''}`.toLowerCase()
     return (
-        <>
-            <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h2 className="text-xl font-semibold text-gray-900">Gestión de Tutores</h2>
-                        <p className="text-sm text-gray-500">Administra los tutores del sistema</p>
-                    </div>
-                    <Button onClick={() => setShowAddModal(true)}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        Nuevo Tutor
-                    </Button>
-                </div>
-
-                <div className="bg-white rounded-lg border border-gray-200 p-4">
-                    <Input
-                        placeholder="Buscar tutores..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        icon
-                    />
-                </div>
-
-                {/* Tabla */}
-                <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-center">
-                            <thead className="bg-gray-50">
-                                <tr className="border-b border-gray-200">
-                                    <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">Nombre</th>
-                                    <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">Correo</th>
-                                    <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">Teléfono</th>
-                                    <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">Estado</th>
-                                    <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
-                                {filteredTutores.length === 0 ? (
-                                    <tr>
-                                        <td colSpan="5" className="px-6 py-12 text-center">
-                                            <div className="text-gray-500">
-                                                <p className="text-sm">No se encontraron tutores</p>
-                                                <p className="text-xs mt-1">Intenta con otros términos de búsqueda</p>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ) : (
-                                    filteredTutores.map((tutor) => (
-                                        <tr key={tutor.id} className="hover:bg-gray-50 transition-colors">
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                {tutor.nombre} {tutor.apellido}
-                                            </td>
-                                            <td className="px-6 py-4 text-sm text-gray-600">{tutor.correo}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{tutor.telefono}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <Badge variant={tutor.estado ? "active" : "inactive"}>
-                                                    {tutor.estado ? "Activo" : "Inactivo"}
-                                                </Badge>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-center">
-                                                <div className="flex items-center justify-center gap-2">
-                                                    <button onClick={() => handleEdit(tutor)} className="text-gray-600 hover:text-gray-900 p-1">
-                                                        <Edit className="h-4 w-4" />
-                                                    </button>
-                                                    <button onClick={() => handleDelete(tutor)} className="text-gray-600 hover:text-red-600 p-1">
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            {/* Modales */}
-            {showAddModal && <AddTutorModal onClose={() => setShowAddModal(false)} onAdd={handleAddTutor} />}
-            {showEditModal && selectedTutor && <EditTutorModal tutor={selectedTutor} onClose={() => setShowEditModal(false)} onUpdate={handleUpdateTutor} />}
-            {showDeleteModal && selectedTutor && <DeleteTutorModal tutor={selectedTutor} onClose={() => setShowDeleteModal(false)} onConfirm={handleConfirmDelete} />}
-        </>
+      fullName.includes(searchLower) ||
+      (tutor.email || '').toLowerCase().includes(searchLower) ||
+      (tutor.telefono || '').includes(searchTerm)
     )
+  })
+
+  const handleEdit = (tutor) => {
+    setSelectedTutor(tutor)
+    setShowEditModal(true)
+  }
+
+  const handleDelete = (tutor) => {
+    setSelectedTutor(tutor)
+    setShowDeleteModal(true)
+  }
+
+  const handleAddTutor = async (newTutorData) => {
+    try {
+      setActionLoading(true)
+      const newTutor = await createTutor(newTutorData)
+      setTutores([...tutores, newTutor])
+      setShowAddModal(false)
+    } catch (err) {
+      console.error("Error al crear tutor:", err)
+      alert(err.response?.data?.message || "Error al crear tutor")
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handleUpdateTutor = async (updatedTutorData) => {
+    try {
+      setActionLoading(true)
+      const updated = await updateTutor(selectedTutor.id_usuario, updatedTutorData)
+      setTutores(tutores.map(t =>
+        t.id_usuario === selectedTutor.id_usuario ? updated : t
+      ))
+      setShowEditModal(false)
+    } catch (err) {
+      console.error("Error al actualizar tutor:", err)
+      alert(err.response?.data?.message || "Error al actualizar tutor")
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handleConfirmDelete = async () => {
+    try {
+      setActionLoading(true)
+      await deleteTutor(selectedTutor.id_usuario)
+      setTutores(tutores.filter(t => t.id_usuario !== selectedTutor.id_usuario))
+      setShowDeleteModal(false)
+      setSelectedTutor(null)
+    } catch (err) {
+      console.error("Error al eliminar tutor:", err)
+      alert(err.response?.data?.message || "Error al eliminar tutor")
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  return (
+    <>
+      <div className="space-y-4">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900">
+              Gestión de Tutores
+            </h2>
+            <p className="text-sm text-gray-500">
+              Administra los tutores del sistema
+            </p>
+          </div>
+          <Button onClick={() => setShowAddModal(true)} disabled={loading}>
+            <Plus className="mr-2 h-4 w-4" />
+            Nuevo Tutor
+          </Button>
+        </div>
+
+        {/* Error Alert */}
+        {error && (
+          <ErrorAlert 
+            message={error} 
+            onRetry={loadTutores}
+          />
+        )}
+
+        {/* Buscador */}
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <Input
+            placeholder="Buscar tutores..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            icon
+            disabled={loading}
+          />
+        </div>
+
+        {/* Tabla */}
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            {loading ? (
+              <LoadingSpinner />
+            ) : (
+              <table className="w-full text-center">
+                <thead className="bg-gray-50">
+                  <tr className="border-b border-gray-200">
+                    <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">
+                      Nombre
+                    </th>
+                    <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">
+                      Correo
+                    </th>
+                    <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">
+                      Teléfono
+                    </th>
+                    <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">
+                      Estado
+                    </th>
+                    <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">
+                      Acciones
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredTutores.length === 0 ? (
+                    <tr>
+                      <td colSpan="5" className="px-6 py-12 text-center">
+                        <div className="text-gray-500">
+                          <p className="text-sm">
+                            {searchTerm 
+                              ? "No se encontraron tutores con esos criterios"
+                              : "No hay tutores registrados"
+                            }
+                          </p>
+                          {!searchTerm && (
+                            <p className="text-xs mt-1">Agrega el primer tutor usando el botón superior</p>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredTutores.map((tutor) => (
+                      <tr
+                        key={tutor.id_usuario}
+                        className="hover:bg-gray-50 transition-colors"
+                      >
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {tutor.nombre} {tutor.apellido_paterno} {tutor.apellido_materno || ''}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600">{tutor.email}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                          {tutor.telefono || 'N/A'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span
+                            className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${
+                              tutor.estado 
+                                ? "bg-green-100 text-green-800" 
+                                : "bg-gray-100 text-gray-500"
+                            }`}
+                          >
+                            {tutor.estado ? "Activo" : "Inactivo"}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          <div className="flex items-center justify-center gap-2">
+                            <button
+                              onClick={() => handleEdit(tutor)}
+                              className="text-gray-600 hover:text-gray-900 p-1 disabled:opacity-50"
+                              disabled={actionLoading}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(tutor)}
+                              className="text-gray-600 hover:text-red-600 p-1 disabled:opacity-50"
+                              disabled={actionLoading}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Modales */}
+      {showAddModal && (
+        <AddTutorModal
+          onClose={() => setShowAddModal(false)}
+          onAdd={handleAddTutor}
+          loading={actionLoading}
+        />
+      )}
+
+      {showEditModal && selectedTutor && (
+        <EditTutorModal
+          tutor={selectedTutor}
+          onClose={() => setShowEditModal(false)}
+          onUpdate={handleUpdateTutor}
+          loading={actionLoading}
+        />
+      )}
+
+      {showDeleteModal && selectedTutor && (
+        <DeleteConfirmModal
+          title="Eliminar Tutor"
+          message={`¿Estás seguro de que deseas eliminar al tutor ${selectedTutor.nombre} ${selectedTutor.apellido_paterno}? Esta acción no se puede deshacer.`}
+          onClose={() => setShowDeleteModal(false)}
+          onConfirm={handleConfirmDelete}
+          loading={actionLoading}
+        />
+      )}
+    </>
+  )
 }

@@ -10,19 +10,36 @@ const LoginPage = () => {
   const navigate = useNavigate();
 
   const onSubmit = async ({ email, password }) => {
+    console.log("🔐 Intentando login con:", email);
     const usuario = await handleLogin(email, password);
+
+    console.log("👤 Usuario devuelto por handleLogin:", usuario);
+    console.log("👤 Rol del usuario:", usuario?.rol);
 
     if (usuario) {
       showToast("¡Login exitoso!", "success");
 
-      if (usuario?.rol === "coordinador") navigate("/coordinador/gestion");
-      else if (usuario?.rol === "alumno") navigate("/alumno");
-      else if (usuario?.rol === "tutor") navigate("/tutor");
-      else navigate("/home");
+      console.log("🚀 Redirigiendo según rol:", usuario.rol);
 
+      if (usuario?.rol === "coordinator") {
+        console.log("Navegando a /coordinador");
+        navigate("/coordinador");
+      }
+      else if (usuario?.rol === "student") {
+        console.log("Navegando a /alumno");
+        navigate("/alumno");
+      }
+      else if (usuario?.rol === "tutor") {
+        console.log("Navegando a /tutor");
+        navigate("/tutor");
+      }
+      else {
+        console.log("Navegando a /home (rol no reconocido)");
+        navigate("/home");
+      }
     } else {
       const mensaje = error || "Credenciales incorrectas";
-      showToast(mensaje, "error"); // <--- mensaje seguro
+      showToast(mensaje, "error");
     }
   };
 

@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
+import { ProtectedRoute } from "../routes/ProtectedRoute";
 import LoginPage from "../modules/login/LoginPage";
 import EspaciosTutorPage from "../modules/coordinador/GestionCoordinador";
 import NotFoundPage from "../modules/notFoundPage/NotFoundPage";
@@ -16,21 +17,68 @@ export const RoutesConfig = () => {
 
   return (
     <Routes>
-      <Route path="/" element={<LoginPage />} />
-      <Route path="/home" element={user ? <Home /> : <Navigate to="/" />} />
+      <Route 
+        path="/" 
+        element={user ? <Navigate to={getRoleRoute(user.rol)} replace /> : <LoginPage />} 
+      />
+
+      <Route
+        path="/home"
+        element={
+          <ProtectedRoute allowedRoles={["student", "tutor", "coordinator", "admin"]}>
+            <Home />
+          </ProtectedRoute>
+        }
+      />
+
       <Route
         path="/alumno"
-        element={user ? <AlumnoPage /> : <Navigate to="/" />}
+        element={
+          <ProtectedRoute allowedRoles={["student"]}>
+            <AlumnoPage />
+          </ProtectedRoute>
+        }
       />
-      <Route
-        path="/coordinador/gestion"
-        element={user ? <EspaciosTutorPage /> : <Navigate to="/" />}
-      />
+
       <Route
         path="/tutor"
-        element={user ? <TutorPage /> : <Navigate to="/" />}
+        element={
+          <ProtectedRoute allowedRoles={["tutor"]}>
+            <TutorPage />
+          </ProtectedRoute>
+        }
       />
+
+      <Route
+        path="/coordinador"
+        element={
+          <ProtectedRoute allowedRoles={["coordinator"]}>
+            <EspaciosTutorPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <div>Panel de Administrador</div>
+          </ProtectedRoute>
+        }
+      />
+
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
+};
+
+// Usar roles en INGLÉS
+const getRoleRoute = (rol) => {
+  const routes = {
+    student: "/alumno",
+    tutor: "/tutor",
+    coordinator: "/coordinador",
+    admin: "/admin",
+  };
+  return routes[rol] || "/";
 };
