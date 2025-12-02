@@ -31,7 +31,7 @@ import {
   BookOpen,
   Clock,
 } from "./components/Icons";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import { Plus, Edit, Trash2, UserCheck } from "lucide-react";
 
 export default function AlumnoPage() {
   const { user } = useAuth();
@@ -568,56 +568,64 @@ export default function AlumnoPage() {
           {/* Modal Nueva Asesoría */}
           {isModalOpen && (
             <div
-              className="fixed inset-0 flex items-center justify-center bg-opacity-50 p-4 backdrop-blur-sm"
-              style={{ zIndex: 9999 }}
+              className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4"
               onClick={closeModal}
             >
               <div
-                className="bg-white rounded-xl w-full max-w-md shadow-2xl overflow-hidden animate-in"
+                className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-auto overflow-hidden"
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-bold text-white">
-                      Nueva Asesoría
-                    </h2>
-                    <button
-                      onClick={closeModal}
-                      className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-1 transition-colors"
-                    >
-                      <svg
-                        className="w-6 h-6"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
-                    </button>
+                {/* Header */}
+                <div className="px-6 py-4 border-b border-gray-100 relative">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-blue-600 p-2 rounded-lg">
+                      <BookOpen className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-bold text-gray-900">
+                        Nueva Asesoría
+                      </h2>
+                      <p className="text-gray-500 text-xs">
+                        Registra tu solicitud de asesoría académica
+                      </p>
+                    </div>
                   </div>
-                  <p className="text-blue-100 text-sm mt-1">
-                    Registra tu solicitud de asesoría académica
-                  </p>
+                  <button
+                    onClick={closeModal}
+                    className="absolute top-4 right-5 text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <svg
+                      className="h-5 w-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
                 </div>
 
+                {/* Form */}
                 <form
                   onSubmit={handleRegistrarAsesoria}
-                  className="p-6 space-y-5"
+                  className="p-6 space-y-4"
                 >
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Materia <span className="text-red-500">*</span>
+                  {/* Materia */}
+                  <div className="space-y-1.5">
+                    <label className="flex items-center gap-2 text-xs font-medium text-gray-700">
+                      <BookOpen className="h-3.5 w-3.5 text-gray-400" />
+                      Materia
                     </label>
                     <select
                       value={materia}
                       onChange={(e) => setMateria(e.target.value)}
                       required
-                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white text-gray-900"
+                      className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-gray-900"
                     >
                       <option value="">Selecciona una materia</option>
                       <option value="Matemáticas">Matemáticas</option>
@@ -627,9 +635,11 @@ export default function AlumnoPage() {
                     </select>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Motivo <span className="text-red-500">*</span>
+                  {/* Motivo */}
+                  <div className="space-y-1.5">
+                    <label className="flex items-center gap-2 text-xs font-medium text-gray-700">
+                      <FileText className="h-3.5 w-3.5 text-gray-400" />
+                      Motivo
                     </label>
                     <textarea
                       value={motivo}
@@ -637,13 +647,15 @@ export default function AlumnoPage() {
                       placeholder="Describe brevemente el tema que necesitas revisar..."
                       required
                       rows={3}
-                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none"
+                      className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-gray-900 placeholder:text-gray-400 resize-none"
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Fecha <span className="text-red-500">*</span>
+                  {/* Fecha */}
+                  <div className="space-y-1.5">
+                    <label className="flex items-center gap-2 text-xs font-medium text-gray-700">
+                      <Clock className="h-3.5 w-3.5 text-gray-400" />
+                      Fecha
                     </label>
                     <input
                       type="date"
@@ -651,19 +663,21 @@ export default function AlumnoPage() {
                       onChange={(e) => setFecha(e.target.value)}
                       required
                       min={new Date().toISOString().split("T")[0]}
-                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-gray-900"
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Tutor <span className="text-red-500">*</span>
+                  {/* Tutor */}
+                  <div className="space-y-1.5">
+                    <label className="flex items-center gap-2 text-xs font-medium text-gray-700">
+                      <UserCheck className="h-3.5 w-3.5 text-gray-400" />
+                      Tutor
                     </label>
                     <select
                       value={tutor}
                       onChange={(e) => setTutor(e.target.value)}
                       required
-                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white text-gray-900"
+                      className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-gray-900"
                     >
                       <option value="">Selecciona un tutor</option>
                       <option value="2">Juan Pérez</option>
@@ -672,21 +686,21 @@ export default function AlumnoPage() {
                     </select>
                   </div>
 
-                  <div className="flex gap-3 pt-4">
-                    <Button
+                  {/* Buttons */}
+                  <div className="flex gap-3 pt-2">
+                    <button
                       type="button"
-                      variant="ghost"
                       onClick={closeModal}
-                      className="flex-1"
+                      className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-all"
                     >
                       Cancelar
-                    </Button>
-                    <Button
+                    </button>
+                    <button
                       type="submit"
-                      className="flex-1 bg-blue-600 hover:bg-blue-700"
+                      className="flex-1 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md shadow-blue-500/20"
                     >
                       Registrar Asesoría
-                    </Button>
+                    </button>
                   </div>
                 </form>
               </div>
