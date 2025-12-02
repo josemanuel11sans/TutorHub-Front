@@ -7,7 +7,7 @@ export function Navbar() {
   const { user } = useAuth();
 
   return (
-    <nav className="bg-transparent border-b border-gray-200 px-6 py-4">
+    <nav className="bg-white border-b border-gray-200 px-6 py-4">
       <div className="flex items-center justify-between max-w-full">
         <div className="flex items-center space-x-4 min-w-0 flex-shrink">
           <div className="bg-blue-600 text-white rounded-lg p-2 font-bold text-sm flex-shrink-0">
