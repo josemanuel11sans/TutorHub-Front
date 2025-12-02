@@ -1,32 +1,31 @@
 import { useState } from "react"
-import { Search, Plus, Edit, Trash2 } from "lucide-react"
+import { Search, Plus, Edit, Trash2, Check } from "lucide-react"
 import { AddAsesoriaModal } from "../modales/AddAsesoriaModal"
 import { DeleteAsesoriaModal } from "../modales/DeleteAsesoriaModal"
 import { EditAsesoriaModal } from "../modales/EditAsesoriaModal"
-// import { AddAsesoriaModal } from "../modales/AddAsesoriaModal"
-// import { EditAsesoriaModal } from "../modales/EditAsesoriaModal"
-// import { DeleteAsesoriaModal } from "../modales/DeleteAsesoriaModal"
+import { AttendanceAsesoriaModal } from "../modales/AttendanceAsesoriaModal"
+
 
 // Botón compacto
 const Button = ({ children, onClick, variant = "default", size = "default", className = "" }) => {
     const baseStyles = "inline-flex items-center justify-center rounded-md font-medium transition-colors"
-  const variants = {
-    default: "bg-blue-600 text-white hover:bg-blue-700",
-    ghost: "hover:bg-gray-100 text-gray-700",
-  }
-  const sizes = {
-    default: "px-4 py-2",
-    sm: "px-2 py-1 text-sm",
-  }
+    const variants = {
+        default: "bg-blue-600 text-white hover:bg-blue-700",
+        ghost: "hover:bg-gray-100 text-gray-700",
+    }
+    const sizes = {
+        default: "px-4 py-2",
+        sm: "px-2 py-1 text-sm",
+    }
   
-  return (
-    <button
-      onClick={onClick}
-      className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
-    >
-      {children}
-    </button>
-  )
+    return (
+        <button
+        onClick={onClick}
+        className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
+        >
+        {children}
+        </button>
+    )
 }
 
 const Input = ({ className = "", icon, ...props }) => (
@@ -67,6 +66,7 @@ export default function AsesoriasTable() {
     const [showEditModal, setShowEditModal] = useState(false)
     const [showDeleteModal, setShowDeleteModal] = useState(false)
     const [selectedAsesoria, setSelectedAsesoria] = useState(null)
+    const [showAttendanceModal, setShowAttendanceModal] = useState(false)
 
     const filteredAsesorias = asesorias.filter(a =>
         a.materia.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -95,10 +95,22 @@ export default function AsesoriasTable() {
     }
 
     const handleConfirmDelete = () => {
-        setAsesorias(asesorias.filter(a => a.id !== selectedMateria.id))
+        setAsesorias(asesorias.filter(a => a.id !== selectedAsesoria.id))
         setShowDeleteModal(false)
         setSelectedAsesoria(null)
     }
+
+    const handleAttendance = (asesoria) => {
+        setSelectedAsesoria(asesoria)
+        setShowAttendanceModal(true)
+    }
+
+    const handleConfirmAttendace = () => {
+        setAsesorias(asesorias.map(a => a.id === selectedAsesoria.id ? { ...a, asistencia: true } : a))
+        setShowAttendanceModal(false)
+        setSelectedAsesoria(null)
+    }
+
 
     return (
         <>
@@ -133,6 +145,7 @@ export default function AsesoriasTable() {
                                     <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">Fecha</th>
                                     <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">Alumno</th>
                                     <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">Estado</th>
+                                    <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">Asistencia</th>
                                     <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">Acciones</th>
                                 </tr>
                             </thead>
@@ -160,7 +173,12 @@ export default function AsesoriasTable() {
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <Badge variant={asesoria.estado ? "active" : "inactive"}>
-                                                    {asesoria.estado ? "Activo" : "Inactivo"}
+                                                    {asesoria.estado ? "Confirmada" : "Cancelada"}
+                                                </Badge>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <Badge variant={asesoria.asistencia ? "active" : "inactive"}>
+                                                    {asesoria.asistencia ? "Asistio" : "No Asistio"}
                                                 </Badge>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-center">
@@ -170,6 +188,9 @@ export default function AsesoriasTable() {
                                                     </button>
                                                     <button onClick={() => handleDelete(asesoria)} className="text-gray-600 hover:text-red-600 p-1">
                                                         <Trash2 className="h-4 w-4" />
+                                                    </button>
+                                                    <button onClick={() => handleAttendance(asesoria)} className="text-gray-600 hover:text-green-600 p-1">
+                                                        <Check className="h-4 w-4" />
                                                     </button>
                                                 </div>
                                             </td>
@@ -186,6 +207,7 @@ export default function AsesoriasTable() {
             {showAddModal && <AddAsesoriaModal onClose={() => setShowAddModal(false)} onAdd={handleAddAsesoria} />}
             {showEditModal && selectedAsesoria&& <EditAsesoriaModal asesoria={selectedAsesoria} onClose={() => setShowEditModal(false)} onUpdate={handleUpdateAsesoria} />}
             {showDeleteModal && selectedAsesoria&& <DeleteAsesoriaModal asesoria={selectedAsesoria} onClose={() => setShowDeleteModal(false)} onConfirm={handleConfirmDelete} />}
+            {showAttendanceModal && selectedAsesoria&& <AttendanceAsesoriaModal asesoria={selectedAsesoria} onClose={() => setShowAttendanceModal(false)} onConfirm={handleConfirmAttendace} />}
         </>
     )
 }
