@@ -19,9 +19,14 @@ export function Tabs({ children, defaultValue, className = "" }) {
   );
 }
 
-export function TabsList({ children, activeTab, setActiveTab }) {
+export function TabsList({
+  children,
+  activeTab,
+  setActiveTab,
+  className = "",
+}) {
   return (
-    <div className="inline-flex bg-gray-100 rounded-lg p-1 space-x-1">
+    <div className={className || "border-b border-gray-200"}>
       {Children.map(children, (child) => {
         if (!child) return null;
         return cloneElement(child, { activeTab, setActiveTab });
@@ -36,10 +41,10 @@ export function TabsTrigger({ children, value, activeTab, setActiveTab }) {
   return (
     <button
       onClick={() => setActiveTab(value)}
-      className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+      className={`flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
         isActive
-          ? "bg-white text-gray-900 shadow-sm"
-          : "text-gray-600 hover:text-gray-900"
+          ? "border-blue-600 text-blue-600"
+          : "border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300"
       }`}
     >
       {children}
@@ -49,6 +54,5 @@ export function TabsTrigger({ children, value, activeTab, setActiveTab }) {
 
 export function TabsContent({ children, value, activeTab, className = "" }) {
   if (value !== activeTab) return null;
-
   return <div className={className}>{children}</div>;
 }

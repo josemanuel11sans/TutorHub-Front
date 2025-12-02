@@ -1,0 +1,178 @@
+import { useState } from "react"
+import { Search, Plus, Edit, Trash2 } from "lucide-react"
+import { AddMateriaModal } from "../modales/AddMateriaModal "
+import { DeleteMateriaModal } from "../modales/DeleteMateriaModal"
+// import { AddMateriaModal } from "../modales/AddMateriaModal"
+// import { EditMateriaModal } from "../modales/EditMateriaModal"
+// import { DeleteMateriaModal } from "../modales/DeleteMateriaModal"
+
+// Botón compacto
+const Button = ({ children, onClick, variant = "default", size = "default", className = "" }) => {
+    const baseStyles = "inline-flex items-center justify-center rounded-md font-medium transition-colors"
+  const variants = {
+    default: "bg-blue-600 text-white hover:bg-blue-700",
+    ghost: "hover:bg-gray-100 text-gray-700",
+  }
+  const sizes = {
+    default: "px-4 py-2",
+    sm: "px-2 py-1 text-sm",
+  }
+  
+  return (
+    <button
+      onClick={onClick}
+      className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
+    >
+      {children}
+    </button>
+  )
+}
+
+const Input = ({ className = "", icon, ...props }) => (
+    <div className="relative w-full">
+        {icon && <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />}
+        <input
+            className={`flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${icon ? 'pl-10' : ''} ${className}`}
+            {...props}
+        />
+    </div>
+)
+
+const Badge = ({ children, variant = "default" }) => {
+    const variants = {
+        active: "bg-green-100 text-green-800",
+        inactive: "bg-gray-100 text-gray-500",
+        default: "bg-gray-200 text-gray-700"
+    }
+
+    return (
+        <span className={`inline-flex items-center rounded px-2.5 py-0.5 text-xs font-medium ${variants[variant]}`}>
+            {children}
+        </span>
+    )
+}
+
+// Datos de prueba
+const MATERIAS_MOCK = [
+    { id: 1, nombre: "Arquitecturas de Software", estado: true },
+    { id: 2, nombre: "Bases de Datos", estado: true },
+    { id: 3, nombre: "Desarrollo Web", estado: false }
+]
+
+export default function MateriasTable() {
+    const [materias, setMaterias] = useState(MATERIAS_MOCK)
+    const [searchTerm, setSearchTerm] = useState("")
+    const [showAddModal, setShowAddModal] = useState(false)
+    const [showEditModal, setShowEditModal] = useState(false)
+    const [showDeleteModal, setShowDeleteModal] = useState(false)
+    const [selectedMateria, setSelectedMateria] = useState(null)
+
+    const filteredMaterias = materias.filter(a =>
+        a.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        a.estado.toString().toLowerCase().includes(searchTerm.toLowerCase())
+    )
+
+    const handleEdit = (materia) => {
+        setSelectedMateria(materia)
+        setShowEditModal(true)
+    }
+
+    const handleDelete = (materia) => {
+        setSelectedMateria(materia)
+        setShowDeleteModal(true)
+    }
+
+    const handleAddMateria= (newMateria) => {
+        setMaterias([...materias, { ...newMateria, id: Date.now() }])
+        setShowAddModal(false)
+    }
+
+    const handleUpdateMateria= (updatedMateria) => {
+        setMaterias(materias.map(a => a.id === updatedMateria.id ? updatedMateria: a))
+        setShowEditModal(false)
+    }
+
+    const handleConfirmDelete = () => {
+        setMaterias(materias.filter(a => a.id !== selectedMateria.id))
+        setShowDeleteModal(false)
+        setSelectedMateria(null)
+    }
+
+    return (
+        <>
+            <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h2 className="text-xl font-semibold text-gray-900">Gestión de Materias</h2>
+                        <p className="text-sm text-gray-500">Administra las materias del sistema</p>
+                    </div>
+                    <Button onClick={() => setShowAddModal(true)}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Nueva Materia
+                    </Button>
+                </div>
+
+                <div className="bg-white rounded-lg border border-gray-200 p-4">
+                    <Input
+                        placeholder="Buscar materias..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        icon
+                    />
+                </div>
+
+                {/* Tabla */}
+                <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-center">
+                            <thead className="bg-gray-50">
+                                <tr className="border-b border-gray-200">
+                                    <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">Nombre de la materia impartida</th>
+                                    <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">Estado</th>
+                                    <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-200">
+                                {filteredMaterias.length === 0 ? (
+                                    <tr>
+                                        <td colSpan="5" className="px-6 py-12 text-center">
+                                            <div className="text-gray-500">
+                                                <p className="text-sm">No se encontraron Materias</p>
+                                                <p className="text-xs mt-1">Intenta con otros términos de búsqueda</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    filteredMaterias.map((materia) => (
+                                        <tr key={materia.id} className="hover:bg-gray-50 transition-colors">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                {materia.nombre}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <Badge variant={materia.estado ? "active" : "inactive"}>
+                                                    {materia.estado ? "Activo" : "Inactivo"}
+                                                </Badge>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                <div className="flex items-center justify-center gap-2">
+                                                    <button onClick={() => handleDelete(materia)} className="text-gray-600 hover:text-red-600 p-1">
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            {/* Modales */}
+            {showAddModal && <AddMateriaModal onClose={() => setShowAddModal(false)} onAdd={handleAddMateria} />}
+            {/* {showEditModal && selectedMateria&& <EditMateriaModal materia={selectedMateria} onClose={() => setShowEditModal(false)} onUpdate={handleUpdateMateria} />} */}
+            {showDeleteModal && selectedMateria&& <DeleteMateriaModal materia={selectedMateria} onClose={() => setShowDeleteModal(false)} onConfirm={handleConfirmDelete} />}
+        </>
+    )
+}

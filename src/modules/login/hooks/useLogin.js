@@ -1,29 +1,30 @@
-import { useState } from "react";
-import { login as loginRequest } from "../../../api/auth.api";
+"use client"
+
+import { useState } from "react"
+import { login as loginRequest } from "../../../api/auth.api"
 
 export const useLogin = () => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
 
   const login = async (credenciales) => {
     try {
-      setLoading(true);
-      setError(null);
-      
-      const { data } = await loginRequest(credenciales);
+      setLoading(true)
+      setError(null)
 
-      return data; // <- regresa el usuario/token
+      const { data } = await loginRequest(credenciales)
+      return data
     } catch (err) {
-      setError(err.response?.data?.message || "Error al iniciar sesión");
-      return null;
+      setError(err.response?.data?.message || "Error al iniciar sesión")
+      return null
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return {
     login,
     loading,
     error,
-  };
-};
+  }
+}
