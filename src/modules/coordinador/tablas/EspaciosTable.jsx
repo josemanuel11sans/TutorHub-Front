@@ -1,229 +1,257 @@
 import { useState } from "react"
 import { Search, Plus, Edit, Trash2 } from "lucide-react"
+import { AddEspacioModal } from "../modales/AddEspacioModal"
+import { EditEspacioModal } from "../modales/EditEspacioModal"
+import { DeleteEspacioModal } from "../modales/DeleteEspacioModal"
 
-// Componentes básicos
-const Button = ({ children, onClick, variant = "default", size = "default", className = "" }) => {
-  const baseStyles = "inline-flex items-center justify-center rounded-md font-medium transition-colors"
-  const variants = {
-    default: "bg-blue-600 text-white hover:bg-blue-700",
-    ghost: "hover:bg-gray-100 text-gray-700",
-  }
-  const sizes = {
-    default: "px-4 py-2",
-    sm: "px-2 py-1 text-sm",
-  }
-  
-  return (
-    <button
-      onClick={onClick}
-      className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
-    >
-      {children}
-    </button>
-  )
+/* ─────────────────────────────────────────────── */
+/*                 COMPONENTES BÁSICOS             */
+/* ─────────────────────────────────────────────── */
+
+const Button = ({ children, onClick, variant = "default", size = "sm", className = "" }) => {
+    const baseStyles = "inline-flex items-center justify-center rounded-md font-medium transition-colors"
+    const variants = {
+        default: "bg-blue-600 text-white hover:bg-blue-700",
+        ghost: "hover:bg-gray-100 text-gray-700",
+    }
+    const sizes = {
+        sm: "px-2 py-1 text-xs",
+        xs: "px-1.5 py-0.5 text-[10px]",
+    }
+
+    return (
+        <button
+            onClick={onClick}
+            className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
+        >
+            {children}
+        </button>
+    )
 }
 
 const Input = ({ className = "", icon, ...props }) => (
-  <div className="relative w-full">
-    {icon && (
-      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-    )}
-    <input
-      className={`flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${icon ? 'pl-10' : ''} ${className}`}
-      {...props}
-    />
-  </div>
+    <div className="relative w-full">
+        {icon && (
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+        )}
+        <input
+            className={`flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${icon ? 'pl-10' : ''} ${className}`}
+            {...props}
+        />
+    </div>
 )
 
-const Badge = ({ children, variant = "default" }) => {
-  const variants = {
-    active: "bg-blue-600 text-white",
-    inactive: "bg-gray-200 text-gray-700",
-  }
-  
-  return (
-    <span className={`inline-flex items-center rounded px-2.5 py-0.5 text-xs font-medium ${variants[variant]}`}>
-      {children}
-    </span>
-  )
-}
+/* ─────────────────────────────────────────────── */
+/*                  DATOS MOCK                     */
+/* ─────────────────────────────────────────────── */
 
-// Datos de prueba
 const ESPACIOS_MOCK = [
-  {
-    id_espacio: 1,
-    nombre: "Aula 101",
-    descripcion: "Aula de clases general",
-    edificio: "Edificio A",
-    capacidad: "30 personas",
-    estado: true,
-  },
-  {
-    id_espacio: 2,
-    nombre: "Aula 102",
-    descripcion: "Aula de clases general",
-    edificio: "Edificio A",
-    capacidad: "35 personas",
-    estado: true,
-  },
-  {
-    id_espacio: 3,
-    nombre: "Lab Computación",
-    descripcion: "Laboratorio de computación",
-    edificio: "Edificio B",
-    capacidad: "25 personas",
-    estado: true,
-  },
-  {
-    id_espacio: 4,
-    nombre: "Sala de Conferencias",
-    descripcion: "Sala para eventos y conferencias",
-    edificio: "Edificio A",
-    capacidad: "100 personas",
-    estado: true,
-  },
-  {
-    id_espacio: 5,
-    nombre: "Biblioteca Principal",
-    descripcion: "Sala de lectura principal",
-    edificio: "Edificio C",
-    capacidad: "50 personas",
-    estado: true,
-  }
+    {
+        id_espacio: 1,
+        nombre: "Aula 101",
+        descripcion: "Aula de clases general",
+        tutor: "Juan Pérez",
+        estado: true,
+    },
+    {
+        id_espacio: 2,
+        nombre: "Sala Audiovisual",
+        descripcion: "Sala para proyecciones",
+        tutor: "María López",
+        estado: true,
+    },
+    {
+        id_espacio: 3,
+        nombre: "Laboratorio 2",
+        descripcion: "Lab de química",
+        tutor: "Carlos Rivera",
+        estado: false,
+    },
 ]
 
-export default function EspaciosTutorPage() {
-  const [espacios] = useState(ESPACIOS_MOCK)
-  const [searchTerm, setSearchTerm] = useState("")
+/* ─────────────────────────────────────────────── */
+/*                  COMPONENTE PRINCIPAL            */
+/* ─────────────────────────────────────────────── */
 
-  // Filtrar espacios
-  const filteredEspacios = espacios.filter(espacio =>
-    espacio.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    espacio.descripcion?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    espacio.edificio?.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+export default function EspaciosTable() {
+    const [espacios, setEspacios] = useState(ESPACIOS_MOCK)
+    const [searchTerm, setSearchTerm] = useState("")
+    const [showAddModal, setShowAddModal] = useState(false)
+    const [showEditModal, setShowEditModal] = useState(false)
+    const [showDeleteModal, setShowDeleteModal] = useState(false)
+    const [selectedEspacio, setSelectedEspacio] = useState(null)
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto p-6 space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-semibold text-gray-900">
-              Gestión de Espacios
-            </h1>
-            <p className="text-sm text-gray-500">
-              Administra los espacios y aulas
-            </p>
-          </div>
-          <Button onClick={() => alert("Nuevo espacio")}>
-            <Plus className="mr-2 h-4 w-4" />
-            Nuevo Espacio
-          </Button>
-        </div>
+    // Filtrar espacios
+    const filteredEspacios = espacios.filter(espacio =>
+        espacio.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        espacio.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        espacio.tutor.toLowerCase().includes(searchTerm.toLowerCase())
+    )
 
-        {/* Card contenedor */}
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-          {/* Buscador */}
-          <div className="p-4 border-b border-gray-200">
-            <Input
-              placeholder="Buscar espacios..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              icon
-            />
-          </div>
+    const handleEdit = (espacio) => {
+        setSelectedEspacio(espacio)
+        setShowEditModal(true)
+    }
 
-          {/* Tabla */}
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr className="border-b border-gray-200">
-                  <th className="text-left px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">
-                    Nombre
-                  </th>
-                  <th className="text-left px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">
-                    Descripción
-                  </th>
-                  <th className="text-left px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">
-                    Edificio
-                  </th>
-                  <th className="text-left px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">
-                    Capacidad
-                  </th>
-                  <th className="text-left px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">
-                    Estado
-                  </th>
-                  <th className="text-right px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">
-                    Acciones
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredEspacios.length === 0 ? (
-                  <tr>
-                    <td colSpan="6" className="px-6 py-12 text-center">
-                      <div className="text-gray-500">
-                        <p className="text-sm">No se encontraron espacios</p>
-                        <p className="text-xs mt-1">Intenta con otros términos de búsqueda</p>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  filteredEspacios.map((espacio) => (
-                    <tr
-                      key={espacio.id_espacio}
-                      className="hover:bg-gray-50 transition-colors"
-                    >
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">
-                          {espacio.nombre}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-gray-600">
-                          {espacio.descripcion || "Sin descripción"}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-600">
-                          {espacio.edificio}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-600">
-                          {espacio.capacidad}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <Badge variant={espacio.estado ? "active" : "inactive"}>
-                          {espacio.estado ? "Activo" : "Inactivo"}
-                        </Badge>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => alert(`Editar: ${espacio.nombre}`)}
-                            className="text-gray-600 hover:text-gray-900 p-1"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => alert(`Eliminar: ${espacio.nombre}`)}
-                            className="text-gray-600 hover:text-red-600 p-1"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
+    const handleDelete = (espacio) => {
+        setSelectedEspacio(espacio)
+        setShowDeleteModal(true)
+    }
+
+    const handleAddEspacio = (newEspacio) => {
+        setEspacios([...espacios, { ...newEspacio, id_espacio: Date.now() }])
+        setShowAddModal(false)
+    }
+
+    const handleUpdateEspacio = (updatedEspacio) => {
+        setEspacios(espacios.map(e =>
+            e.id_espacio === updatedEspacio.id_espacio ? updatedEspacio : e
+        ))
+        setShowEditModal(false)
+    }
+
+    const handleConfirmDelete = () => {
+        setEspacios(espacios.filter(e => e.id_espacio !== selectedEspacio.id_espacio))
+        setShowDeleteModal(false)
+        setSelectedEspacio(null)
+    }
+
+    return (
+        <>
+            <div className="space-y-4">
+                {/* Header */}
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h2 className="text-xl font-semibold text-gray-900">
+                            Gestión de Espacios
+                        </h2>
+                        <p className="text-sm text-gray-500">
+                            Administra los espacios y aulas
+                        </p>
+                    </div>
+                    <Button onClick={() => setShowAddModal(true)}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Nuevo Espacio
+                    </Button>
+                </div>
+
+                {/* Buscador */}
+                <div className="bg-white rounded-lg border border-gray-200 p-4">
+                    <Input
+                        placeholder="Buscar espacios..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        icon
+                    />
+                </div>
+
+                {/* Tabla */}
+                <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-center">
+                            <thead className="bg-gray-50">
+                                <tr className="border-b border-gray-200">
+                                    <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">
+                                        Nombre
+                                    </th>
+                                    <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">
+                                        Descripción
+                                    </th>
+                                    <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">
+                                        Tutor
+                                    </th>
+                                    <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">
+                                        Estado
+                                    </th>
+                                    <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">
+                                        Acciones
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-200">
+                                {filteredEspacios.length === 0 ? (
+                                    <tr>
+                                        <td colSpan="5" className="px-6 py-12 text-center">
+                                            <div className="text-gray-500">
+                                                <p className="text-sm">No se encontraron espacios</p>
+                                                <p className="text-xs mt-1">Intenta con otros términos de búsqueda</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    filteredEspacios.map((espacio) => (
+                                        <tr
+                                            key={espacio.id_espacio}
+                                            className="hover:bg-gray-50 transition-colors"
+                                        >
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                {espacio.nombre}
+                                            </td>
+                                            <td className="px-6 py-4 text-sm text-gray-600">
+                                                {espacio.descripcion}
+                                            </td>
+                                            <td className="px-6 py-4 text-sm text-gray-600">
+                                                {espacio.tutor}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span
+                                                    className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${
+                                                        espacio.estado 
+                                                            ? "bg-green-100 text-green-800" 
+                                                            : "bg-gray-100 text-gray-500"
+                                                    }`}
+                                                >
+                                                    {espacio.estado ? "Activo" : "Inactivo"}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                <div className="flex items-center justify-center gap-2">
+                                                    <button
+                                                        onClick={() => handleEdit(espacio)}
+                                                        className="text-gray-600 hover:text-gray-900 p-1"
+                                                    >
+                                                        <Edit className="h-4 w-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDelete(espacio)}
+                                                        className="text-gray-600 hover:text-red-600 p-1"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            {/* Modales */}
+            {showAddModal && (
+                <AddEspacioModal
+                    onClose={() => setShowAddModal(false)}
+                    onAdd={handleAddEspacio}
+                />
+            )}
+
+            {showEditModal && selectedEspacio && (
+                <EditEspacioModal
+                    espacio={selectedEspacio}
+                    onClose={() => setShowEditModal(false)}
+                    onUpdate={handleUpdateEspacio}
+                />
+            )}
+
+            {showDeleteModal && selectedEspacio && (
+                <DeleteEspacioModal
+                    espacio={selectedEspacio}
+                    onClose={() => setShowDeleteModal(false)}
+                    onConfirm={handleConfirmDelete}
+                />
+            )}
+        </>
+    )
 }

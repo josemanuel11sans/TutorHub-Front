@@ -1,8 +1,8 @@
 import { useState } from "react"
 import { Search, Plus, Edit, Trash2 } from "lucide-react"
-import { AddEdificioModal } from "../modales/AddEdificioModal"
-import { EditEdificioModal } from "../modales/EditEdificioModal"
-import { DeleteEdificioModal } from "../modales/DeleteEdificioModal"
+import { AddAulaModal } from "../modales/AddAulaModal"
+import { EditAulaModal } from "../modales/EditAulaModal"
+import { DeleteAulaModal } from "../modales/DeleteAulaModal"
 
 // Botón compacto
 const Button = ({ children, onClick, variant = "default", size = "sm", className = "" }) => {
@@ -52,72 +52,83 @@ const Badge = ({ children, variant = "default" }) => {
     )
 }
 
-// Datos de prueba
-const EDIFICIOS_MOCK = [
+// Datos de prueba - Edificios disponibles
+const EDIFICIOS_DISPONIBLES = [
+    { id: 1, nombre: "Edificio A" },
+    { id: 2, nombre: "Edificio B" },
+    { id: 3, nombre: "Edificio C" },
+]
+
+// Datos de prueba - Aulas
+const AULAS_MOCK = [
     {
         id: 1,
-        nombre: "Edificio A",
-        descripcion: "Edificio principal de aulas",
-        ubicacion: "norte",
+        nombre: "Aula 101",
+        descripcion: "Aula de matemáticas",
+        edificioId: 1,
+        edificioNombre: "Edificio A",
         estado: true,
     },
     {
         id: 2,
-        nombre: "Edificio B",
-        descripcion: "Laboratorios y talleres",
-        ubicacion: "sur",
+        nombre: "Aula 202",
+        descripcion: "Laboratorio de química",
+        edificioId: 2,
+        edificioNombre: "Edificio B",
         estado: true,
     },
     {
         id: 3,
-        nombre: "Edificio C",
-        descripcion: "Biblioteca central",
-        ubicacion: "centro",
+        nombre: "Aula 303",
+        descripcion: "Sala de cómputo",
+        edificioId: 3,
+        edificioNombre: "Edificio C",
         estado: false,
     }
 ]
 
-export default function EdificiosTable() {
-    const [edificios, setEdificios] = useState(EDIFICIOS_MOCK)
+export default function AulasTable() {
+    const [aulas, setAulas] = useState(AULAS_MOCK)
+    const [edificios] = useState(EDIFICIOS_DISPONIBLES)
     const [searchTerm, setSearchTerm] = useState("")
     const [showAddModal, setShowAddModal] = useState(false)
     const [showEditModal, setShowEditModal] = useState(false)
     const [showDeleteModal, setShowDeleteModal] = useState(false)
-    const [selectedEdificio, setSelectedEdificio] = useState(null)
+    const [selectedAula, setSelectedAula] = useState(null)
 
-    // Filtrar edificios
-    const filteredEdificios = edificios.filter(edificio =>
-        edificio.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        edificio.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        edificio.ubicacion.toLowerCase().includes(searchTerm.toLowerCase())
+    // Filtrar aulas
+    const filteredAulas = aulas.filter(aula =>
+        aula.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        aula.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        aula.edificioNombre.toLowerCase().includes(searchTerm.toLowerCase())
     )
 
-    const handleEdit = (edificio) => {
-        setSelectedEdificio(edificio)
+    const handleEdit = (aula) => {
+        setSelectedAula(aula)
         setShowEditModal(true)
     }
 
-    const handleDelete = (edificio) => {
-        setSelectedEdificio(edificio)
+    const handleDelete = (aula) => {
+        setSelectedAula(aula)
         setShowDeleteModal(true)
     }
 
-    const handleAddEdificio = (newEdificio) => {
-        setEdificios([...edificios, { ...newEdificio, id: Date.now() }])
+    const handleAddAula = (newAula) => {
+        setAulas([...aulas, { ...newAula, id: Date.now() }])
         setShowAddModal(false)
     }
 
-    const handleUpdateEdificio = (updatedEdificio) => {
-        setEdificios(edificios.map(e =>
-            e.id === updatedEdificio.id ? updatedEdificio : e
+    const handleUpdateAula = (updatedAula) => {
+        setAulas(aulas.map(a =>
+            a.id === updatedAula.id ? updatedAula : a
         ))
         setShowEditModal(false)
     }
 
     const handleConfirmDelete = () => {
-        setEdificios(edificios.filter(e => e.id !== selectedEdificio.id))
+        setAulas(aulas.filter(a => a.id !== selectedAula.id))
         setShowDeleteModal(false)
-        setSelectedEdificio(null)
+        setSelectedAula(null)
     }
 
     return (
@@ -127,22 +138,22 @@ export default function EdificiosTable() {
                 <div className="flex items-center justify-between">
                     <div>
                         <h2 className="text-xl font-semibold text-gray-900">
-                            Gestión de Edificios
+                            Gestión de Aulas
                         </h2>
                         <p className="text-sm text-gray-500">
-                            Administra los edificios del sistema
+                            Administra las aulas del sistema
                         </p>
                     </div>
                     <Button onClick={() => setShowAddModal(true)}>
                         <Plus className="mr-2 h-4 w-4" />
-                        Nuevo Edificio
+                        Nueva Aula
                     </Button>
                 </div>
 
                 {/* Buscador */}
                 <div className="bg-white rounded-lg border border-gray-200 p-4">
                     <Input
-                        placeholder="Buscar edificios..."
+                        placeholder="Buscar aulas..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         icon
@@ -162,7 +173,7 @@ export default function EdificiosTable() {
                                         Descripción
                                     </th>
                                     <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">
-                                        Ubicación
+                                        Edificio
                                     </th>
                                     <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">
                                         Estado
@@ -173,45 +184,45 @@ export default function EdificiosTable() {
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
-                                {filteredEdificios.length === 0 ? (
+                                {filteredAulas.length === 0 ? (
                                     <tr>
                                         <td colSpan="5" className="px-6 py-12 text-center">
                                             <div className="text-gray-500">
-                                                <p className="text-sm">No se encontraron edificios</p>
+                                                <p className="text-sm">No se encontraron aulas</p>
                                                 <p className="text-xs mt-1">Intenta con otros términos de búsqueda</p>
                                             </div>
                                         </td>
                                     </tr>
                                 ) : (
-                                    filteredEdificios.map((edificio) => (
+                                    filteredAulas.map((aula) => (
                                         <tr
-                                            key={edificio.id}
+                                            key={aula.id}
                                             className="hover:bg-gray-50 transition-colors"
                                         >
                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                {edificio.nombre}
+                                                {aula.nombre}
                                             </td>
                                             <td className="px-6 py-4 text-sm text-gray-600">
-                                                {edificio.descripcion}
+                                                {aula.descripcion}
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 capitalize">
-                                                {edificio.ubicacion}
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                                {aula.edificioNombre}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <Badge variant={edificio.estado ? "active" : "inactive"}>
-                                                    {edificio.estado ? "Activo" : "Inactivo"}
+                                                <Badge variant={aula.estado ? "active" : "inactive"}>
+                                                    {aula.estado ? "Activo" : "Inactivo"}
                                                 </Badge>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-center">
                                                 <div className="flex items-center justify-center gap-2">
                                                     <button
-                                                        onClick={() => handleEdit(edificio)}
+                                                        onClick={() => handleEdit(aula)}
                                                         className="text-gray-600 hover:text-gray-900 p-1"
                                                     >
                                                         <Edit className="h-4 w-4" />
                                                     </button>
                                                     <button
-                                                        onClick={() => handleDelete(edificio)}
+                                                        onClick={() => handleDelete(aula)}
                                                         className="text-gray-600 hover:text-red-600 p-1"
                                                     >
                                                         <Trash2 className="h-4 w-4" />
@@ -229,23 +240,25 @@ export default function EdificiosTable() {
 
             {/* Modales */}
             {showAddModal && (
-                <AddEdificioModal
+                <AddAulaModal
                     onClose={() => setShowAddModal(false)}
-                    onAdd={handleAddEdificio}
+                    onAdd={handleAddAula}
+                    edificios={edificios}
                 />
             )}
 
-            {showEditModal && selectedEdificio && (
-                <EditEdificioModal
-                    edificio={selectedEdificio}
+            {showEditModal && selectedAula && (
+                <EditAulaModal
+                    aula={selectedAula}
                     onClose={() => setShowEditModal(false)}
-                    onUpdate={handleUpdateEdificio}
+                    onUpdate={handleUpdateAula}
+                    edificios={edificios}
                 />
             )}
 
-            {showDeleteModal && selectedEdificio && (
-                <DeleteEdificioModal
-                    edificio={selectedEdificio}
+            {showDeleteModal && selectedAula && (
+                <DeleteAulaModal
+                    aula={selectedAula}
                     onClose={() => setShowDeleteModal(false)}
                     onDelete={handleConfirmDelete}
                 />

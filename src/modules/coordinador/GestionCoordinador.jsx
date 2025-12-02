@@ -1,15 +1,15 @@
 "use client"
 
 import { useState } from "react"
-import { Users, UserCheck,UserStar, Building, DoorOpen, BookOpen, FolderTree, UserCog, BarChart3, UserRoundCog } from "lucide-react"
+import { Users, Computer, GraduationCap, UserCheck,UserStar, Building, DoorOpen, BookOpen, FolderTree, UserCog, BarChart3, UserRoundCog } from "lucide-react"
 import { Navbar } from "./components/Navbar"
 import CoordinadoresTable from "./tablas/CoordinadoresTable"
 import TutoresTable from "./tablas/tutoresTable"
 import AlumnosTable from "./tablas/AlumnosTable"
+import EspaciosTable from "./tablas/EspaciosTable"
 import EdificiosTable from "./tablas/EdificiosTable"
-import CategoriasTable from "./tablas/CategoriasTable"
-import ResponsablesTable from "./tablas/ResponsablesTable"
-import RecursosTable from "./tablas/RecursosTable"
+import AulaTable from "./tablas/AulaTable"
+import MateriasTable from "./tablas/MateriasTable"
 
 const Card = ({ children, className = "" }) => (
   <div className={`bg-white rounded-lg border border-gray-200 shadow-sm p-6 ${className}`}>
@@ -24,8 +24,10 @@ export default function PanelCoordinador() {
     { id: "coordinadores", label: "Coordinadores", icon: UserRoundCog },
     { id: "tutores", label: "Tutores", icon: UserCheck },
     { id: "alumnos", label: "Alumnos", icon: UserStar },
+    { id: "espacios", label: "Espacios", icon: Computer },
     { id: "edificios", label: "Edificios", icon: Building },
-    { id: "espacios", label: "Espacios", icon: DoorOpen },
+    { id: "aulas", label: "Aulas", icon: GraduationCap },
+    { id: "materias", label: "Materias", icon: BookOpen },
   ]
 
   return (
@@ -40,10 +42,6 @@ export default function PanelCoordinador() {
             <h2 className="text-2xl font-bold text-gray-900">Panel de Coordinador</h2>
             <p className="text-sm text-gray-500">Administra todos los recursos del sistema</p>
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
-            <BarChart3 className="h-4 w-4" />
-            Ver Estadísticas
-          </button>
         </div>
 
         {/* Stats Cards */}
@@ -111,8 +109,10 @@ export default function PanelCoordinador() {
             {activeTab === "coordinadores" && <CoordinadoresTable />}
             {activeTab === "tutores" && <TutoresTable />}
             {activeTab === "alumnos" && <AlumnosTable />}
-
             {activeTab === "edificios" && <EdificiosTable />}
+            {activeTab === "aulas" && <AulaTable />}
+            {activeTab === "espacios" && <EspaciosTable />}
+            {activeTab === "materias" && <MateriasTable />}
           </div>
         </div>
       </div>
