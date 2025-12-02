@@ -7,7 +7,9 @@ import NotFoundPage from "../modules/notFoundPage/NotFoundPage";
 import AlumnoPage from "../modules/alumno/Alumno";
 import TutorPage from "../modules/tutor/tutor";
 
-const Home = () => <h1 className="text-center mt-10 text-2xl">Bienvenido a TutorHub</h1>;
+const Home = () => (
+  <h1 className="text-center mt-10 text-2xl">Bienvenido a TutorHub</h1>
+);
 
 export const RoutesConfig = () => {
   const { user } = useContext(AuthContext);
@@ -15,12 +17,11 @@ export const RoutesConfig = () => {
   return (
     <Routes>
       <Route path="/" element={<LoginPage />} />
-      <Route path="/home" element={user ? <Home /> : <Navigate to="/" />} />
-      <Route path="/alumno" element={user ? <AlumnoPage /> : <Navigate to="/" />} />
-      <Route path="/coordinador/gestion" element={user ? <EspaciosTutorPage /> : <Navigate to="/" />} />
-      <Route path="/tutor" element={user ? <TutorPage /> : <Navigate to="/" />} />
+      <Route path="/home" element={<Home />} />
+      <Route path="/alumno" element={<AlumnoPage />} />
+      <Route path="/coordinador/gestion" element={<EspaciosTutorPage />} />
+      <Route path="/tutor" element={<TutorPage />} />
       <Route path="*" element={<NotFoundPage />} />
-       
     </Routes>
   );
 };
