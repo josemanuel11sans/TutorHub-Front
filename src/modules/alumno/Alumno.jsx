@@ -145,7 +145,7 @@ export default function AlumnoPage() {
       materia,
       motivo,
       fecha,
-      tutorId: tutor,
+      tutorId: Number(tutor),
     };
 
     setMisAsesorias([...misAsesorias, nuevaAsesoria]);
@@ -177,7 +177,7 @@ export default function AlumnoPage() {
 
   return (
     <ProtectedRoute allowedRoles={["alumno"]}>
-      <div className="min-h-screen bg-sky-50">
+      <div className="min-h-screen bg-white">
         <Navbar />
         <main className="container mx-auto p-6 space-y-6">
           <div className="flex items-center justify-between">
