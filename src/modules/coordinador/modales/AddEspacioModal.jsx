@@ -1,14 +1,15 @@
 "use client"
 
 import { useState } from "react"
-import { X, FileText, Image, Users } from "lucide-react"
+import { X, FileText, Image, Users, BookOpen } from "lucide-react"
 
-export function AddEspacioModal({ onClose, onAdd, tutores = [] }) {
+export function AddEspacioModal({ onClose, onAdd, tutores = [], materias = [] }) {
   const [formData, setFormData] = useState({
     nombre: "",
     descripcion: "",
     portada: "",
     tutorId: "",
+    materiaId: "",
     estado: true,
   })
 
@@ -116,6 +117,30 @@ export function AddEspacioModal({ onClose, onAdd, tutores = [] }) {
               focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
               placeholder="https://imagen.com/portada.jpg"
             />
+          </div>
+
+          {/* SELECT MATERIA */}
+          <div className="space-y-1.5">
+            <label className="flex items-center gap-2 text-xs font-medium text-gray-700">
+              <BookOpen className="h-3.5 w-3.5 text-gray-400" />
+              Materia
+            </label>
+
+            <select
+              name="materiaId"
+              value={formData.materiaId}
+              onChange={handleChange}
+              required
+              className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg
+              focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+            >
+              <option value="">Seleccione una materia</option>
+              {materias.map((materia) => (
+                <option key={materia.id} value={materia.id}>
+                  {materia.nombre}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* SELECT TUTORES */}

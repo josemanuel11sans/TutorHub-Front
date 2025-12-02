@@ -1,14 +1,15 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { X, FileText, Image, Users } from "lucide-react"
+import { X, FileText, Image, Users, BookOpen } from "lucide-react"
 
-export function EditEspacioModal({ onClose, onEdit, espacio, tutores = [] }) {
+export function EditEspacioModal({ onClose, onEdit, espacio, tutores = [], materias = [] }) {
   const [formData, setFormData] = useState({
     nombre: "",
     descripcion: "",
     portada: "",
     tutorId: "",
+    materiaId: "",
     estado: true,
   })
 
@@ -19,6 +20,7 @@ export function EditEspacioModal({ onClose, onEdit, espacio, tutores = [] }) {
         descripcion: espacio.descripcion || "",
         portada: espacio.portada || "",
         tutorId: espacio.tutorId || "",
+        materiaId: espacio.materiaId || "",
         estado: espacio.estado ?? true,
       })
     }
@@ -128,6 +130,30 @@ export function EditEspacioModal({ onClose, onEdit, espacio, tutores = [] }) {
               focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-gray-900 placeholder:text-gray-400"
               placeholder="https://imagen.com/portada.jpg"
             />
+          </div>
+
+          {/* SELECT MATERIA */}
+          <div className="space-y-1.5">
+            <label className="flex items-center gap-2 text-xs font-medium text-gray-700">
+              <BookOpen className="h-3.5 w-3.5 text-gray-400" />
+              Materia
+            </label>
+
+            <select
+              name="materiaId"
+              value={formData.materiaId}
+              onChange={handleChange}
+              required
+              className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg
+              focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-gray-900"
+            >
+              <option value="">Seleccione una materia</option>
+              {materias.map((materia) => (
+                <option key={materia.id} value={materia.id}>
+                  {materia.nombre}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* SELECT TUTORES */}

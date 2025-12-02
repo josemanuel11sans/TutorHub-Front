@@ -18,7 +18,7 @@ const Card = ({ children, className = "" }) => (
 )
 
 export default function PanelCoordinador() {
-  const [activeTab, setActiveTab] = useState("espacios")
+  const [activeTab, setActiveTab] = useState("coordinadores")
 
   const tabs = [
     { id: "coordinadores", label: "Coordinadores", icon: UserRoundCog },

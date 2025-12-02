@@ -45,26 +45,49 @@ const Input = ({ className = "", icon, ...props }) => (
 /*                  DATOS MOCK                     */
 /* ─────────────────────────────────────────────── */
 
+const MATERIAS_MOCK = [
+    { id: 1, nombre: "Matemáticas" },
+    { id: 2, nombre: "Física" },
+    { id: 3, nombre: "Química" },
+    { id: 4, nombre: "Historia" },
+    { id: 5, nombre: "Literatura" },
+]
+
+const TUTORES_MOCK = [
+    { id: 1, nombre: "Juan", apellido: "Pérez" },
+    { id: 2, nombre: "María", apellido: "López" },
+    { id: 3, nombre: "Carlos", apellido: "Rivera" },
+]
+
 const ESPACIOS_MOCK = [
     {
         id_espacio: 1,
-        nombre: "Aula 101",
-        descripcion: "Aula de clases general",
+        nombre: "Classroom 101",
+        descripcion: "General classroom",
+        tutorId: 1,
+        materiaId: 1,
         tutor: "Juan Pérez",
+        materia: "Matemáticas",
         estado: true,
     },
     {
         id_espacio: 2,
-        nombre: "Sala Audiovisual",
-        descripcion: "Sala para proyecciones",
+        nombre: "Classroom 102",
+        descripcion: "General classroom",
+        tutorId: 2,
+        materiaId: 4,
         tutor: "María López",
+        materia: "Historia",
         estado: true,
     },
     {
         id_espacio: 3,
-        nombre: "Laboratorio 2",
-        descripcion: "Lab de química",
+        nombre: "Classroom 103",
+        descripcion: "General classroom",
+        tutorId: 3,
+        materiaId: 3,
         tutor: "Carlos Rivera",
+        materia: "Química",
         estado: false,
     },
 ]
@@ -85,7 +108,8 @@ export default function EspaciosTable() {
     const filteredEspacios = espacios.filter(espacio =>
         espacio.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
         espacio.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        espacio.tutor.toLowerCase().includes(searchTerm.toLowerCase())
+        espacio.tutor.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        espacio.materia.toLowerCase().includes(searchTerm.toLowerCase())
     )
 
     const handleEdit = (espacio) => {
@@ -99,13 +123,36 @@ export default function EspaciosTable() {
     }
 
     const handleAddEspacio = (newEspacio) => {
-        setEspacios([...espacios, { ...newEspacio, id_espacio: Date.now() }])
+        // Buscar nombres del tutor y materia
+        const tutor = TUTORES_MOCK.find(t => t.id === parseInt(newEspacio.tutorId))
+        const materia = MATERIAS_MOCK.find(m => m.id === parseInt(newEspacio.materiaId))
+        
+        setEspacios([
+            ...espacios, 
+            { 
+                ...newEspacio, 
+                id_espacio: Date.now(),
+                tutor: tutor ? `${tutor.nombre} ${tutor.apellido}` : "",
+                materia: materia ? materia.nombre : ""
+            }
+        ])
         setShowAddModal(false)
     }
 
     const handleUpdateEspacio = (updatedEspacio) => {
+        // Buscar nombres del tutor y materia
+        const tutor = TUTORES_MOCK.find(t => t.id === parseInt(updatedEspacio.tutorId))
+        const materia = MATERIAS_MOCK.find(m => m.id === parseInt(updatedEspacio.materiaId))
+        
         setEspacios(espacios.map(e =>
-            e.id_espacio === updatedEspacio.id_espacio ? updatedEspacio : e
+            e.id_espacio === selectedEspacio.id_espacio 
+                ? { 
+                    ...updatedEspacio, 
+                    id_espacio: selectedEspacio.id_espacio,
+                    tutor: tutor ? `${tutor.nombre} ${tutor.apellido}` : e.tutor,
+                    materia: materia ? materia.nombre : e.materia
+                  } 
+                : e
         ))
         setShowEditModal(false)
     }
@@ -158,6 +205,9 @@ export default function EspaciosTable() {
                                         Descripción
                                     </th>
                                     <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">
+                                        Materia
+                                    </th>
+                                    <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">
                                         Tutor
                                     </th>
                                     <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">
@@ -171,7 +221,7 @@ export default function EspaciosTable() {
                             <tbody className="bg-white divide-y divide-gray-200">
                                 {filteredEspacios.length === 0 ? (
                                     <tr>
-                                        <td colSpan="5" className="px-6 py-12 text-center">
+                                        <td colSpan="6" className="px-6 py-12 text-center">
                                             <div className="text-gray-500">
                                                 <p className="text-sm">No se encontraron espacios</p>
                                                 <p className="text-xs mt-1">Intenta con otros términos de búsqueda</p>
@@ -189,6 +239,9 @@ export default function EspaciosTable() {
                                             </td>
                                             <td className="px-6 py-4 text-sm text-gray-600">
                                                 {espacio.descripcion}
+                                            </td>
+                                            <td className="px-6 py-4 text-sm text-gray-600">
+                                                {espacio.materia}
                                             </td>
                                             <td className="px-6 py-4 text-sm text-gray-600">
                                                 {espacio.tutor}
@@ -234,6 +287,8 @@ export default function EspaciosTable() {
                 <AddEspacioModal
                     onClose={() => setShowAddModal(false)}
                     onAdd={handleAddEspacio}
+                    tutores={TUTORES_MOCK}
+                    materias={MATERIAS_MOCK}
                 />
             )}
 
@@ -241,7 +296,9 @@ export default function EspaciosTable() {
                 <EditEspacioModal
                     espacio={selectedEspacio}
                     onClose={() => setShowEditModal(false)}
-                    onUpdate={handleUpdateEspacio}
+                    onEdit={handleUpdateEspacio}
+                    tutores={TUTORES_MOCK}
+                    materias={MATERIAS_MOCK}
                 />
             )}
 
