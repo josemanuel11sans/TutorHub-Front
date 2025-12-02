@@ -1,8 +1,8 @@
 import { useState } from "react"
 import { Search, Plus, Edit, Trash2 } from "lucide-react"
-import { AddEdificioModal } from "../modales/AddEdificioModal"
-import { EditEdificioModal } from "../modales/EditEdificioModal"
-import { DeleteEdificioModal } from "../modales/DeleteEdificioModal"
+import { AddMateriaModal } from "../modales/AddMateriaModal"
+import { EditMateriaModal } from "../modales/EditMateriaModal"
+import { DeleteMateriaModal } from "../modales/DeleteMateriaModal"
 
 // Botón compacto
 const Button = ({ children, onClick, variant = "default", size = "sm", className = "" }) => {
@@ -53,71 +53,67 @@ const Badge = ({ children, variant = "default" }) => {
 }
 
 // Datos de prueba
-const EDIFICIOS_MOCK = [
+const MATERIAS_MOCK = [
     {
         id: 1,
-        nombre: "Edificio A",
-        descripcion: "Edificio principal de aulas",
-        ubicacion: "norte",
+        nombre: "Matemáticas I",
+        objetivo: "Desarrollar habilidades de cálculo y razonamiento matemático",
         estado: true,
     },
     {
         id: 2,
-        nombre: "Edificio B",
-        descripcion: "Laboratorios y talleres",
-        ubicacion: "sur",
+        nombre: "Física",
+        objetivo: "Comprender los principios fundamentales de la física",
         estado: true,
     },
     {
         id: 3,
-        nombre: "Edificio C",
-        descripcion: "Biblioteca central",
-        ubicacion: "centro",
+        nombre: "Química Orgánica",
+        objetivo: "Estudiar la estructura y reactividad de compuestos orgánicos",
         estado: false,
     }
 ]
 
-export default function EdificiosTable() {
-    const [edificios, setEdificios] = useState(EDIFICIOS_MOCK)
+export default function MateriasTable() {
+    const [materias, setMaterias] = useState(MATERIAS_MOCK)
     const [searchTerm, setSearchTerm] = useState("")
     const [showAddModal, setShowAddModal] = useState(false)
     const [showEditModal, setShowEditModal] = useState(false)
     const [showDeleteModal, setShowDeleteModal] = useState(false)
-    const [selectedEdificio, setSelectedEdificio] = useState(null)
+    const [selectedMateria, setSelectedMateria] = useState(null)
 
-    // Filtrar edificios
-    const filteredEdificios = edificios.filter(edificio =>
-        edificio.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        edificio.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        edificio.ubicacion.toLowerCase().includes(searchTerm.toLowerCase())
+    // Filtrar materias
+    const filteredMaterias = materias.filter(materia =>
+        materia.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        materia.objetivo.toLowerCase().includes(searchTerm.toLowerCase())
     )
 
-    const handleEdit = (edificio) => {
-        setSelectedEdificio(edificio)
+    const handleEdit = (materia) => {
+        setSelectedMateria(materia)
         setShowEditModal(true)
     }
 
-    const handleDelete = (edificio) => {
-        setSelectedEdificio(edificio)
+    const handleDelete = (materia) => {
+        setSelectedMateria(materia)
         setShowDeleteModal(true)
     }
 
-    const handleAddEdificio = (newEdificio) => {
-        setEdificios([...edificios, { ...newEdificio, id: Date.now() }])
+    const handleAddMateria = (newMateria) => {
+        setMaterias([...materias, { ...newMateria, id: Date.now() }])
         setShowAddModal(false)
     }
 
-    const handleUpdateEdificio = (updatedEdificio) => {
-        setEdificios(edificios.map(e =>
-            e.id === updatedEdificio.id ? updatedEdificio : e
+    const handleUpdateMateria = (updatedMateria) => {
+        setMaterias(materias.map(m =>
+            m.id === updatedMateria.id ? updatedMateria : m
         ))
         setShowEditModal(false)
     }
 
     const handleConfirmDelete = () => {
-        setEdificios(edificios.filter(e => e.id !== selectedEdificio.id))
+        setMaterias(materias.filter(m => m.id !== selectedMateria.id))
         setShowDeleteModal(false)
-        setSelectedEdificio(null)
+        setSelectedMateria(null)
     }
 
     return (
@@ -127,22 +123,22 @@ export default function EdificiosTable() {
                 <div className="flex items-center justify-between">
                     <div>
                         <h2 className="text-xl font-semibold text-gray-900">
-                            Gestión de Edificios
+                            Gestión de Materias
                         </h2>
                         <p className="text-sm text-gray-500">
-                            Administra los edificios del sistema
+                            Administra las materias del sistema
                         </p>
                     </div>
                     <Button onClick={() => setShowAddModal(true)}>
                         <Plus className="mr-2 h-4 w-4" />
-                        Nuevo Edificio
+                        Nueva Materia
                     </Button>
                 </div>
 
                 {/* Buscador */}
                 <div className="bg-white rounded-lg border border-gray-200 p-4">
                     <Input
-                        placeholder="Buscar edificios..."
+                        placeholder="Buscar materias..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         icon
@@ -159,10 +155,7 @@ export default function EdificiosTable() {
                                         Nombre
                                     </th>
                                     <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">
-                                        Descripción
-                                    </th>
-                                    <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">
-                                        Ubicación
+                                        Objetivo
                                     </th>
                                     <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">
                                         Estado
@@ -173,45 +166,42 @@ export default function EdificiosTable() {
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
-                                {filteredEdificios.length === 0 ? (
+                                {filteredMaterias.length === 0 ? (
                                     <tr>
-                                        <td colSpan="5" className="px-6 py-12 text-center">
+                                        <td colSpan="4" className="px-6 py-12 text-center">
                                             <div className="text-gray-500">
-                                                <p className="text-sm">No se encontraron edificios</p>
+                                                <p className="text-sm">No se encontraron materias</p>
                                                 <p className="text-xs mt-1">Intenta con otros términos de búsqueda</p>
                                             </div>
                                         </td>
                                     </tr>
                                 ) : (
-                                    filteredEdificios.map((edificio) => (
+                                    filteredMaterias.map((materia) => (
                                         <tr
-                                            key={edificio.id}
+                                            key={materia.id}
                                             className="hover:bg-gray-50 transition-colors"
                                         >
                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                {edificio.nombre}
+                                                {materia.nombre}
                                             </td>
                                             <td className="px-6 py-4 text-sm text-gray-600">
-                                                {edificio.descripcion}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 capitalize">
-                                                {edificio.ubicacion}
+                                                {materia.objetivo}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <Badge variant={edificio.estado ? "active" : "inactive"}>
-                                                    {edificio.estado ? "Activo" : "Inactivo"}
+                                                <Badge variant={materia.estado ? "active" : "inactive"}>
+                                                    {materia.estado ? "Activo" : "Inactivo"}
                                                 </Badge>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-center">
                                                 <div className="flex items-center justify-center gap-2">
                                                     <button
-                                                        onClick={() => handleEdit(edificio)}
+                                                        onClick={() => handleEdit(materia)}
                                                         className="text-gray-600 hover:text-gray-900 p-1"
                                                     >
                                                         <Edit className="h-4 w-4" />
                                                     </button>
                                                     <button
-                                                        onClick={() => handleDelete(edificio)}
+                                                        onClick={() => handleDelete(materia)}
                                                         className="text-gray-600 hover:text-red-600 p-1"
                                                     >
                                                         <Trash2 className="h-4 w-4" />
@@ -229,23 +219,23 @@ export default function EdificiosTable() {
 
             {/* Modales */}
             {showAddModal && (
-                <AddEdificioModal
+                <AddMateriaModal
                     onClose={() => setShowAddModal(false)}
-                    onAdd={handleAddEdificio}
+                    onAdd={handleAddMateria}
                 />
             )}
 
-            {showEditModal && selectedEdificio && (
-                <EditEdificioModal
-                    edificio={selectedEdificio}
+            {showEditModal && selectedMateria && (
+                <EditMateriaModal
+                    materia={selectedMateria}
                     onClose={() => setShowEditModal(false)}
-                    onUpdate={handleUpdateEdificio}
+                    onUpdate={handleUpdateMateria}
                 />
             )}
 
-            {showDeleteModal && selectedEdificio && (
-                <DeleteEdificioModal
-                    edificio={selectedEdificio}
+            {showDeleteModal && selectedMateria && (
+                <DeleteMateriaModal
+                    materia={selectedMateria}
                     onClose={() => setShowDeleteModal(false)}
                     onDelete={handleConfirmDelete}
                 />

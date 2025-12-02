@@ -20,7 +20,7 @@ export function DeleteAlumnoModal({ alumno, onClose, onConfirm }) {
             </div>
             <div>
               <h2 className="text-lg font-bold text-gray-900">Eliminar Alumno</h2>
-              <p className="text-gray-500 text-xs">Esta acción no se puede deshacer</p>
+              <p className="text-gray-500 text-xs">Esta acción se puede deshacer</p>
             </div>
           </div>
           <button
