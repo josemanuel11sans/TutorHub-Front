@@ -1,32 +1,32 @@
-import { useContext } from "react";
-import { AuthContext } from "../../context/AuthContext";
-import { LoginForm } from "./components/LoginForm";
-import { useNavigate } from "react-router-dom";
-import { useToast } from "../../context/ToastContext";
+import { useLogin } from "./hooks/useLogin"
+import { LoginForm } from "./components/LoginForm"
+import { useNavigate } from "react-router-dom"
 
-const LoginPage = () => {
-  const { handleLogin, loading, error } = useContext(AuthContext);
-  const { showToast } = useToast();
-  const navigate = useNavigate();
+export default function LoginPage() {
+  const { login, loading, error } = useLogin()
+  const navigate = useNavigate()
 
   const onSubmit = async ({ email, password }) => {
-    const usuario = await handleLogin(email, password);
+    console.log("[v0] Intentando login con:", email)
+
+    const usuario = await login({ email, password })
 
     if (usuario) {
-      showToast("¡Login exitoso!", "success");
+      console.log("[v0] Login exitoso:", usuario)
 
-      if (usuario?.rol === "coordinador") navigate("/coordinador/gestion");
-      else if (usuario?.rol === "alumno") navigate("/alumno");
-      else if (usuario?.rol === "tutor") navigate("/tutor");
-      else navigate("/home");
-
+      if (usuario.rol === "coordinador") {
+        navigate("/coordinador/gestion")
+      } else if (usuario.rol === "alumno") {
+        navigate("/alumno")
+      } else if (usuario.rol === "tutor") {
+        navigate("/tutor")
+      } else {
+        navigate("/home")
+      }
     } else {
-      const mensaje = error || "Credenciales incorrectas";
-      showToast(mensaje, "error"); // <--- mensaje seguro
+      console.error("[v0] Login fallido")
     }
-  };
+  }
 
-  return <LoginForm onSubmit={onSubmit} loading={loading} error={error} />;
-};
-
-export default LoginPage;
+  return <LoginForm onSubmit={onSubmit} loading={loading} error={error} />
+}

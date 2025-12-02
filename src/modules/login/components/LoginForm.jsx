@@ -1,14 +1,25 @@
 "use client"
 
 import { useState } from "react"
+import { usePasswordRecovery } from "../hooks/usePasswordRecovery"
 
 export const LoginForm = ({ onSubmit, loading, error }) => {
   const [form, setForm] = useState({ email: "", password: "" })
-  const [recoveryForm, setRecoveryForm] = useState({ email: "", code: "" })
+  const [recoveryForm, setRecoveryForm] = useState({ email: "", code: "", newPassword: "", confirmPassword: "" })
   const [isFlipped, setIsFlipped] = useState(false)
   const [recoveryStep, setRecoveryStep] = useState("email")
 
+  const {
+    sendCode,
+    validateCode,
+    changePassword,
+    loading: recoveryLoading,
+    error: recoveryError,
+    success: recoverySuccess,
+  } = usePasswordRecovery()
+
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value })
+
   const handleRecoveryChange = (e) => setRecoveryForm({ ...recoveryForm, [e.target.name]: e.target.value })
 
   const handleSubmit = (e) => {
@@ -16,20 +27,44 @@ export const LoginForm = ({ onSubmit, loading, error }) => {
     onSubmit(form)
   }
 
-  const handleRecoverySubmit = (e) => {
+  const handleRecoverySubmit = async (e) => {
     e.preventDefault()
+
     if (recoveryStep === "email") {
       console.log("[v0] Enviando código a:", recoveryForm.email)
-      setRecoveryStep("code")
-    } else {
+      const success = await sendCode(recoveryForm.email)
+
+      if (success) {
+        setRecoveryStep("code")
+      }
+    } else if (recoveryStep === "code") {
       console.log("[v0] Verificando código:", recoveryForm.code)
+      const success = await validateCode(recoveryForm.email, recoveryForm.code)
+
+      if (success) {
+        setRecoveryStep("password")
+      }
+    } else if (recoveryStep === "password") {
+      if (recoveryForm.newPassword !== recoveryForm.confirmPassword) {
+        alert("Las contraseñas no coinciden")
+        return
+      }
+
+      console.log("[v0] Cambiando contraseña")
+      const success = await changePassword(recoveryForm.email, recoveryForm.code, recoveryForm.newPassword)
+
+      if (success) {
+        setTimeout(() => {
+          toggleForm()
+        }, 2000)
+      }
     }
   }
 
   const toggleForm = () => {
     setIsFlipped(!isFlipped)
     if (isFlipped) {
-      setRecoveryForm({ email: "", code: "" })
+      setRecoveryForm({ email: "", code: "", newPassword: "", confirmPassword: "" })
       setRecoveryStep("email")
     }
   }
@@ -50,8 +85,7 @@ export const LoginForm = ({ onSubmit, loading, error }) => {
               justifyContent: "center",
             }}
           >
-
-            {/* === CARA DEL LOGIN === */}
+            {/* CARA DEL LOGIN */}
             <div
               className="absolute w-full h-full flex items-center justify-center"
               style={{
@@ -95,8 +129,7 @@ export const LoginForm = ({ onSubmit, loading, error }) => {
                         name="email"
                         value={form.email}
                         onChange={handleChange}
-                        className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl
- focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                         placeholder="ejemplo@utez.edu.mx"
                         required
                       />
@@ -112,8 +145,7 @@ export const LoginForm = ({ onSubmit, loading, error }) => {
                             strokeLinecap="round"
                             strokeLinejoin="round"
                             strokeWidth={2}
-                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2
- 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
                           />
                         </svg>
                       </div>
@@ -122,21 +154,19 @@ export const LoginForm = ({ onSubmit, loading, error }) => {
                         name="password"
                         value={form.password}
                         onChange={handleChange}
-                        className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl
- focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                         placeholder="••••••••"
                         required
                       />
                     </div>
                   </div>
 
+                  {error && <div className="text-red-600 text-sm text-center bg-red-50 p-3 rounded-lg">{error}</div>}
+
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3.5
- rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg
- hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02]
- active:scale-[0.98]"
+                    className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3.5 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] active:scale-[0.98]"
                   >
                     {loading ? "Ingresando..." : "Iniciar sesión"}
                   </button>
@@ -146,8 +176,7 @@ export const LoginForm = ({ onSubmit, loading, error }) => {
                   <button
                     type="button"
                     onClick={toggleForm}
-                    className="text-blue-600 hover:text-blue-700 font-semibold text-sm transition-colors
- inline-flex items-center gap-1 group"
+                    className="text-blue-600 hover:text-blue-700 font-semibold text-sm transition-colors inline-flex items-center gap-1 group"
                   >
                     ¿Olvidaste tu contraseña?
                     <svg
@@ -163,7 +192,7 @@ export const LoginForm = ({ onSubmit, loading, error }) => {
               </div>
             </div>
 
-            {/* === CARA DE RECUPERACIÓN === */}
+            {/* CARA DE RECUPERACIÓN */}
             <div
               className="absolute w-full h-full flex items-center justify-center"
               style={{
@@ -174,15 +203,13 @@ export const LoginForm = ({ onSubmit, loading, error }) => {
             >
               <div className="bg-white rounded-3xl shadow-2xl p-8 border border-gray-100 w-full max-w-md">
                 <div className="text-center mb-8">
-                  <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br
- from-blue-600 to-blue-700 rounded-2xl mb-4 shadow-lg">
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl mb-4 shadow-lg">
                     <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1
- 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
+                        d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
                       />
                     </svg>
                   </div>
@@ -190,45 +217,41 @@ export const LoginForm = ({ onSubmit, loading, error }) => {
                   <p className="text-sm text-gray-500 mt-2">
                     {recoveryStep === "email"
                       ? "Ingresa tu correo para recibir el código de recuperación"
-                      : "Verifica el código enviado a tu correo"}
+                      : recoveryStep === "code"
+                        ? "Verifica el código enviado a tu correo"
+                        : "Ingresa tu nueva contraseña"}
                   </p>
                 </div>
 
                 <form onSubmit={handleRecoverySubmit} className="space-y-5">
-                  {recoveryStep === "email" ? (
-                    <>
-                      <div>
-                        <label className="text-gray-700 text-sm font-semibold mb-2 block">
-                          Correo electrónico
-                        </label>
-
-                        <div className="relative">
-                          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"
-                              />
-                            </svg>
-                          </div>
-
-                          <input
-                            type="email"
-                            name="email"
-                            value={recoveryForm.email}
-                            onChange={handleRecoveryChange}
-                            className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl
-      focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                            placeholder="ejemplo@utez.edu.mx"
-                            required
-                          />
+                  {recoveryStep === "email" && (
+                    <div>
+                      <label className="text-gray-700 text-sm font-semibold mb-2 block">Correo electrónico</label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                          <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"
+                            />
+                          </svg>
                         </div>
+                        <input
+                          type="email"
+                          name="email"
+                          value={recoveryForm.email}
+                          onChange={handleRecoveryChange}
+                          className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                          placeholder="ejemplo@utez.edu.mx"
+                          required
+                        />
                       </div>
+                    </div>
+                  )}
 
-                    </>
-                  ) : (
+                  {recoveryStep === "code" && (
                     <>
                       <div>
                         <label className="text-gray-700 text-sm font-semibold mb-2 block">Correo electrónico</label>
@@ -236,24 +259,18 @@ export const LoginForm = ({ onSubmit, loading, error }) => {
                           type="email"
                           value={recoveryForm.email}
                           disabled
-                          className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl bg-gray-50
- text-gray-600"
+                          className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl bg-gray-50 text-gray-600"
                         />
                       </div>
-
                       <div>
-                        <label className="text-gray-700 text-sm font-semibold mb-2 block">
-                          Código de verificación
-                        </label>
+                        <label className="text-gray-700 text-sm font-semibold mb-2 block">Código de verificación</label>
                         <input
                           type="text"
                           name="code"
                           value={recoveryForm.code}
                           onChange={handleRecoveryChange}
                           maxLength={6}
-                          className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl
- focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all
- tracking-widest text-center text-lg font-semibold"
+                          className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all tracking-widest text-center text-lg font-semibold"
                           placeholder="000000"
                           required
                         />
@@ -261,13 +278,66 @@ export const LoginForm = ({ onSubmit, loading, error }) => {
                     </>
                   )}
 
+                  {recoveryStep === "password" && (
+                    <>
+                      <div>
+                        <label className="text-gray-700 text-sm font-semibold mb-2 block">Correo electrónico</label>
+                        <input
+                          type="email"
+                          value={recoveryForm.email}
+                          disabled
+                          className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl bg-gray-50 text-gray-600"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-gray-700 text-sm font-semibold mb-2 block">Nueva contraseña</label>
+                        <input
+                          type="password"
+                          name="newPassword"
+                          value={recoveryForm.newPassword}
+                          onChange={handleRecoveryChange}
+                          className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                          placeholder="••••••••"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="text-gray-700 text-sm font-semibold mb-2 block">Confirmar contraseña</label>
+                        <input
+                          type="password"
+                          name="confirmPassword"
+                          value={recoveryForm.confirmPassword}
+                          onChange={handleRecoveryChange}
+                          className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                          placeholder="••••••••"
+                          required
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  {recoveryError && (
+                    <div className="text-red-600 text-sm text-center bg-red-50 p-3 rounded-lg">{recoveryError}</div>
+                  )}
+
+                  {recoverySuccess && (
+                    <div className="text-green-600 text-sm text-center bg-green-50 p-3 rounded-lg">
+                      {recoverySuccess}
+                    </div>
+                  )}
+
                   <button
                     type="submit"
-                    className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3.5
- rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg
- hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]"
+                    disabled={recoveryLoading}
+                    className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3.5 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] active:scale-[0.98]"
                   >
-                    {recoveryStep === "email" ? "Enviar código" : "Verificar código"}
+                    {recoveryLoading
+                      ? "Procesando..."
+                      : recoveryStep === "email"
+                        ? "Enviar código"
+                        : recoveryStep === "code"
+                          ? "Verificar código"
+                          : "Cambiar contraseña"}
                   </button>
                 </form>
 
@@ -275,8 +345,7 @@ export const LoginForm = ({ onSubmit, loading, error }) => {
                   <button
                     type="button"
                     onClick={toggleForm}
-                    className="text-blue-600 hover:text-blue-700 font-semibold text-sm transition-colors
- inline-flex items-center gap-1 group"
+                    className="text-blue-600 hover:text-blue-700 font-semibold text-sm transition-colors inline-flex items-center gap-1 group"
                   >
                     <svg
                       className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform"
@@ -291,7 +360,6 @@ export const LoginForm = ({ onSubmit, loading, error }) => {
                 </div>
               </div>
             </div>
-
           </div>
         </div>
       </div>
