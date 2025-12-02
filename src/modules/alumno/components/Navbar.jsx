@@ -1,34 +1,30 @@
-"use client"
+"use client";
 
-import { useAuth } from "../hooks/useAuth"
+import { useAuth } from "../hooks/useAuth";
+import { UserMenu } from "./UserMenu";
 
 export function Navbar() {
-  const { user, logout } = useAuth()
+  const { user } = useAuth();
 
   return (
-    <nav className="bg-white border-b border-gray-200">
-      <div className="container mx-auto px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <h1 className="text-xl font-bold text-gray-900">Sistema de Materiales</h1>
+    <nav className="bg-white border-b border-gray-200 px-6 py-4">
+      <div className="flex items-center justify-between max-w-full">
+        <div className="flex items-center space-x-4 min-w-0 flex-shrink">
+          <div className="bg-blue-600 text-white rounded-lg p-2 font-bold text-sm flex-shrink-0">
+            TH
           </div>
+          <div className="min-w-0">
+            <h1 className="text-base font-semibold text-gray-900 truncate">
+              TutorHub
+            </h1>
+            <p className="text-xs text-gray-500">Estudiante</p>
+          </div>
+        </div>
 
-          <div className="flex items-center space-x-4">
-            <div className="text-sm">
-              <span className="text-gray-600">Bienvenido, </span>
-              <span className="font-semibold text-gray-900">
-                {user?.nombre} {user?.apellido_paterno}
-              </span>
-            </div>
-            <button
-              onClick={logout}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Cerrar Sesión
-            </button>
-          </div>
+        <div className="flex items-center space-x-4 flex-shrink-0">
+          <UserMenu user={user} />
         </div>
       </div>
     </nav>
-  )
+  );
 }

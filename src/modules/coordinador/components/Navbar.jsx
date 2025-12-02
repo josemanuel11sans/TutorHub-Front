@@ -11,10 +11,10 @@ export function Navbar() {
       <div className="flex items-center justify-between max-w-full">
         <div className="flex items-center space-x-4 min-w-0 flex-shrink">
           <div className="bg-blue-600 text-white rounded-lg p-2 font-bold text-sm flex-shrink-0">
-            SGE
+            TH
           </div>
           <div className="min-w-0">
-            <h1 className="text-base font-semibold text-gray-900 truncate">Sistema de Gestión Educativa</h1>
+            <h1 className="text-base font-semibold text-gray-900 truncate">TutorHub</h1>
             <p className="text-xs text-gray-500">Coordinador</p>
           </div>
         </div>
