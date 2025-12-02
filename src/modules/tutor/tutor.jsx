@@ -15,7 +15,7 @@ const Card = ({ children, className = "" }) => (
 )
 
 export default function TutorPage() {
-  const [activeTab, setActiveTab] = useState("espacios")
+  const [activeTab, setActiveTab] = useState("materias")
 
   const tabs = [
     { id: "materias", label: "Materias", icon: BarChart3 },
@@ -24,18 +24,18 @@ export default function TutorPage() {
     { id: "espacios", label: "Espacios", icon: DoorOpen },
   ]
   
-	return (
-		<div className="min-h-screen bg-gray-50">
-        {/* Navbar Component */}
-        <Navbar />
-    
-        <div className="max-w-[1400px] mx-auto p-6 space-y-6 pb-12">
-          {/* Título del panel */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">Panel de tutor</h2>
-              <p className="text-sm text-gray-500">Administra todas asesorias y materiales</p>
-            </div>
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Navbar Component */}
+      <Navbar />
+
+      {/* CONTENEDOR CENTRAL IGUAL QUE EN PANELCOORDINADOR */}
+      <div className="max-w-[1400px] mx-auto p-6 space-y-6 pb-12">
+        {/* Título del panel */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">Panel de tutor</h2>
+            <p className="text-sm text-gray-500">Administra todas asesorias y materiales</p>
           </div>
         </div>
 
@@ -76,38 +76,38 @@ export default function TutorPage() {
         </div>
 
         {/* Tabs de navegación */}
-          <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-            <div className="border-b border-gray-200">
-              <div className="flex overflow-x-auto">
-                {tabs.map((tab) => {
-                  const Icon = tab.icon
-                  return (
-                    <button
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id)}
-                      className={`flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-                        activeTab === tab.id
-                          ? "border-blue-600 text-blue-600"
-                          : "border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300"
-                      }`}
-                    >
-                      <Icon className="h-4 w-4" />
-                      {tab.label}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-        
-            {/* Contenido de tabs */}
-            <div className="p-6">
-              {activeTab === "materias" && <MateriasTable />}
-              {activeTab === "materiales" && <MaterialesTable />}
-              {activeTab === "asesorias" && <AsesoriasTable/>}
-              {activeTab === "espacios" && <EspaciosTable/>}
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+          <div className="border-b border-gray-200">
+            <div className="flex overflow-x-auto">
+              {tabs.map((tab) => {
+                const Icon = tab.icon
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                      activeTab === tab.id
+                        ? "border-blue-600 text-blue-600"
+                        : "border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300"
+                    }`}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {tab.label}
+                  </button>
+                )
+              })}
             </div>
           </div>
-      
-		</div>
-	);
+
+          {/* Contenido de tabs */}
+          <div className="p-6">
+            {activeTab === "materias" && <MateriasTable />}
+            {activeTab === "materiales" && <MaterialesTable />}
+            {activeTab === "asesorias" && <AsesoriasTable />}
+            {activeTab === "espacios" && <EspaciosTable />}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
