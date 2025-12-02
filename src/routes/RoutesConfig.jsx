@@ -17,10 +17,19 @@ export const RoutesConfig = () => {
   return (
     <Routes>
       <Route path="/" element={<LoginPage />} />
-      <Route path="/home" element={<Home />} />
-      <Route path="/alumno" element={<AlumnoPage />} />
-      <Route path="/coordinador/gestion" element={<EspaciosTutorPage />} />
-      <Route path="/tutor" element={<TutorPage />} />
+      <Route path="/home" element={user ? <Home /> : <Navigate to="/" />} />
+      <Route
+        path="/alumno"
+        element={user ? <AlumnoPage /> : <Navigate to="/" />}
+      />
+      <Route
+        path="/coordinador/gestion"
+        element={user ? <EspaciosTutorPage /> : <Navigate to="/" />}
+      />
+      <Route
+        path="/tutor"
+        element={user ? <TutorPage /> : <Navigate to="/" />}
+      />
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
