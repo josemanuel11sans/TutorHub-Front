@@ -10,6 +10,7 @@ export const AuthProvider = ({ children }) => {
     try {
       return JSON.parse(storedUser);
     } catch (e) {
+      localStorage.removeItem("user");
       return null;
     }
   });
@@ -17,7 +18,25 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // Función para normalizar roles
+  const normalizeRole = (role) => {
+    const roleMap = {
+      'alumno': 'student',
+      'estudiante': 'student',
+      'student': 'student',
+      'tutor': 'tutor',
+      'profesor': 'tutor',
+      'teacher': 'tutor',
+      'coordinador': 'coordinator',
+      'coordinator': 'coordinator',
+      'administrador': 'admin',
+      'admin': 'admin'
+    };
+    return roleMap[role?.toLowerCase()] || 'student';
+  };
+
   const handleLogin = async (email, password) => {
+    // Cuentas mock para desarrollo
     const mockAccounts = [
       {
         email: "alumno@utez.edu.mx",
@@ -25,7 +44,7 @@ export const AuthProvider = ({ children }) => {
         usuario: { 
           id: 1, 
           nombre: "Alumno", 
-          apellido_paterno: "Demo", 
+          apellido: "Demo", 
           email: "alumno@utez.edu.mx", 
           rol: "student"
         },
@@ -36,7 +55,7 @@ export const AuthProvider = ({ children }) => {
         usuario: { 
           id: 2, 
           nombre: "Tutor", 
-          apellido_paterno: "Demo", 
+          apellido: "Demo", 
           email: "profe@utez.edu.mx", 
           rol: "tutor" 
         },
@@ -45,53 +64,61 @@ export const AuthProvider = ({ children }) => {
 
     const match = mockAccounts.find((a) => a.email === email && a.password === password);
     if (match) {
-      setLoading(true);
-      setError(null);
-      const usuario = match.usuario;
-      setUser(usuario);
-      localStorage.setItem("user", JSON.stringify(usuario));
-      setLoading(false);
-      return usuario;
+      setUser(match.usuario);
+      localStorage.setItem("user", JSON.stringify(match.usuario));
+      return match.usuario;
     }
 
-    // Login con backend
+    // Login con backend real
     try {
       setLoading(true);
       setError(null);
+      
       const response = await loginRequest({ email, password });
       
-      console.log("📦 Respuesta completa del backend:", response);
+      console.log("📦 Respuesta del backend:", response);
       
-      // El backend devuelve { token, usuario }
-      // Y dentro de usuario está el campo 'role'
+      // Extraer token y datos del usuario
       const { token, usuario: usuarioData } = response;
       
-      console.log("🔍 Token:", token);
-      console.log("🔍 Datos del usuario:", usuarioData);
-      console.log("🔍 Role del usuario:", usuarioData?.role);
-      
-      // Crear el objeto usuario con el rol normalizado
+      if (!usuarioData) {
+        throw new Error("No se recibieron datos del usuario");
+      }
+
+      // Crear objeto usuario limpio con solo los datos necesarios
       const usuario = {
-        ...usuarioData,
-        rol: usuarioData?.role || usuarioData?.rol // Usar 'role' del backend
+        id: usuarioData.id_usuario,
+        nombre: usuarioData.nombre,
+        apellido: usuarioData.apellido,
+        email: usuarioData.email,
+        telefono: usuarioData.telefono,
+        // El rol viene en el campo "role" del backend
+        rol: normalizeRole(usuarioData.role),
+        estado: usuarioData.estado,
+        carrera_id: usuarioData.carrera_id
       };
       
-      console.log("✅ Usuario final procesado:", usuario);
-      console.log("✅ Rol final:", usuario.rol);
+      console.log("✅ Usuario procesado:", usuario);
+      console.log("✅ Rol normalizado:", usuario.rol);
       
+      // Guardar usuario y token
       setUser(usuario);
       localStorage.setItem("user", JSON.stringify(usuario));
       
-      // Opcional: guardar el token por separado si lo necesitas
       if (token) {
         localStorage.setItem("jwt", token);
+        console.log("🔑 Token guardado");
       }
       
       return usuario;
+      
     } catch (err) {
       console.error("❌ Error en login:", err);
-      setError("Credenciales incorrectas");
+      const errorMessage = err.response?.data?.message || "Credenciales incorrectas";
+      setError(errorMessage);
       setUser(null);
+      localStorage.removeItem("user");
+      localStorage.removeItem("jwt");
       return null;
     } finally {
       setLoading(false);
@@ -100,20 +127,33 @@ export const AuthProvider = ({ children }) => {
 
   const handleLogout = async () => {
     try {
-      await logoutRequest();
+      const token = localStorage.getItem("jwt");
+      if (token) {
+        await logoutRequest();
+      }
     } catch (e) {
-      // Ignorar errores
-    }
-    setUser(null);
-    localStorage.removeItem("user");
-    localStorage.removeItem("jwt");
-    if (typeof window !== "undefined") {
-      window.location.href = "/";
+      console.error("Error en logout:", e);
+    } finally {
+      setUser(null);
+      localStorage.removeItem("user");
+      localStorage.removeItem("jwt");
+      if (typeof window !== "undefined") {
+        window.location.href = "/";
+      }
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, handleLogin, handleLogout, logout: handleLogout, loading, error }}>
+    <AuthContext.Provider 
+      value={{ 
+        user, 
+        handleLogin, 
+        handleLogout, 
+        logout: handleLogout, 
+        loading, 
+        error 
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

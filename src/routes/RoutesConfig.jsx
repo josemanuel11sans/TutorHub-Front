@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
-import { ProtectedRoute } from "../routes/ProtectedRoute";
+import { ProtectedRoute } from "./ProtectedRoute";
 import LoginPage from "../modules/login/LoginPage";
 import EspaciosTutorPage from "../modules/coordinador/GestionCoordinador";
 import NotFoundPage from "../modules/notFoundPage/NotFoundPage";
@@ -12,16 +12,39 @@ const Home = () => (
   <h1 className="text-center mt-10 text-2xl">Bienvenido a TutorHub</h1>
 );
 
-export const RoutesConfig = () => {
+// Componente que redirige a usuarios logueados
+const PublicRoute = ({ children }) => {
   const { user } = useContext(AuthContext);
 
+  if (user) {
+    const roleRoutes = {
+      student: "/alumno",
+      tutor: "/tutor",
+      coordinator: "/coordinador",
+      admin: "/admin",
+    };
+    const redirectTo = roleRoutes[user.rol] || "/home";
+    console.log("🔓 Usuario ya logueado, redirigiendo a:", redirectTo);
+    return <Navigate to={redirectTo} replace />;
+  }
+
+  return children;
+};
+
+export const RoutesConfig = () => {
   return (
     <Routes>
-      <Route 
-        path="/" 
-        element={user ? <Navigate to={getRoleRoute(user.rol)} replace /> : <LoginPage />} 
+      {/* Ruta raíz - redirige a dashboard si ya está logueado */}
+      <Route
+        path="/"
+        element={
+          <PublicRoute>
+            <LoginPage />
+          </PublicRoute>
+        }
       />
 
+      {/* Ruta home solo para usuarios logueados */}
       <Route
         path="/home"
         element={
@@ -70,15 +93,4 @@ export const RoutesConfig = () => {
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
-};
-
-// Usar roles en INGLÉS
-const getRoleRoute = (rol) => {
-  const routes = {
-    student: "/alumno",
-    tutor: "/tutor",
-    coordinator: "/coordinador",
-    admin: "/admin",
-  };
-  return routes[rol] || "/";
 };

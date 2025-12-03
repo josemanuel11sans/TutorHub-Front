@@ -1,30 +1,16 @@
 "use client"
 
-import { useState } from "react"
-import { login as loginRequest } from "../../../api/auth.api"
+import { useContext } from "react"
+import { AuthContext } from "../../../context/AuthContext"
 
 export const useLogin = () => {
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
+  const { handleLogin, loading, error } = useContext(AuthContext);
 
-  const login = async (credenciales) => {
-    try {
-      setLoading(true)
-      setError(null)
+  const login = async ({ email, password }) => {
+    // handleLogin ya retorna el objeto usuario procesado
+    const usuario = await handleLogin(email, password);
+    return usuario;
+  };
 
-      const { data } = await loginRequest(credenciales)
-      return data
-    } catch (err) {
-      setError(err.response?.data?.message || "Error al iniciar sesión")
-      return null
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return {
-    login,
-    loading,
-    error,
-  }
-}
+  return { login, loading, error };
+};

@@ -11,7 +11,7 @@ export const login = async (credenciales) => {
     localStorage.setItem("jwt", token);
     localStorage.setItem("user", JSON.stringify({ usuario}));
     // localStorage.setItem("expiration", Date.now() + expiration); // expiración en milisegundos
-    return response; // opcional: devolver la respuesta
+    return response.data; // opcional: devolver la respuesta
   } catch (error) {
     console.error("Error en el login:", error);
     throw error;

@@ -194,8 +194,7 @@ export default function AlumnoPage() {
   };
 
   return (
-    <ProtectedRoute allowedRoles={["alumno"]}>
-      <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-gray-50">
         <Navbar />
         <main className="max-w-[1400px] mx-auto p-6 space-y-6 pb-12">
           <div className="flex items-center justify-between">
