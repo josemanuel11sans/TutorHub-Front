@@ -18,7 +18,7 @@ export default function LoginPage() {
         tutor: "/tutor",
         admin: "/admin"
       }
-      const redirectTo = roleRoutes[user.rol] || "/home"
+      const redirectTo = roleRoutes[user.rol] || "/"
       console.log("[v0] Usuario ya logueado, redirigiendo a:", redirectTo)
       navigate(redirectTo, { replace: true })
     }
@@ -41,7 +41,7 @@ export default function LoginPage() {
         admin: "/admin"
       }
 
-      const redirectTo = roleRoutes[usuario.rol] || "/home"
+      const redirectTo = roleRoutes[usuario.rol] || "/"
       console.log("[v0] Redirigiendo a:", redirectTo)
       
       navigate(redirectTo, { replace: true })

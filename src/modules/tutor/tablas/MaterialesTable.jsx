@@ -109,7 +109,7 @@ export default function MaterialesTable() {
                     </div>
                     <Button onClick={() => setShowAddModal(true)}>
                         <Plus className="mr-2 h-4 w-4" />
-                        Nueva Materia
+                        Nuevo Material
                     </Button>
                 </div>
 

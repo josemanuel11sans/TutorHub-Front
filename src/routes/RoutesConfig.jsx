@@ -23,7 +23,7 @@ const PublicRoute = ({ children }) => {
       coordinator: "/coordinador",
       admin: "/admin",
     };
-    const redirectTo = roleRoutes[user.rol] || "/home";
+    const redirectTo = roleRoutes[user.rol] || "/";
     console.log("🔓 Usuario ya logueado, redirigiendo a:", redirectTo);
     return <Navigate to={redirectTo} replace />;
   }
@@ -46,7 +46,7 @@ export const RoutesConfig = () => {
 
       {/* Ruta home solo para usuarios logueados */}
       <Route
-        path="/home"
+        path="/"
         element={
           <ProtectedRoute allowedRoles={["student", "tutor", "coordinator", "admin"]}>
             <Home />
