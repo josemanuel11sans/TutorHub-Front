@@ -13,7 +13,7 @@ const Home = () => (
 );
 
 // Componente que redirige a usuarios logueados
-const PublicRoute = ({ children }) => {
+/*const PublicRoute = ({ children }) => {
   const { user } = useContext(AuthContext);
 
   if (user) {
@@ -23,32 +23,27 @@ const PublicRoute = ({ children }) => {
       coordinator: "/coordinador",
       admin: "/admin",
     };
-    const redirectTo = roleRoutes[user.rol] || "/";
+    const redirectTo = roleRoutes[user.rol] || "/alumno";
     console.log("🔓 Usuario ya logueado, redirigiendo a:", redirectTo);
     return <Navigate to={redirectTo} replace />;
   }
 
   return children;
-};
+};*/
 
 export const RoutesConfig = () => {
   return (
     <Routes>
       {/* Ruta raíz - redirige a dashboard si ya está logueado */}
-      <Route
-        path="/"
-        element={
-          <PublicRoute>
-            <LoginPage />
-          </PublicRoute>
-        }
-      />
+      <Route path="/" element={<LoginPage />} />
 
       {/* Ruta home solo para usuarios logueados */}
       <Route
         path="/"
         element={
-          <ProtectedRoute allowedRoles={["student", "tutor", "coordinator", "admin"]}>
+          <ProtectedRoute
+            allowedRoles={["student", "tutor", "coordinator", "admin"]}
+          >
             <Home />
           </ProtectedRoute>
         }
