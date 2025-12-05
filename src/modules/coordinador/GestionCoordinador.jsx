@@ -10,6 +10,9 @@ import EspaciosTable from "./tablas/EspaciosTable"
 import EdificiosTable from "./tablas/EdificiosTable"
 import AulaTable from "./tablas/AulaTable"
 import MateriasTable from "./tablas/MateriasTable"
+import UsersCountCard from "./components/UsersCountCard"
+import BuildingCountCard from "./components/BuildingCountCard" 
+import SubjectsCountCard from "./components/SubjectsCountCard"
 
 const Card = ({ children, className = "" }) => (
   <div className={`bg-white rounded-lg border border-gray-200 shadow-sm p-6 ${className}`}>
@@ -46,38 +49,11 @@ export default function PanelCoordinador() {
 
         {/* Stats Cards */}
         <div className="grid gap-4 md:grid-cols-3">
-          <Card>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total Usuarios</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">6</p>
-                <p className="text-xs text-gray-500 mt-1">3 alumnos, 2 tutores, 1 coordinador</p>
-              </div>
-              <Users className="h-8 w-8 text-gray-400" />
-            </div>
-          </Card>
+          <UsersCountCard />
 
-          <Card>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Edificios</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">3</p>
-                <p className="text-xs text-gray-500 mt-1">Con 5 espacios totales</p>
-              </div>
-              <Building className="h-8 w-8 text-gray-400" />
-            </div>
-          </Card>
+          <BuildingCountCard />
 
-          <Card>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Materias</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">20</p>
-                <p className="text-xs text-gray-500 mt-1">Diversos ámbitos</p>
-              </div>
-              <BookOpen className="h-8 w-8 text-gray-400" />
-            </div>
-          </Card>
+          <SubjectsCountCard />
         </div>
 
         {/* Tabs de navegación */}
