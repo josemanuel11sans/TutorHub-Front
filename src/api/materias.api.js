@@ -5,7 +5,7 @@ const endpoint = "/materias";
 // Obtener todas las materias
 export const getMaterias = async () => {
   try {
-    const response = await api.get(endpoint);
+    const response = await api.get(`${endpoint}/all`);
     return response.data;
   } catch (error) {
     console.error("Error al obtener materias:", error);
@@ -38,7 +38,7 @@ export const createMateria = async (materiaData) => {
 // Actualizar una materia
 export const updateMateria = async (id, materiaData) => {
   try {
-    const response = await api.put(`${endpoint}/${id}`, materiaData);
+    const response = await api.put(`${endpoint}/update/${id}`, materiaData);
     return response.data;
   } catch (error) {
     console.error("Error al actualizar materia:", error);
@@ -49,7 +49,7 @@ export const updateMateria = async (id, materiaData) => {
 // Eliminar una materia
 export const deleteMateria = async (id) => {
   try {
-    const response = await api.delete(`${endpoint}/${id}`);
+    const response = await api.delete(`${endpoint}/delete/${id}`);
     return response.data;
   } catch (error) {
     console.error("Error al eliminar materia:", error);
