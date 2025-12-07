@@ -1,14 +1,12 @@
-"use client"
-
 import { useState } from "react"
 import { X, BookOpen, Target } from "lucide-react"
 
-export function EditMateriaModal({ materia, onClose, onUpdate }) {
+export function EditMateriaModal({ materia, carreras, onClose, onUpdate }) {
   const [formData, setFormData] = useState({
-    id: materia.id,
-    nombre: materia.nombre,
-    objetivo: materia.objetivo,
-    estado: materia.estado,
+    nombre: materia.nombre_materia || "",  
+    objetivo: materia.descripcion || "",       
+    estado: materia.activo || false,           
+    carrera_id: materia.carrera_id || ""        
   })
 
   const [loading, setLoading] = useState(false)
@@ -25,11 +23,13 @@ export function EditMateriaModal({ materia, onClose, onUpdate }) {
     e.preventDefault()
     setLoading(true)
 
-    // Simulación de actualización
-    setTimeout(() => {
-      onUpdate(formData)
+    try {
+      await onUpdate(formData)
+    } catch (error) {
+      console.error("Error al actualizar:", error)
+    } finally {
       setLoading(false)
-    }, 500)
+    }
   }
 
   return (
@@ -94,6 +94,21 @@ export function EditMateriaModal({ materia, onClose, onUpdate }) {
               rows={3}
               className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all resize-none text-gray-900 placeholder:text-gray-400"
             />
+          </div>
+
+          {/* Estado */}
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              name="estado"
+              id="estado"
+              checked={formData.estado}
+              onChange={handleChange}
+              className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+            />
+            <label htmlFor="estado" className="text-sm font-medium text-gray-700">
+              Materia activa
+            </label>
           </div>
 
           {/* Buttons */}

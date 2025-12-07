@@ -41,7 +41,7 @@ export const createAlumno = async (alumnoData) => {
 // Actualizar un alumno
 export const updateAlumno = async (id, alumnoData) => {
   try {
-    const response = await api.put(`${endpoint}/${id}`, alumnoData);
+    const response = await api.put(`${endpoint}/update/${id}`, alumnoData);
     return response.data;
   } catch (error) {
     console.error("Error al actualizar alumno:", error);

@@ -41,7 +41,7 @@ export const createTutor = async (tutorData) => {
 // Actualizar un tutor
 export const updateTutor = async (id, tutorData) => {
   try {
-    const response = await api.put(`${endpoint}/${id}`, tutorData);
+    const response = await api.put(`${endpoint}/update/${id}`, tutorData);
     return response.data;
   } catch (error) {
     console.error("Error al actualizar tutor:", error);

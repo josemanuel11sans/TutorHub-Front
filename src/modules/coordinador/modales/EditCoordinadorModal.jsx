@@ -8,7 +8,7 @@ export function EditCoordinadorModal({ coordinador, onClose, onUpdate }) {
     id: coordinador.id,
     nombre: coordinador.nombre,
     apellido: coordinador.apellido,
-    correo: coordinador.correo,
+    email: coordinador.email,
     telefono: coordinador.telefono,
     currentPassword: "",
     newPassword: "",
@@ -122,8 +122,8 @@ export function EditCoordinadorModal({ coordinador, onClose, onUpdate }) {
             </label>
             <input
               type="email"
-              name="correo"
-              value={formData.correo}
+              name="email"
+              value={formData.email}
               onChange={handleChange}
               className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-gray-900 placeholder:text-gray-400"
               placeholder="ejemplo@escuela.edu"
