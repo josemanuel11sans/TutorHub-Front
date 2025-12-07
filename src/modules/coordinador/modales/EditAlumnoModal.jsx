@@ -8,7 +8,7 @@ export function EditAlumnoModal({ alumno, onClose, onUpdate }) {
     id: alumno.id,
     nombre: alumno.nombre,
     apellido: alumno.apellido,
-    correo: alumno.correo,
+    email: alumno.email,
     telefono: alumno.telefono,
     currentPassword: "",
     newPassword: "",
@@ -122,8 +122,8 @@ export function EditAlumnoModal({ alumno, onClose, onUpdate }) {
             </label>
             <input
               type="email"
-              name="correo"
-              value={formData.correo}
+              name="email"
+              value={formData.email}
               onChange={handleChange}
               placeholder="ejemplo@escuela.edu"
               required

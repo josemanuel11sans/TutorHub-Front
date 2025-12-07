@@ -41,7 +41,7 @@ export const createCoordinador = async (coordinadorData) => {
 // Actualizar un coordinador
 export const updateCoordinador = async (id, coordinadorData) => {
   try {
-    const response = await api.put(`${endpoint}/${id}`, coordinadorData);
+    const response = await api.put(`${endpoint}/update/${id}`, coordinadorData);
     return response.data;
   } catch (error) {
     console.error("Error al actualizar coordinador:", error);

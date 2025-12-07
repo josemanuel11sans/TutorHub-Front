@@ -8,7 +8,7 @@ export function EditTutorModal({ tutor, onClose, onUpdate }) {
     id: tutor.id,
     nombre: tutor.nombre,
     apellido: tutor.apellido,
-    correo: tutor.correo,
+    email: tutor.email,
     telefono: tutor.telefono,
     currentPassword: "",
     newPassword: "",
@@ -122,8 +122,8 @@ export function EditTutorModal({ tutor, onClose, onUpdate }) {
             </label>
             <input
               type="email"
-              name="correo"
-              value={formData.correo}
+              name="email"
+              value={formData.email}
               onChange={handleChange}
               placeholder="ejemplo@escuela.edu"
               required
