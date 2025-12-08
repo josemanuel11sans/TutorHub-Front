@@ -1,11 +1,11 @@
 "use client"
 
 import { useState, useContext } from "react"
-import { X, FileText } from "lucide-react"
+import { X, Upload } from "lucide-react"
 import { AuthContext } from "../../../context/AuthContext"
 import { uploadFile } from "../../../api/claudinary.api"
 
-export function AddMaterialModal({ onClose }) {
+export function UploadFileModal({ onClose }) {
   const { user } = useContext(AuthContext)
   const [file, setFile] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -13,6 +13,7 @@ export function AddMaterialModal({ onClose }) {
 
   const handleFileChange = (e) => {
     setError(null)
+    // Solo permitimos un archivo
     setFile(e.target.files?.[0] ?? null)
   }
 
@@ -34,6 +35,7 @@ export function AddMaterialModal({ onClose }) {
       setLoading(true)
       await uploadFile(file, usuarioId)
       setLoading(false)
+      // Cerrar modal tras subida correcta
       onClose()
     } catch (err) {
       console.error(err)
@@ -55,11 +57,11 @@ export function AddMaterialModal({ onClose }) {
         <div className="px-6 py-4 border-b border-gray-100 relative">
           <div className="flex items-center gap-3">
             <div className="bg-blue-600 p-2 rounded-lg">
-              <FileText className="h-5 w-5 text-white" />
+              <Upload className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-gray-900">Nuevo Material</h2>
-              <p className="text-gray-500 text-xs">Registra un nuevo material en el sistema</p>
+              <h2 className="text-lg font-bold text-gray-900">Subir Archivo</h2>
+              <p className="text-gray-500 text-xs">Selecciona un archivo para subir y se guardará con tu usuario</p>
             </div>
           </div>
           <button
@@ -70,16 +72,9 @@ export function AddMaterialModal({ onClose }) {
           </button>
         </div>
 
-
-        {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-
-          {/* Archivo */}
           <div className="space-y-1.5">
-            <label className="flex items-center gap-2 text-xs font-medium text-gray-700">
-              <FileText className="h-3.5 w-3.5 text-gray-400" />
-              Archivo
-            </label>
+            <label className="flex items-center gap-2 text-xs font-medium text-gray-700">Archivo</label>
             <input
               type="file"
               name="file"
@@ -90,29 +85,24 @@ export function AddMaterialModal({ onClose }) {
             />
           </div>
 
-          {/* Buttons */}
+          {error && <p className="text-sm text-red-600">{error}</p>}
+
           <div className="flex gap-3 pt-2">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 
-              bg-gray-100 rounded-lg hover:bg-gray-200 transition-all"
+              className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-all"
             >
               Cancelar
             </button>
-
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 px-4 py-2 text-sm font-medium text-white 
-              bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg 
-              hover:from-blue-700 hover:to-blue-800 transition-all shadow-md 
-              shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
             >
-              {loading ? "Guardando..." : "Guardar"}
+              {loading ? "Subiendo..." : "Subir"}
             </button>
           </div>
-
         </form>
       </div>
     </div>

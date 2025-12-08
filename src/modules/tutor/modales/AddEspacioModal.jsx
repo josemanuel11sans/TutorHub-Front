@@ -1,36 +1,62 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { X, Building, FileText, Hash, Layers } from "lucide-react"
+import { useEffect, useState } from "react";
+import { X, Layers, FileText, Hash } from "lucide-react";
+import { getMaterias } from "../../../api/materias.api";
+import { createEspacio } from "../../../api/espacios.api";
+import { UploadFileModal } from "./UploadFileModal";
 
-export function AddEspacioModal({ onClose, onAdd }) {
+export function AddEspacioModal({ onClose, onCreated }) {
+  const [materias, setMaterias] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [showUpload, setShowUpload] = useState(false);
+
+  //saca el id del tutor del local storage
+  const tutor = JSON.parse(localStorage.getItem("user"));
+
   const [formData, setFormData] = useState({
     nombre: "",
     descripcion: "",
-    capacidad: "",
-    estado: true,
-  })
+    portada: "",
+    tutor_id: tutor.id,
+    materia_id: "",
+  });
 
-  const [loading, setLoading] = useState(false)
+  // Cargar materias
+  useEffect(() => {
+    cargarMaterias();
+  }, []);
+
+  const cargarMaterias = async () => {
+    try {
+      const data = await getMaterias();
+      setMaterias(data);
+    } catch (error) {
+      console.error("Error al cargar materias", error);
+    }
+  };
 
   const handleChange = (e) => {
-    const { name, value } = e.target
-    setFormData({
-      ...formData,
-      [name]: value,
-    })
-  }
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setLoading(true)
+  const CrearEspacio = async (e) => {
+    e.preventDefault();
+    setLoading(true);
 
-    // Simulación de guardado
-    setTimeout(() => {
-      onAdd(formData)
-      setLoading(false)
-    }, 500)
-  }
+    try {
+      await createEspacio(formData);
+
+      if (onCreated) onCreated();
+      onClose();
+    } catch (error) {
+      console.error(error);
+      alert("Error al crear el espacio");
+    }
+
+    setLoading(false);
+  };
 
   return (
     <div
@@ -49,9 +75,12 @@ export function AddEspacioModal({ onClose, onAdd }) {
             </div>
             <div>
               <h2 className="text-lg font-bold text-gray-900">Nuevo Espacio</h2>
-              <p className="text-gray-500 text-xs">Registra un nuevo espacio en el sistema</p>
+              <p className="text-gray-500 text-xs">
+                Registra un nuevo espacio en el sistema
+              </p>
             </div>
           </div>
+
           <button
             onClick={onClose}
             className="absolute top-4 right-5 text-gray-400 hover:text-gray-600 transition-colors"
@@ -61,8 +90,7 @@ export function AddEspacioModal({ onClose, onAdd }) {
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-
+        <form onSubmit={CrearEspacio} className="p-6 space-y-4">
           {/* Nombre */}
           <div className="space-y-1.5">
             <label className="flex items-center gap-2 text-xs font-medium text-gray-700">
@@ -101,29 +129,49 @@ export function AddEspacioModal({ onClose, onAdd }) {
             />
           </div>
 
-          {/* Capacidad */}
           <div className="space-y-1.5">
             <label className="flex items-center gap-2 text-xs font-medium text-gray-700">
-              <Hash className="h-3.5 w-3.5 text-gray-400" />
-              Capacidad
+              <FileText className="h-3.5 w-3.5 text-gray-400" />
+              URL de portada
             </label>
             <input
-              type="number"
-              name="capacidad"
-              value={formData.capacidad}
+              type="text"
+              name="portada"
+              value={formData.portada}
               onChange={handleChange}
               className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg 
-              focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none 
-              transition-all text-gray-900 placeholder:text-gray-400"
-              placeholder="Ej. 30"
+    focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none 
+    transition-all text-gray-900 placeholder:text-gray-400"
+              placeholder="https://ejemplo.com/imagen.jpg"
               required
             />
           </div>
 
-          {/* Estado (oculto, siempre true) */}
-          <input type="hidden" name="estado" value={formData.estado} />
+          {/* Materias */}
+          <div className="space-y-1.5">
+            <label className="flex items-center gap-2 text-xs font-medium text-gray-700">
+              <Layers className="h-3.5 w-3.5 text-gray-400" />
+              Materia
+            </label>
 
-          {/* Buttons */}
+            <select
+              name="materia_id"
+              value={formData.materia_id}
+              onChange={handleChange}
+              className="..."
+              required
+            >
+              <option value="">Selecciona una materia</option>
+
+              {materias.map((m) => (
+                <option key={m.id_materia} value={m.id_materia}>
+                  {m.nombre_materia}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Botones */}
           <div className="flex gap-3 pt-2">
             <button
               type="button"
@@ -142,11 +190,21 @@ export function AddEspacioModal({ onClose, onAdd }) {
               shadow-md shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed 
               disabled:shadow-none"
             >
-              {loading ? "Guardando..." : "Guardar"}
+              {loading ? "Guardando..." : "Crear"}
             </button>
           </div>
         </form>
+
+        {showUpload && (
+          <UploadFileModal
+            onClose={() => setShowUpload(false)}
+            onUpload={(res) => {
+              console.log("Archivo subido:", res);
+              // Actualizar estado o mostrar toast
+            }}
+          />
+        )}
       </div>
     </div>
-  )
+  );
 }
