@@ -1,12 +1,13 @@
-import { useState } from "react"
-import { Search, Plus, Edit, Trash2 } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Search, Plus, Edit, Trash2, RefreshCw } from "lucide-react"
 import { AddAulaModal } from "../modales/AddAulaModal"
 import { EditAulaModal } from "../modales/EditAulaModal"
 import { DeleteAulaModal } from "../modales/DeleteAulaModal"
+import { getAulas } from "../../../api/aulas.api" // Ajusta la ruta según tu estructura
 
 // Botón compacto
-const Button = ({ children, onClick, variant = "default", size = "sm", className = "" }) => {
-    const baseStyles = "inline-flex items-center justify-center rounded-md font-medium transition-colors"
+const Button = ({ children, onClick, variant = "default", size = "sm", className = "", disabled = false }) => {
+    const baseStyles = "inline-flex items-center justify-center rounded-md font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
     const variants = {
         default: "bg-blue-600 text-white hover:bg-blue-700",
         ghost: "hover:bg-gray-100 text-gray-700",
@@ -19,6 +20,7 @@ const Button = ({ children, onClick, variant = "default", size = "sm", className
     return (
         <button
             onClick={onClick}
+            disabled={disabled}
             className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
         >
             {children}
@@ -52,49 +54,61 @@ const Badge = ({ children, variant = "default" }) => {
     )
 }
 
-// Datos de prueba - Edificios disponibles
-const EDIFICIOS_DISPONIBLES = [
-    { id: 1, nombre: "Edificio A" },
-    { id: 2, nombre: "Edificio B" },
-    { id: 3, nombre: "Edificio C" },
-]
-
-// Datos de prueba - Aulas
-const AULAS_MOCK = [
-    {
-        id: 1,
-        nombre: "Aula 101",
-        descripcion: "Aula de matemáticas",
-        edificioId: 1,
-        edificioNombre: "Edificio A",
-        estado: true,
-    },
-    {
-        id: 2,
-        nombre: "Aula 202",
-        descripcion: "Laboratorio de química",
-        edificioId: 2,
-        edificioNombre: "Edificio B",
-        estado: true,
-    },
-    {
-        id: 3,
-        nombre: "Aula 303",
-        descripcion: "Sala de cómputo",
-        edificioId: 3,
-        edificioNombre: "Edificio C",
-        estado: false,
-    }
-]
-
 export default function AulasTable() {
-    const [aulas, setAulas] = useState(AULAS_MOCK)
-    const [edificios] = useState(EDIFICIOS_DISPONIBLES)
+    const [aulas, setAulas] = useState([])
+    const [edificios, setEdificios] = useState([])
     const [searchTerm, setSearchTerm] = useState("")
     const [showAddModal, setShowAddModal] = useState(false)
     const [showEditModal, setShowEditModal] = useState(false)
     const [showDeleteModal, setShowDeleteModal] = useState(false)
     const [selectedAula, setSelectedAula] = useState(null)
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState(null)
+
+    // Cargar aulas al montar el componente
+    const fetchAulas = async () => {
+        try {
+            setLoading(true)
+            setError(null)
+            const data = await getAulas()
+            
+            // Transformar los datos de la API al formato del componente
+            const aulasTransformadas = data.map(aula => ({
+                id: aula.id,
+                nombre: aula.nombre,
+                descripcion: aula.descripcion,
+                edificioId: aula.edificioId,
+                edificioNombre: aula.Edificio?.nombre || 'Sin edificio',
+                estado: aula.Edificio?.estado ?? true, // Tomamos el estado del edificio
+            }))
+            
+            setAulas(aulasTransformadas)
+            
+            // Extraer edificios únicos de los datos
+            const edificiosUnicos = data
+                .filter(aula => aula.Edificio)
+                .reduce((acc, aula) => {
+                    if (!acc.find(e => e.id === aula.Edificio.id)) {
+                        acc.push({
+                            id: aula.Edificio.id,
+                            nombre: aula.Edificio.nombre
+                        })
+                    }
+                    return acc
+                }, [])
+            
+            setEdificios(edificiosUnicos)
+        } catch (err) {
+            setError("Error al cargar las aulas. Por favor, intenta de nuevo.")
+            console.error("Error al cargar aulas:", err)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    useEffect(() => {
+        fetchAulas()
+    }, [])
 
     // Filtrar aulas
     const filteredAulas = aulas.filter(aula =>
@@ -113,20 +127,22 @@ export default function AulasTable() {
         setShowDeleteModal(true)
     }
 
-    const handleAddAula = (newAula) => {
-        setAulas([...aulas, { ...newAula, id: Date.now() }])
+    const handleAddAula = async (newAula) => {
+        // Aquí llamarías a createAula(newAula)
+        // Por ahora solo actualizo el estado local
+        await fetchAulas() // Recargar la lista después de agregar
         setShowAddModal(false)
     }
 
-    const handleUpdateAula = (updatedAula) => {
-        setAulas(aulas.map(a =>
-            a.id === updatedAula.id ? updatedAula : a
-        ))
+    const handleUpdateAula = async (updatedAula) => {
+        // Aquí llamarías a updateAula(updatedAula)
+        await fetchAulas() // Recargar la lista después de actualizar
         setShowEditModal(false)
     }
 
-    const handleConfirmDelete = () => {
-        setAulas(aulas.filter(a => a.id !== selectedAula.id))
+    const handleConfirmDelete = async () => {
+        // Aquí llamarías a deleteAula(selectedAula.id)
+        await fetchAulas() // Recargar la lista después de eliminar
         setShowDeleteModal(false)
         setSelectedAula(null)
     }
@@ -144,11 +160,28 @@ export default function AulasTable() {
                             Administra las aulas del sistema
                         </p>
                     </div>
-                    <Button onClick={() => setShowAddModal(true)}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        Nueva Aula
-                    </Button>
+                    <div className="flex gap-2">
+                        <Button 
+                            onClick={fetchAulas} 
+                            variant="ghost"
+                            disabled={loading}
+                        >
+                            <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                            Actualizar
+                        </Button>
+                        <Button onClick={() => setShowAddModal(true)}>
+                            <Plus className="mr-2 h-4 w-4" />
+                            Nueva Aula
+                        </Button>
+                    </div>
                 </div>
+
+                {/* Mensaje de error */}
+                {error && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <p className="text-sm text-red-800">{error}</p>
+                    </div>
+                )}
 
                 {/* Buscador */}
                 <div className="bg-white rounded-lg border border-gray-200 p-4">
@@ -157,6 +190,7 @@ export default function AulasTable() {
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         icon
+                        disabled={loading}
                     />
                 </div>
 
@@ -184,12 +218,23 @@ export default function AulasTable() {
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
-                                {filteredAulas.length === 0 ? (
+                                {loading ? (
+                                    <tr>
+                                        <td colSpan="5" className="px-6 py-12 text-center">
+                                            <div className="flex flex-col items-center justify-center">
+                                                <RefreshCw className="h-8 w-8 text-blue-500 animate-spin mb-2" />
+                                                <p className="text-sm text-gray-500">Cargando aulas...</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ) : filteredAulas.length === 0 ? (
                                     <tr>
                                         <td colSpan="5" className="px-6 py-12 text-center">
                                             <div className="text-gray-500">
                                                 <p className="text-sm">No se encontraron aulas</p>
-                                                <p className="text-xs mt-1">Intenta con otros términos de búsqueda</p>
+                                                <p className="text-xs mt-1">
+                                                    {searchTerm ? 'Intenta con otros términos de búsqueda' : 'Agrega tu primera aula'}
+                                                </p>
                                             </div>
                                         </td>
                                     </tr>
