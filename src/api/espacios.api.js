@@ -19,3 +19,23 @@ export const getEspaciosByTutor = async (tutorId) => {
     throw error;
   }
 };
+
+export const updateEspacio = async (id, data) => {
+  try {
+    const res = await api.put(`/espacios/update/${id}`, data);
+    return res.data;
+  } catch (error) {
+    console.error("Error al actualizar espacio:", error);
+    throw error;
+  }
+};
+
+export const deleteEspacio = async (id) => {
+  try {
+    const res = await api.delete(`/espacios/delete/${id}`);
+    return res.data;
+  } catch (error) {
+    console.error("Error al eliminar espacio:", error);
+    throw error;
+  }
+};

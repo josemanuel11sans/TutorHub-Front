@@ -51,55 +51,11 @@ const Badge = ({ children, variant = "default" }) => {
 }
 
 // Datos mock
-const ASESORIAS_MOCK = [
-  {
-    id: 1,
-    titulo: "Dudas sobre React Hooks",
-    fecha: "2024-01-20",
-    hora: "10:00",
-    duracion: "1h",
-    espacio: "Aula 101",
-    materia: "Desarrollo Web",
-    asistentes: 8,
-    estado: "programada",
-  },
-  {
-    id: 2,
-    titulo: "Revisión de proyectos finales",
-    fecha: "2024-01-22",
-    hora: "14:00",
-    duracion: "2h",
-    espacio: "Lab. Computación",
-    materia: "Desarrollo Web",
-    asistentes: 12,
-    estado: "programada",
-  },
-  {
-    id: 3,
-    titulo: "Normalización de BD",
-    fecha: "2024-01-18",
-    hora: "16:00",
-    duracion: "1.5h",
-    espacio: "Aula 102",
-    materia: "Bases de Datos",
-    asistentes: 10,
-    estado: "completada",
-  },
-  {
-    id: 4,
-    titulo: "Patrones de diseño",
-    fecha: "2024-01-25",
-    hora: "11:00",
-    duracion: "1h",
-    espacio: "Aula 101",
-    materia: "Arquitectura",
-    asistentes: 5,
-    estado: "programada",
-  },
-]
+// Removed local mock data; this view should fetch asesorias from backend
+const ASESORIAS_MOCK = [] // Initialize empty array for asesorias
 
 export default function AsesoriasView() {
-  const [asesorias, setAsesorias] = useState(ASESORIAS_MOCK)
+  const [asesorias, setAsesorias] = useState([])
   const [searchTerm, setSearchTerm] = useState("")
   const [showAddModal, setShowAddModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
