@@ -46,9 +46,9 @@ export function AddEspacioModal({ onClose, onCreated }) {
     setLoading(true);
 
     try {
-      await createEspacio(formData);
+      const res = await createEspacio(formData);
 
-      if (onCreated) onCreated();
+      if (onCreated) onCreated(res);
       onClose();
     } catch (error) {
       console.error(error);

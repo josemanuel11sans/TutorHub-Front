@@ -69,6 +69,7 @@ export default function EspacioDetailView({ espacio, onBack, initialOpenAddMater
   const [materiales, setMateriales] = useState([])
   const [asesorias, setAsesorias] = useState([])
   const toast = useToast()
+  const [showDetails, setShowDetails] = useState(false)
 
   useEffect(() => {
     console.log('EspacioDetailView mounted or espacio changed:', espacio)
@@ -204,32 +205,34 @@ export default function EspacioDetailView({ espacio, onBack, initialOpenAddMater
           </div>
         </div>
 
-        {/* Detalles (muestra todos los datos del espacio) */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-3">Detalles del espacio</h2>
-          <div className="grid gap-2 grid-cols-1 md:grid-cols-2 text-sm text-gray-700">
-            {Object.entries(espacio._raw || espacio).map(([k, v]) => {
-              let display = v
-              try {
-                if (v === null || v === undefined) display = "-"
-                else if (typeof v === "object") display = JSON.stringify(v)
-                else display = String(v)
-              } catch (err) {
-                display = "(no disponible)"
-              }
+        {/* Detalles (mantenido en el DOM pero oculto por defecto) */}
+        {showDetails && (
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">Detalles del espacio</h2>
+            <div className="grid gap-2 grid-cols-1 md:grid-cols-2 text-sm text-gray-700">
+              {Object.entries(espacio._raw || espacio).map(([k, v]) => {
+                let display = v
+                try {
+                  if (v === null || v === undefined) display = "-"
+                  else if (typeof v === "object") display = JSON.stringify(v)
+                  else display = String(v)
+                } catch (err) {
+                  display = "(no disponible)"
+                }
 
-              // Truncar si es muy largo
-              if (typeof display === "string" && display.length > 200) display = display.slice(0, 200) + "..."
+                // Truncar si es muy largo
+                if (typeof display === "string" && display.length > 200) display = display.slice(0, 200) + "..."
 
-              return (
-                <div key={k} className="flex items-start gap-2">
-                  <div className="w-36 text-gray-500 capitalize">{k.replace(/_/g, " ")}</div>
-                  <div className="flex-1 break-words">{display}</div>
-                </div>
-              )
-            })}
+                return (
+                  <div key={k} className="flex items-start gap-2">
+                    <div className="w-36 text-gray-500 capitalize">{k.replace(/_/g, " ")}</div>
+                    <div className="flex-1 break-words">{display}</div>
+                  </div>
+                )
+              })}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Sección de Materiales */}
         <div className="bg-white rounded-lg border border-gray-200 p-6">

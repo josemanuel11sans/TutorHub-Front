@@ -1,22 +1,39 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useContext } from "react"
 import { X, DoorOpen, FileText, Building2, Users } from "lucide-react"
 import { updateEspacio } from "../../../api/espacios.api"
+import { getMaterias } from "../../../api/materias.api"
 import { useToast } from "../../../context/ToastContext"
+import { AuthContext } from "../../../context/AuthContext"
 
 export function EditEspacioModal({ espacio, onClose, onUpdate }) {
   const toast = useToast()
+  const { user } = useContext(AuthContext)
+  const [materias, setMaterias] = useState([])
+
   const [formData, setFormData] = useState({
     id_espacio: espacio.id_espacio ?? espacio.id,
-    nombre: espacio.nombre,
+    nombre: espacio.nombre ?? "",
     descripcion: espacio.descripcion || "",
     portada: espacio.portada || (espacio._raw && (espacio._raw.portada || espacio._raw.cover)) || "",
-    tutor_id: espacio._raw?.tutor_id ?? espacio._raw?.tutorId ?? undefined,
-    materia_id: espacio._raw?.materia_id ?? espacio._raw?.materiaId ?? undefined,
+    materia_id: espacio._raw?.materia_id ?? espacio._raw?.materiaId ?? espacio.materia_id ?? espacio._raw?.materia ?? "",
+    capacidad: espacio.capacidad ?? espacio._raw?.capacidad ?? "",
   })
 
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    const loadMaterias = async () => {
+      try {
+        const data = await getMaterias()
+        setMaterias(data || [])
+      } catch (err) {
+        console.warn('No se pudieron cargar materias:', err)
+      }
+    }
+    loadMaterias()
+  }, [])
 
   const handleChange = (e) => {
     const { name, type, value, checked } = e.target
@@ -31,12 +48,13 @@ export function EditEspacioModal({ espacio, onClose, onUpdate }) {
     setLoading(true)
     try {
       const id = formData.id_espacio
+      // usar user.id como tutor_id (sesión)
       const payload = {
         nombre: formData.nombre,
         descripcion: formData.descripcion,
         portada: formData.portada,
-        tutor_id: formData.tutor_id,
-        materia_id: formData.materia_id,
+        tutor_id: user?.id,
+        materia_id: Number(formData.materia_id) || null,
       }
       const res = await updateEspacio(id, payload)
       // Respuesta esperada: { message, espacio: {...} }
@@ -116,6 +134,48 @@ export function EditEspacioModal({ espacio, onClose, onUpdate }) {
             onChange={handleChange}
             placeholder="Descripción del espacio"
           />
+
+          {/* Portada URL */}
+          <div className="space-y-1.5">
+            <label className="flex items-center gap-2 text-xs font-medium text-gray-700">
+              <FileText className="h-3.5 w-3.5 text-gray-400" />
+              URL de portada
+            </label>
+            <input
+              type="text"
+              name="portada"
+              value={formData.portada}
+              onChange={handleChange}
+              className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg 
+              focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none 
+              transition-all text-gray-900 placeholder:text-gray-400"
+              placeholder="https://ejemplo.com/imagen.jpg"
+            />
+          </div>
+
+          {/* Materia */}
+          <div className="space-y-1.5">
+            <label className="flex items-center gap-2 text-xs font-medium text-gray-700">
+              <Building2 className="h-3.5 w-3.5 text-gray-400" />
+              Materia
+            </label>
+            <select
+              name="materia_id"
+              value={formData.materia_id}
+              onChange={handleChange}
+              className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg 
+              focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none 
+              transition-all text-gray-900"
+              required
+            >
+              <option value="">Selecciona una materia</option>
+              {materias.map((m) => (
+                <option key={m.id_materia ?? m.id} value={m.id_materia ?? m.id}>
+                  {m.nombre_materia ?? m.nombre}
+                </option>
+              ))}
+            </select>
+          </div>
 
           {/* Capacidad */}
           <Field

@@ -61,6 +61,74 @@ export default function EspaciosView({ onSelectEspacio, tutorId: propTutorId }) 
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [selectedEspacio, setSelectedEspacio] = useState(null)
 
+  // fetchEspacios moved to component scope so we can call it on demand
+  const fetchEspacios = async () => {
+    try {
+      const id = propTutorId ?? user?.id
+      if (!id) return
+      const data = await getEspaciosByTutor(id)
+
+      // Normalizar la respuesta a un arreglo y mapear campos esperados
+      let raw = []
+      if (Array.isArray(data)) raw = data
+      else if (Array.isArray(data.espacios)) raw = data.espacios
+      else if (Array.isArray(data.data)) raw = data.data
+      else {
+        console.warn('Respuesta inesperada al obtener espacios:', data)
+      }
+
+      const normalized = raw.map((r) => {
+        // alumnos: puede venir como número, como array o en _count
+        let alumnosCount = 0
+        if (Array.isArray(r.alumnos)) alumnosCount = r.alumnos.length
+        else if (typeof r.alumnos === 'number') alumnosCount = r.alumnos
+        else if (typeof r.alumnosCount === 'number') alumnosCount = r.alumnosCount
+        else if (typeof r.studentCount === 'number') alumnosCount = r.studentCount
+        else if (r._count && typeof r._count.alumnos === 'number') alumnosCount = r._count.alumnos
+        else if (r._count && typeof r._count.students === 'number') alumnosCount = r._count.students
+        else if (r.alumnos && typeof r.alumnos === 'string' && !isNaN(Number(r.alumnos))) alumnosCount = Number(r.alumnos)
+
+        // materiales: puede venir como array, como files, en _count o en filesCount/materialCount
+        let materialesCount = 0
+        if (Array.isArray(r.materiales)) materialesCount = r.materiales.length
+        else if (Array.isArray(r.files)) materialesCount = r.files.length
+        else if (typeof r.materiales === 'number') materialesCount = r.materiales
+        else if (typeof r.filesCount === 'number') materialesCount = r.filesCount
+        else if (typeof r.materialCount === 'number') materialesCount = r.materialCount
+        else if (r._count && typeof r._count.files === 'number') materialesCount = r._count.files
+        else if (r._count && typeof r._count.materiales === 'number') materialesCount = r._count.materiales
+        else if (r.materiales && typeof r.materiales === 'string' && !isNaN(Number(r.materiales))) materialesCount = Number(r.materiales)
+
+        return {
+          id: r.id_espacio ?? r.id ?? r._id ?? null,
+          nombre: r.nombre ?? r.name ?? "",
+          materia: r.materia ?? r.subject ?? "",
+          descripcion: r.descripcion ?? r.descripcion_corta ?? r.description ?? "",
+          portada: r.portada ?? r.cover ?? r.image ?? null,
+          alumnos: Number(alumnosCount ?? 0),
+          capacidad: Number(r.capacidad ?? r.capacity ?? 0),
+          materiales: Number(materialesCount ?? 0),
+          color: r.color ?? r.bgColor ?? "bg-blue-500",
+          _raw: r,
+        }
+      })
+
+      console.log('Espacios (normalizados):', normalized.map((x) => ({ id: x.id, nombre: x.nombre, alumnos: x.alumnos, materiales: x.materiales })))
+      setEspacios(normalized)
+
+      // Guardar ids de espacios en localStorage para referencia posterior
+      try {
+        const ids = normalized.map((e) => e.id)
+        console.log('Espacios obtenidos:', ids)
+        if (ids.length) localStorage.setItem('espaciosIds', JSON.stringify(ids))
+      } catch (err) {
+        console.warn('No se pudo guardar espaciosIds en localStorage', err)
+      }
+    } catch (err) {
+      console.error('Error al obtener espacios:', err)
+    }
+  }
+
   const filteredEspacios = espacios.filter((e) => {
     const nombre = (e.nombre || "").toString().toLowerCase()
     const materia = (e.materia || "").toString().toLowerCase()
@@ -81,11 +149,7 @@ export default function EspaciosView({ onSelectEspacio, tutorId: propTutorId }) 
     setShowDeleteModal(true)
   }
 
-  const handleAddEspacio = (newEspacio) => {
-    console.log('Agregar espacio local:', newEspacio)
-    setEspacios([...espacios, { ...newEspacio, id: Date.now(), alumnos: 0, materiales: 0, color: "bg-blue-500" }])
-    setShowAddModal(false)
-  }
+  // handleAddEspacio now se define más abajo y recibe la respuesta del API
 
   const handleUpdateEspacio = (updated) => {
     console.log('Actualizar espacio local:', updated)
@@ -94,50 +158,6 @@ export default function EspaciosView({ onSelectEspacio, tutorId: propTutorId }) 
   }
 
   useEffect(() => {
-    const fetchEspacios = async () => {
-      try {
-        const id = propTutorId ?? user?.id
-        if (!id) return
-        const data = await getEspaciosByTutor(id)
-
-        // Normalizar la respuesta a un arreglo y mapear campos esperados
-        let raw = []
-        if (Array.isArray(data)) raw = data
-        else if (Array.isArray(data.espacios)) raw = data.espacios
-        else if (Array.isArray(data.data)) raw = data.data
-        else {
-          console.warn('Respuesta inesperada al obtener espacios:', data)
-        }
-
-        const normalized = raw.map((r) => ({
-          id: r.id_espacio ?? r.id ?? r._id ?? null,
-          nombre: r.nombre ?? r.name ?? "",
-          materia: r.materia ?? r.subject ?? "",
-          descripcion: r.descripcion ?? r.descripcion_corta ?? r.description ?? "",
-          portada: r.portada ?? r.cover ?? r.image ?? null,
-          alumnos: Number(r.alumnos ?? r.alumnosCount ?? r.studentCount ?? 0),
-          capacidad: Number(r.capacidad ?? r.capacity ?? 0),
-          materiales: Number(r.materiales ?? r.materialCount ?? r.filesCount ?? 0),
-          color: r.color ?? r.bgColor ?? "bg-blue-500",
-          _raw: r,
-        }))
-
-        console.log('Espacios (normalizados):', normalized.map((x) => ({ id: x.id, nombre: x.nombre, alumnos: x.alumnos, materiales: x.materiales })))
-        setEspacios(normalized)
-
-        // Guardar ids de espacios en localStorage para referencia posterior
-        try {
-          const ids = normalized.map((e) => e.id)
-          console.log('Espacios obtenidos:', ids)
-          if (ids.length) localStorage.setItem('espaciosIds', JSON.stringify(ids))
-        } catch (err) {
-          console.warn('No se pudo guardar espaciosIds en localStorage', err)
-        }
-      } catch (err) {
-        console.error('Error al obtener espacios:', err)
-      }
-    }
-
     fetchEspacios()
   }, [user?.id, propTutorId])
 
@@ -159,6 +179,32 @@ export default function EspaciosView({ onSelectEspacio, tutorId: propTutorId }) 
     doDelete()
   }
 
+  const handleAddEspacio = (createdResponse) => {
+    // createdResponse puede ser { message, espacio: {...} } o solo el espacio
+    let r = createdResponse
+    if (!r) {
+      setShowAddModal(false)
+      return
+    }
+    if (r.espacio) r = r.espacio
+
+    const normalized = {
+      id: r.id_espacio ?? r.id ?? r._id ?? Date.now(),
+      nombre: r.nombre ?? r.name ?? "Nuevo Espacio",
+      materia: r.materia ?? r.subject ?? "",
+      descripcion: r.descripcion ?? r.descripcion_corta ?? r.description ?? "",
+      portada: r.portada ?? r.cover ?? r.image ?? null,
+      alumnos: Number(r.alumnos ?? 0),
+      capacidad: Number(r.capacidad ?? 0),
+      materiales: Number(r.materiales ?? 0),
+      color: r.color ?? "bg-blue-500",
+      _raw: r,
+    }
+
+    setEspacios((prev) => [normalized, ...prev])
+    setShowAddModal(false)
+  }
+
   return (
     <>
       <div className="space-y-4">
@@ -169,10 +215,15 @@ export default function EspaciosView({ onSelectEspacio, tutorId: propTutorId }) 
             <p className="text-sm text-gray-500 mt-1">Selecciona un espacio para ver sus materiales y asesorías</p>
           </div>
 
-          <Button onClick={() => setShowAddModal(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Crear Espacio
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button onClick={() => fetchEspacios()} variant="ghost" className="mr-2">
+              Actualizar
+            </Button>
+            <Button onClick={() => setShowAddModal(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Crear Espacio
+            </Button>
+          </div>
         </div>
 
         {/* Buscador */}
@@ -272,7 +323,7 @@ export default function EspaciosView({ onSelectEspacio, tutorId: propTutorId }) 
       </div>
 
       {/* Modales */}
-      {showAddModal && <AddEspacioModal onClose={() => setShowAddModal(false)} onAdd={handleAddEspacio} />}
+      {showAddModal && <AddEspacioModal onClose={() => setShowAddModal(false)} onCreated={handleAddEspacio} />}
       {showEditModal && selectedEspacio && (
         <EditEspacioModal
           espacio={selectedEspacio}
