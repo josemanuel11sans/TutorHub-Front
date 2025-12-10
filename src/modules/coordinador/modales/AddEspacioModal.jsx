@@ -3,13 +3,13 @@
 import { useState } from "react"
 import { X, FileText, Image, Users, BookOpen } from "lucide-react"
 
-export function AddEspacioModal({ onClose, onAdd, tutores = [], materias = [] }) {
+export default function AddEspacioModal({ onClose, onAdd, tutores = [], materias = [] }) {
   const [formData, setFormData] = useState({
     nombre: "",
     descripcion: "",
     portada: "",
-    tutorId: "",
-    materiaId: "",
+    tutor_id: "",
+    materia_id: "",
     estado: true,
   })
 
@@ -23,15 +23,22 @@ export function AddEspacioModal({ onClose, onAdd, tutores = [], materias = [] })
     })
   }
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault()
     setLoading(true)
 
+    const fixedData = {
+      ...formData,
+      tutor_id: Number(formData.tutor_id),
+      materia_id: Number(formData.materia_id)
+    }
+
     setTimeout(() => {
-      onAdd(formData)
+      onAdd(fixedData)
       setLoading(false)
     }, 500)
   }
+
 
   return (
     <div
@@ -65,7 +72,7 @@ export function AddEspacioModal({ onClose, onAdd, tutores = [], materias = [] })
         </div>
 
         {/* FORM */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <div className="p-6 space-y-4">
           {/* NOMBRE */}
           <div className="space-y-1.5">
             <label className="flex items-center gap-2 text-xs font-medium text-gray-700">
@@ -99,7 +106,7 @@ export function AddEspacioModal({ onClose, onAdd, tutores = [], materias = [] })
               placeholder="Escribe una descripción..."
               rows={3}
               required
-            ></textarea>
+            />
           </div>
 
           {/* PORTADA */}
@@ -127,8 +134,8 @@ export function AddEspacioModal({ onClose, onAdd, tutores = [], materias = [] })
             </label>
 
             <select
-              name="materiaId"
-              value={formData.materiaId}
+              name="materia_id"
+              value={formData.materia_id}
               onChange={handleChange}
               required
               className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg
@@ -136,8 +143,9 @@ export function AddEspacioModal({ onClose, onAdd, tutores = [], materias = [] })
             >
               <option value="">Seleccione una materia</option>
               {materias.map((materia) => (
-                <option key={materia.id} value={materia.id}>
-                  {materia.nombre}
+                <option key={materia.id_materia} value={materia.id_materia}>
+                  {materia.nombre_materia}
+                  {materia.carrera && ` - ${materia.carrera.nombre_carrera}`}
                 </option>
               ))}
             </select>
@@ -151,8 +159,8 @@ export function AddEspacioModal({ onClose, onAdd, tutores = [], materias = [] })
             </label>
 
             <select
-              name="tutorId"
-              value={formData.tutorId}
+              name="tutor_id"
+              value={formData.tutor_id}
               onChange={handleChange}
               required
               className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg
@@ -160,21 +168,11 @@ export function AddEspacioModal({ onClose, onAdd, tutores = [], materias = [] })
             >
               <option value="">Seleccione un tutor</option>
               {tutores.map((tutor) => (
-                <option key={tutor.id} value={tutor.id}>
+                <option key={tutor.id_usuario} value={tutor.id_usuario}>
                   {tutor.nombre} {tutor.apellido}
                 </option>
               ))}
             </select>
-          </div>
-
-          {/* ESTADO (OCULTO) */}
-          <div className="hidden">
-            <input
-              type="checkbox"
-              name="estado"
-              checked={formData.estado}
-              onChange={handleChange}
-            />
           </div>
 
           {/* BOTONES */}
@@ -189,7 +187,8 @@ export function AddEspacioModal({ onClose, onAdd, tutores = [], materias = [] })
             </button>
 
             <button
-              type="submit"
+              type="button"
+              onClick={handleSubmit}
               disabled={loading}
               className="flex-1 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r 
               from-blue-600 to-blue-700 rounded-lg hover:from-blue-700 hover:to-blue-800 
@@ -197,8 +196,9 @@ export function AddEspacioModal({ onClose, onAdd, tutores = [], materias = [] })
             >
               {loading ? "Guardando..." : "Guardar"}
             </button>
+
           </div>
-        </form>
+        </div>
       </div>
     </div>
   )

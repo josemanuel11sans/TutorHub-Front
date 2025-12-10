@@ -27,7 +27,7 @@ export const getAlumnoById = async (id) => {
 // Crear un nuevo alumno
 export const createAlumno = async (alumnoData) => {
   try {
-    const response = await api.post(endpoint, {
+    const response = await api.post(`${endpoint}/create`, {
       ...alumnoData,
       role: "student", // Asegurar que el rol sea student
     });

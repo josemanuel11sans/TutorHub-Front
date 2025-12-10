@@ -1,15 +1,23 @@
-import { useState } from "react"
-import { Search, Plus, Edit, Trash2 } from "lucide-react"
-import { AddEspacioModal } from "../modales/AddEspacioModal"
+import { useState, useEffect } from "react"
+import { Search, Plus, Edit, Trash2, RefreshCw } from "lucide-react"
+import  AddEspacioModal  from "../modales/AddEspacioModal"
 import { EditEspacioModal } from "../modales/EditEspacioModal"
 import { DeleteEspacioModal } from "../modales/DeleteEspacioModal"
+import { 
+  getEspacios, 
+  createEspacio, 
+  updateEspacio, 
+  deleteEspacio 
+} from "../../../api/espacios.api"
+import { getMaterias } from "../../../api/materias.api"
+import { getTutores } from "../../../api/tutores.api"
 
 /* ─────────────────────────────────────────────── */
 /*                 COMPONENTES BÁSICOS             */
 /* ─────────────────────────────────────────────── */
 
-const Button = ({ children, onClick, variant = "default", size = "sm", className = "" }) => {
-    const baseStyles = "inline-flex items-center justify-center rounded-md font-medium transition-colors"
+const Button = ({ children, onClick, variant = "default", size = "sm", className = "", disabled = false }) => {
+    const baseStyles = "inline-flex items-center justify-center rounded-md font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
     const variants = {
         default: "bg-blue-600 text-white hover:bg-blue-700",
         ghost: "hover:bg-gray-100 text-gray-700",
@@ -22,6 +30,7 @@ const Button = ({ children, onClick, variant = "default", size = "sm", className
     return (
         <button
             onClick={onClick}
+            disabled={disabled}
             className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
         >
             {children}
@@ -42,75 +51,62 @@ const Input = ({ className = "", icon, ...props }) => (
 )
 
 /* ─────────────────────────────────────────────── */
-/*                  DATOS MOCK                     */
-/* ─────────────────────────────────────────────── */
-
-const MATERIAS_MOCK = [
-    { id: 1, nombre: "Matemáticas" },
-    { id: 2, nombre: "Física" },
-    { id: 3, nombre: "Química" },
-    { id: 4, nombre: "Historia" },
-    { id: 5, nombre: "Literatura" },
-]
-
-const TUTORES_MOCK = [
-    { id: 1, nombre: "Juan", apellido: "Pérez" },
-    { id: 2, nombre: "María", apellido: "López" },
-    { id: 3, nombre: "Carlos", apellido: "Rivera" },
-]
-
-const ESPACIOS_MOCK = [
-    {
-        id_espacio: 1,
-        nombre: "Classroom 101",
-        descripcion: "General classroom",
-        tutorId: 1,
-        materiaId: 1,
-        tutor: "Juan Pérez",
-        materia: "Matemáticas",
-        estado: true,
-    },
-    {
-        id_espacio: 2,
-        nombre: "Classroom 102",
-        descripcion: "General classroom",
-        tutorId: 2,
-        materiaId: 4,
-        tutor: "María López",
-        materia: "Historia",
-        estado: true,
-    },
-    {
-        id_espacio: 3,
-        nombre: "Classroom 103",
-        descripcion: "General classroom",
-        tutorId: 3,
-        materiaId: 3,
-        tutor: "Carlos Rivera",
-        materia: "Química",
-        estado: false,
-    },
-]
-
-/* ─────────────────────────────────────────────── */
 /*                  COMPONENTE PRINCIPAL            */
 /* ─────────────────────────────────────────────── */
 
 export default function EspaciosTable() {
-    const [espacios, setEspacios] = useState(ESPACIOS_MOCK)
+    const [espacios, setEspacios] = useState([])
+    const [materias, setMaterias] = useState([])
+    const [tutores, setTutores] = useState([])
     const [searchTerm, setSearchTerm] = useState("")
     const [showAddModal, setShowAddModal] = useState(false)
     const [showEditModal, setShowEditModal] = useState(false)
     const [showDeleteModal, setShowDeleteModal] = useState(false)
     const [selectedEspacio, setSelectedEspacio] = useState(null)
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState(null)
+
+    // Cargar datos iniciales
+    useEffect(() => {
+        fetchInitialData()
+    }, [])
+
+    const fetchInitialData = async () => {
+        try {
+            setLoading(true)
+            setError(null)
+            
+            // Cargar datos en paralelo
+            const [espaciosData, materiasData, usuariosData] = await Promise.all([
+                getEspacios(),
+                getMaterias(),
+                getTutores()
+            ])
+
+            setEspacios(espaciosData)
+            setMaterias(materiasData)
+            // Filtrar solo tutores y coordinadores
+            setTutores(usuariosData.filter(u => 
+                u.role === 'tutor' || u.role === 'coordinator' || u.role === 'admin'
+            ))
+        } catch (err) {
+            console.error('Error al cargar datos:', err)
+            setError('Error al cargar los datos. Por favor, intenta de nuevo.')
+        } finally {
+            setLoading(false)
+        }
+    }
 
     // Filtrar espacios
-    const filteredEspacios = espacios.filter(espacio =>
-        espacio.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        espacio.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        espacio.tutor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        espacio.materia.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+    const filteredEspacios = espacios.filter(espacio => {
+        const searchLower = searchTerm.toLowerCase()
+        return (
+            espacio.nombre?.toLowerCase().includes(searchLower) ||
+            espacio.descripcion?.toLowerCase().includes(searchLower) ||
+            espacio.tutor?.nombre?.toLowerCase().includes(searchLower) ||
+            espacio.tutor?.apellido?.toLowerCase().includes(searchLower)
+        )
+    })
 
     const handleEdit = (espacio) => {
         setSelectedEspacio(espacio)
@@ -122,45 +118,126 @@ export default function EspaciosTable() {
         setShowDeleteModal(true)
     }
 
-    const handleAddEspacio = (newEspacio) => {
-        // Buscar nombres del tutor y materia
-        const tutor = TUTORES_MOCK.find(t => t.id === parseInt(newEspacio.tutorId))
-        const materia = MATERIAS_MOCK.find(m => m.id === parseInt(newEspacio.materiaId))
-        
-        setEspacios([
-            ...espacios, 
-            { 
-                ...newEspacio, 
-                id_espacio: Date.now(),
-                tutor: tutor ? `${tutor.nombre} ${tutor.apellido}` : "",
-                materia: materia ? materia.nombre : ""
+    const handleAddEspacio = async (newEspacioData) => {
+        try {
+            // Crear el espacio con la estructura correcta de la API
+            const espacioToCreate = {
+                nombre: newEspacioData.nombre,
+                descripcion: newEspacioData.descripcion,
+                portada: newEspacioData.portada || null,
+                tutor_id: parseInt(newEspacioData.tutorId),
+                materia_id: parseInt(newEspacioData.materiaId)
             }
-        ])
-        setShowAddModal(false)
+
+            const response = await createEspacio(espacioToCreate)
+            
+            // Recargar la lista de espacios
+            await fetchInitialData()
+            
+            setShowAddModal(false)
+            alert('Espacio creado exitosamente')
+        } catch (err) {
+            console.error('Error al crear espacio:', err)
+            let errorMessage = 'Error al crear el espacio'
+            
+            if (err.response?.data?.message) {
+                errorMessage = err.response.data.message
+            }
+            
+            alert(errorMessage)
+        }
     }
 
-    const handleUpdateEspacio = (updatedEspacio) => {
-        // Buscar nombres del tutor y materia
-        const tutor = TUTORES_MOCK.find(t => t.id === parseInt(updatedEspacio.tutorId))
-        const materia = MATERIAS_MOCK.find(m => m.id === parseInt(updatedEspacio.materiaId))
-        
-        setEspacios(espacios.map(e =>
-            e.id_espacio === selectedEspacio.id_espacio 
-                ? { 
-                    ...updatedEspacio, 
-                    id_espacio: selectedEspacio.id_espacio,
-                    tutor: tutor ? `${tutor.nombre} ${tutor.apellido}` : e.tutor,
-                    materia: materia ? materia.nombre : e.materia
-                  } 
-                : e
-        ))
-        setShowEditModal(false)
+    const handleUpdateEspacio = async (updatedEspacioData) => {
+        try {
+            // Preparar datos para actualizar
+            const espacioToUpdate = {
+                nombre: updatedEspacioData.nombre,
+                descripcion: updatedEspacioData.descripcion,
+                portada: updatedEspacioData.portada || null
+            }
+
+            await updateEspacio(selectedEspacio.id_espacio, espacioToUpdate)
+            
+            // Recargar la lista
+            await fetchInitialData()
+            
+            setShowEditModal(false)
+            setSelectedEspacio(null)
+            alert('Espacio actualizado exitosamente')
+        } catch (err) {
+            console.error('Error al actualizar espacio:', err)
+            let errorMessage = 'Error al actualizar el espacio'
+            
+            if (err.response?.data?.message) {
+                errorMessage = err.response.data.message
+            }
+            
+            alert(errorMessage)
+        }
     }
 
-    const handleConfirmDelete = () => {
-        setEspacios(espacios.filter(e => e.id_espacio !== selectedEspacio.id_espacio))
-        setShowDeleteModal(false)
-        setSelectedEspacio(null)
+    const handleConfirmDelete = async () => {
+        try {
+            await deleteEspacio(selectedEspacio.id_espacio)
+            
+            // Recargar la lista
+            await fetchInitialData()
+            
+            setShowDeleteModal(false)
+            setSelectedEspacio(null)
+            alert('Espacio eliminado exitosamente')
+        } catch (err) {
+            console.error('Error al eliminar espacio:', err)
+            let errorMessage = 'Error al eliminar el espacio'
+            
+            // Manejar caso especial de dependencias
+            if (err.response?.data?.code === 'HAS_DEPENDENCIES') {
+                errorMessage = 'No se puede eliminar: el espacio tiene reservas o materiales asociados'
+            } else if (err.response?.data?.message) {
+                errorMessage = err.response.data.message
+            }
+            
+            alert(errorMessage)
+            setShowDeleteModal(false)
+            setSelectedEspacio(null)
+        }
+    }
+
+    // Obtener nombre de materia por ID
+    const getMateriaNombre = (materiaId) => {
+        const materia = materias.find(m => m.id_materia === materiaId)
+        return materia ? materia.nombre_materia : 'N/A'
+    }
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <div className="text-center">
+                    <RefreshCw className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-2" />
+                    <p className="text-sm text-gray-600">Cargando espacios...</p>
+                </div>
+            </div>
+        )
+    }
+
+    if (error) {
+        return (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                        <div className="text-red-600 mr-3">⚠️</div>
+                        <div>
+                            <p className="text-sm font-medium text-red-800">{error}</p>
+                        </div>
+                    </div>
+                    <Button onClick={fetchInitialData} variant="ghost" size="sm">
+                        <RefreshCw className="h-4 w-4 mr-1" />
+                        Reintentar
+                    </Button>
+                </div>
+            </div>
+        )
     }
 
     return (
@@ -173,19 +250,25 @@ export default function EspaciosTable() {
                             Gestión de Espacios
                         </h2>
                         <p className="text-sm text-gray-500">
-                            Administra los espacios y aulas
+                            Administra los espacios y aulas ({espacios.length} espacios)
                         </p>
                     </div>
-                    <Button onClick={() => setShowAddModal(true)}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        Nuevo Espacio
-                    </Button>
+                    <div className="flex gap-2">
+                        <Button onClick={fetchInitialData} variant="ghost">
+                            <RefreshCw className="mr-2 h-4 w-4" />
+                            Actualizar
+                        </Button>
+                        <Button onClick={() => setShowAddModal(true)}>
+                            <Plus className="mr-2 h-4 w-4" />
+                            Nuevo Espacio
+                        </Button>
+                    </div>
                 </div>
 
                 {/* Buscador */}
                 <div className="bg-white rounded-lg border border-gray-200 p-4">
                     <Input
-                        placeholder="Buscar espacios..."
+                        placeholder="Buscar por nombre, descripción o tutor..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         icon
@@ -223,8 +306,19 @@ export default function EspaciosTable() {
                                     <tr>
                                         <td colSpan="6" className="px-6 py-12 text-center">
                                             <div className="text-gray-500">
-                                                <p className="text-sm">No se encontraron espacios</p>
-                                                <p className="text-xs mt-1">Intenta con otros términos de búsqueda</p>
+                                                <p className="text-sm">
+                                                    {searchTerm 
+                                                        ? 'No se encontraron espacios con ese criterio' 
+                                                        : 'No hay espacios registrados'}
+                                                </p>
+                                                {searchTerm && (
+                                                    <button
+                                                        onClick={() => setSearchTerm('')}
+                                                        className="text-xs text-blue-600 hover:underline mt-1"
+                                                    >
+                                                        Limpiar búsqueda
+                                                    </button>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>
@@ -237,14 +331,16 @@ export default function EspaciosTable() {
                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                                 {espacio.nombre}
                                             </td>
-                                            <td className="px-6 py-4 text-sm text-gray-600">
-                                                {espacio.descripcion}
+                                            <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">
+                                                {espacio.descripcion || 'Sin descripción'}
                                             </td>
                                             <td className="px-6 py-4 text-sm text-gray-600">
-                                                {espacio.materia}
+                                                {getMateriaNombre(espacio.materia_id)}
                                             </td>
                                             <td className="px-6 py-4 text-sm text-gray-600">
-                                                {espacio.tutor}
+                                                {espacio.tutor 
+                                                    ? `${espacio.tutor.nombre} ${espacio.tutor.apellido}`
+                                                    : 'N/A'}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <span
@@ -262,12 +358,14 @@ export default function EspaciosTable() {
                                                     <button
                                                         onClick={() => handleEdit(espacio)}
                                                         className="text-gray-600 hover:text-gray-900 p-1"
+                                                        title="Editar espacio"
                                                     >
                                                         <Edit className="h-4 w-4" />
                                                     </button>
                                                     <button
                                                         onClick={() => handleDelete(espacio)}
                                                         className="text-gray-600 hover:text-red-600 p-1"
+                                                        title="Eliminar espacio"
                                                     >
                                                         <Trash2 className="h-4 w-4" />
                                                     </button>
@@ -287,8 +385,8 @@ export default function EspaciosTable() {
                 <AddEspacioModal
                     onClose={() => setShowAddModal(false)}
                     onAdd={handleAddEspacio}
-                    tutores={TUTORES_MOCK}
-                    materias={MATERIAS_MOCK}
+                    tutores={tutores}
+                    materias={materias}
                 />
             )}
 
@@ -297,8 +395,8 @@ export default function EspaciosTable() {
                     espacio={selectedEspacio}
                     onClose={() => setShowEditModal(false)}
                     onEdit={handleUpdateEspacio}
-                    tutores={TUTORES_MOCK}
-                    materias={MATERIAS_MOCK}
+                    tutores={tutores}
+                    materias={materias}
                 />
             )}
 

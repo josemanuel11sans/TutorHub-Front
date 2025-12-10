@@ -27,7 +27,7 @@ export const getCoordinadorById = async (id) => {
 // Crear un nuevo coordinador
 export const createCoordinador = async (coordinadorData) => {
   try {
-    const response = await api.post(endpoint, {
+    const response = await api.post(`${endpoint}/create`, {
       ...coordinadorData,
       role: "coordinator", // Asegurar que el rol sea coordinator
     });
@@ -44,7 +44,7 @@ export const updateCoordinador = async (id, coordinadorData) => {
     const response = await api.put(`${endpoint}/update/${id}`, coordinadorData);
     return response.data;
   } catch (error) {
-    console.error("Error al actualizar coordinador:", error);
+    console.error("Error al actualizar coordinador:", error)``;
     throw error;
   }
 };

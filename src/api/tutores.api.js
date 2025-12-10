@@ -27,7 +27,7 @@ export const getTutorById = async (id) => {
 // Crear un nuevo tutor
 export const createTutor = async (tutorData) => {
   try {
-    const response = await api.post(endpoint, {
+    const response = await api.post(`${endpoint}/create`, {
       ...tutorData,
       role: "tutor", // Asegurar que el rol sea tutor
     });

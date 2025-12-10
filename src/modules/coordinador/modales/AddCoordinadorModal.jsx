@@ -7,9 +7,9 @@ export function AddCoordinadorModal({ onClose, onAdd }) {
     const [formData, setFormData] = useState({
         nombre: "",
         apellido: "",
-        correo: "",
+        email: "",
         telefono: "",
-        currentPassword: "",
+        password: "",
         estado: true,
     })
     const [showPasswords, setShowPasswords] = useState({
@@ -132,8 +132,8 @@ export function AddCoordinadorModal({ onClose, onAdd }) {
                         </label>
                         <input
                             type="email"
-                            name="correo"
-                            value={formData.correo}
+                            name="email"
+                            value={formData.email}
                             onChange={handleChange}
                             className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-gray-900 placeholder:text-gray-400"
                             placeholder="ejemplo@escuela.edu"
@@ -150,7 +150,7 @@ export function AddCoordinadorModal({ onClose, onAdd }) {
                         <div className="relative">
                             <input
                                 type={showPasswords.current ? "text" : "password"}
-                                name="currentPassword"
+                                name="password"
                                 value={formData.currentPassword}
                                 onChange={handleChange}
                                 className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-gray-900 placeholder:text-gray-400"

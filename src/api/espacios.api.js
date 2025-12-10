@@ -1,21 +1,87 @@
-import api from "./base.api"; // o la ruta donde lo tengas
+import api from "./base.api";
 
-export const createEspacio = async (data) => {
+const endpoint = "/espacios";
+
+// Obtener todos los espacios
+export const getEspacios = async () => {
   try {
-    const res = await api.post("/espacios/create", data);
-    return res.data;
+    const response = await api.get(`${endpoint}/all`);
+    return response.data;
+  } catch (error) {
+    console.error("Error al obtener espacios:", error);
+    throw error;
+  }
+};
+
+// Obtener espacios de un tutor específico
+export const getEspaciosByTutor = async (tutorId) => {
+  try {
+    const response = await api.get(`${endpoint}/tutor/${tutorId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error al obtener espacios del tutor:", error);
+    throw error;
+  }
+};
+
+// Buscar espacios por nombre
+export const searchEspacios = async (nombre) => {
+  try {
+    const response = await api.get(`${endpoint}/search`, {
+      params: { nombre }
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error al buscar espacios:", error);
+    throw error;
+  }
+};
+
+// Obtener un espacio por ID
+export const getEspacioById = async (id) => {
+  try {
+    const response = await api.get(`${endpoint}/id/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error al obtener espacio:", error);
+    throw error;
+  }
+};
+
+// Crear un nuevo espacio
+export const createEspacio = async (espacioData) => {
+  console.log("Data cruda recibida en createEspacio:", espacioData);
+  console.log("Tipo tutor_id:", typeof espacioData.tutor_id);
+  console.log("Tipo materia_id:", typeof espacioData.materia_id);
+
+  try {
+    const response = await api.post(`${endpoint}/create`, espacioData);
+    return response.data;
   } catch (error) {
     console.error("Error al crear espacio:", error);
     throw error;
   }
 };
 
-export const getEspaciosByTutor = async (tutorId) => {
+
+// Actualizar un espacio
+export const updateEspacio = async (id, espacioData) => {
   try {
-    const res = await api.get(`/espacios/tutor/${tutorId}`);
-    return res.data;
+    const response = await api.put(`${endpoint}/update/${id}`, espacioData);
+    return response.data;
   } catch (error) {
-    console.error("Error al obtener espacios por tutor:", error);
+    console.error("Error al actualizar espacio:", error);
+    throw error;
+  }
+};
+
+// Eliminar un espacio (soft delete)
+export const deleteEspacio = async (id) => {
+  try {
+    const response = await api.delete(`${endpoint}/delete/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error al eliminar espacio:", error);
     throw error;
   }
 };
