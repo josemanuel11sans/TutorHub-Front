@@ -8,7 +8,7 @@ export function AddAsesoriaModal({ onClose, onAdd }) {
     materia: "",
     fecha: "",
     hora: "",
-    tutor: "",
+    alumno: "",
     estado: true,
   })
 
@@ -22,7 +22,7 @@ export function AddAsesoriaModal({ onClose, onAdd }) {
     "Bases de Datos",
   ]
 
-  const tutoresMock = [
+  const alumnosMock = [
     "Juan Carlos García",
     "María López",
     "Daniela Rodríguez",
@@ -134,23 +134,23 @@ export function AddAsesoriaModal({ onClose, onAdd }) {
             />
           </div>
 
-          {/* Tutor (Select) */}
+          {/* Alumno (Select) */}
           <div className="space-y-1.5">
             <label className="flex items-center gap-2 text-xs font-medium text-gray-700">
               <User className="h-3.5 w-3.5 text-gray-400" />
-              Tutor
+              Alumno
             </label>
             <select
-              name="tutor"
-              value={formData.tutor}
+              name="alumno"
+              value={formData.alumno}
               onChange={handleChange}
               className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg 
               focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
               required
             >
-              <option value="" disabled>Selecciona un tutor</option>
-              {tutoresMock.map((tutor, idx) => (
-                <option key={idx} value={tutor}>{tutor}</option>
+              <option value="" disabled>Selecciona un alumno</option>
+              {alumnosMock.map((alumno, idx) => (
+                <option key={idx} value={alumno}>{alumno}</option>
               ))}
             </select>
           </div>

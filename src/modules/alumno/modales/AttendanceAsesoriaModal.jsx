@@ -1,10 +1,8 @@
-"use client";
+"use client"
 
-import { X, DoorOpen } from "lucide-react";
+import { X, CheckCircle } from "lucide-react"
 
-export function InscribirEspacioModal({ espacio, onClose, onConfirm }) {
-  if (!espacio) return null;
-
+export function AttendanceAsesoriaModal({ asesoria, onClose, onConfirm }) {
   return (
     <div
       className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4"
@@ -18,12 +16,12 @@ export function InscribirEspacioModal({ espacio, onClose, onConfirm }) {
         <div className="px-6 py-4 border-b border-gray-100 relative">
           <div className="flex items-center gap-3">
             <div className="bg-blue-600 p-2 rounded-lg">
-              <DoorOpen className="h-5 w-5 text-white" />
+              <CheckCircle className="h-5 w-5 text-white" />
             </div>
 
             <div>
-              <h2 className="text-lg font-bold text-gray-900">Inscribirse al Espacio</h2>
-              <p className="text-gray-500 text-xs">Confirma tu inscripción</p>
+              <h2 className="text-lg font-bold text-gray-900">Confirmar Asistencia</h2>
+              <p className="text-gray-500 text-xs">Registra la asistencia del alumno</p>
             </div>
           </div>
 
@@ -38,16 +36,20 @@ export function InscribirEspacioModal({ espacio, onClose, onConfirm }) {
         {/* CONTENT */}
         <div className="p-6">
           <p className="text-sm text-gray-700 mb-4 leading-relaxed">
-            ¿Deseas inscribirte al espacio{" "}
-            <span className="font-semibold">{espacio.nombre}</span>? <br />
-            Capacidad:{" "}
-            <span className="font-semibold">{espacio.capacidad} personas</span>
+            ¿Deseas registrar que el alumno{" "}
+            <span className="font-semibold">{asesoria.alumno}</span>{" "}
+            asistió a la asesoría de{" "}
+            <span className="font-semibold">{asesoria.materia}</span>{" "}
+            programada el día{" "}
+            <span className="font-semibold">{asesoria.fecha}</span>{" "}
+            a las{" "}
+            <span className="font-semibold">{asesoria.hora}</span>?
           </p>
 
           <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 flex gap-2 mb-6">
-            <DoorOpen className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
+            <CheckCircle className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
             <p className="text-xs text-blue-700">
-              Una vez inscrito, podrás acceder a los materiales y contenido asignado.
+              Esta acción guardará el registro de asistencia en el sistema.
             </p>
           </div>
 
@@ -70,11 +72,11 @@ export function InscribirEspacioModal({ espacio, onClose, onConfirm }) {
               hover:from-blue-700 hover:to-blue-800 transition-all shadow-md 
               shadow-blue-500/20"
             >
-              Inscribirme
+              Confirmar Asistencia
             </button>
           </div>
         </div>
       </div>
     </div>
-  );
+  )
 }
