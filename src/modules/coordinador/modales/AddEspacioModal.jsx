@@ -1,44 +1,74 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { X, FileText, Image, Users, BookOpen } from "lucide-react"
+import { createEspacio } from "../../../api/espacios.api"
+import { getMaterias } from "../../../api/materias.api"
+import { getTutores } from "../../../api/tutores.api"
 
-export default function AddEspacioModal({ onClose, onAdd, tutores = [], materias = [] }) {
+export default function AddEspacioModal({ onClose, onCreated }) {
   const [formData, setFormData] = useState({
     nombre: "",
     descripcion: "",
     portada: "",
     tutor_id: "",
     materia_id: "",
-    estado: true,
   })
 
+  const [tutores, setTutores] = useState([])
+  const [materias, setMaterias] = useState([])
   const [loading, setLoading] = useState(false)
 
+  // Cargar tutores y materias al montar el componente
+  useEffect(() => {
+    cargarDatos()
+  }, [])
+
+  const cargarDatos = async () => {
+    try {
+      const [tutoresData, materiasData] = await Promise.all([
+        getTutores(),
+        getMaterias()
+      ])
+      setTutores(tutoresData)
+      setMaterias(materiasData)
+    } catch (error) {
+      console.error("Error al cargar datos:", error)
+      alert("Error al cargar tutores y materias")
+    }
+  }
+
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target
+    const { name, value } = e.target
     setFormData({
       ...formData,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: value,
     })
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
 
-    const fixedData = {
-      ...formData,
-      tutor_id: Number(formData.tutor_id),
-      materia_id: Number(formData.materia_id)
-    }
+    try {
+      // Convertir IDs a números antes de enviar
+      const espacioData = {
+        ...formData,
+        tutor_id: Number(formData.tutor_id),
+        materia_id: Number(formData.materia_id)
+      }
 
-    setTimeout(() => {
-      onAdd(fixedData)
+      const res = await createEspacio(espacioData)
+
+      if (onCreated) onCreated(res)
+      onClose()
+    } catch (error) {
+      console.error("Error al crear espacio:", error)
+      alert("Error al crear el espacio")
+    } finally {
       setLoading(false)
-    }, 500)
+    }
   }
-
 
   return (
     <div
@@ -58,7 +88,7 @@ export default function AddEspacioModal({ onClose, onAdd, tutores = [], materias
             <div>
               <h2 className="text-lg font-bold text-gray-900">Nuevo Espacio</h2>
               <p className="text-gray-500 text-xs">
-                Crea un nuevo espacio dentro del sistema
+                Crea un nuevo espacio asignando tutor y materia
               </p>
             </div>
           </div>
@@ -72,7 +102,7 @@ export default function AddEspacioModal({ onClose, onAdd, tutores = [], materias
         </div>
 
         {/* FORM */}
-        <div className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {/* NOMBRE */}
           <div className="space-y-1.5">
             <label className="flex items-center gap-2 text-xs font-medium text-gray-700">
@@ -85,8 +115,9 @@ export default function AddEspacioModal({ onClose, onAdd, tutores = [], materias
               value={formData.nombre}
               onChange={handleChange}
               className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg 
-              focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
-              placeholder="Nombre del espacio"
+              focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none 
+              transition-all text-gray-900 placeholder:text-gray-400"
+              placeholder="Ej. Aula 101"
               required
             />
           </div>
@@ -102,8 +133,9 @@ export default function AddEspacioModal({ onClose, onAdd, tutores = [], materias
               value={formData.descripcion}
               onChange={handleChange}
               className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg 
-              focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all resize-none"
-              placeholder="Escribe una descripción..."
+              focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none 
+              transition-all resize-none text-gray-900 placeholder:text-gray-400"
+              placeholder="Ej. Laboratorio de computación"
               rows={3}
               required
             />
@@ -113,16 +145,18 @@ export default function AddEspacioModal({ onClose, onAdd, tutores = [], materias
           <div className="space-y-1.5">
             <label className="flex items-center gap-2 text-xs font-medium text-gray-700">
               <Image className="h-3.5 w-3.5 text-gray-400" />
-              Portada (opcional)
+              URL de portada
             </label>
             <input
-              type="url"
+              type="text"
               name="portada"
               value={formData.portada}
               onChange={handleChange}
               className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg 
-              focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
-              placeholder="https://imagen.com/portada.jpg"
+              focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none 
+              transition-all text-gray-900 placeholder:text-gray-400"
+              placeholder="https://ejemplo.com/imagen.jpg"
+              required
             />
           </div>
 
@@ -132,16 +166,16 @@ export default function AddEspacioModal({ onClose, onAdd, tutores = [], materias
               <BookOpen className="h-3.5 w-3.5 text-gray-400" />
               Materia
             </label>
-
             <select
               name="materia_id"
               value={formData.materia_id}
               onChange={handleChange}
               required
               className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg
-              focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+              focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none 
+              transition-all text-gray-900"
             >
-              <option value="">Seleccione una materia</option>
+              <option value="">Selecciona una materia</option>
               {materias.map((materia) => (
                 <option key={materia.id_materia} value={materia.id_materia}>
                   {materia.nombre_materia}
@@ -157,16 +191,16 @@ export default function AddEspacioModal({ onClose, onAdd, tutores = [], materias
               <Users className="h-3.5 w-3.5 text-gray-400" />
               Tutor encargado
             </label>
-
             <select
               name="tutor_id"
               value={formData.tutor_id}
               onChange={handleChange}
               required
               className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg
-              focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+              focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none 
+              transition-all text-gray-900"
             >
-              <option value="">Seleccione un tutor</option>
+              <option value="">Selecciona un tutor</option>
               {tutores.map((tutor) => (
                 <option key={tutor.id_usuario} value={tutor.id_usuario}>
                   {tutor.nombre} {tutor.apellido}
@@ -187,18 +221,17 @@ export default function AddEspacioModal({ onClose, onAdd, tutores = [], materias
             </button>
 
             <button
-              type="button"
-              onClick={handleSubmit}
+              type="submit"
               disabled={loading}
               className="flex-1 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r 
               from-blue-600 to-blue-700 rounded-lg hover:from-blue-700 hover:to-blue-800 
-              transition-all shadow-md shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+              transition-all shadow-md shadow-blue-500/20 disabled:opacity-50 
+              disabled:cursor-not-allowed disabled:shadow-none"
             >
-              {loading ? "Guardando..." : "Guardar"}
+              {loading ? "Guardando..." : "Crear"}
             </button>
-
           </div>
-        </div>
+        </form>
       </div>
     </div>
   )

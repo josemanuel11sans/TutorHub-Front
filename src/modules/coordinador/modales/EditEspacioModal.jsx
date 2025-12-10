@@ -2,31 +2,56 @@
 
 import { useState, useEffect } from "react"
 import { X, FileText, Image, Users, BookOpen } from "lucide-react"
+import { updateEspacio } from "../../../api/espacios.api"
+import { getMaterias } from "../../../api/materias.api"
+import { getTutores } from "../../../api/tutores.api"
 
-export function EditEspacioModal({ onClose, onEdit, espacio, tutores = [], materias = [] }) {
+export function EditEspacioModal({ onClose, onEdited, espacio }) {
   const [formData, setFormData] = useState({
     nombre: "",
     descripcion: "",
     portada: "",
-    tutorId: "",
-    materiaId: "",
+    tutor_id: "",
+    materia_id: "",
     estado: true,
   })
 
+  const [tutores, setTutores] = useState([])
+  const [materias, setMaterias] = useState([])
+  const [loading, setLoading] = useState(false)
+
+  // Cargar tutores y materias al montar el componente
+  useEffect(() => {
+    cargarDatos()
+  }, [])
+
+  // Cargar datos del espacio cuando cambie
   useEffect(() => {
     if (espacio) {
       setFormData({
         nombre: espacio.nombre || "",
         descripcion: espacio.descripcion || "",
         portada: espacio.portada || "",
-        tutorId: espacio.tutorId || "",
-        materiaId: espacio.materiaId || "",
+        tutor_id: espacio.tutor_id || espacio.tutorId || "",
+        materia_id: espacio.materia_id || espacio.materiaId || "",
         estado: espacio.estado ?? true,
       })
     }
   }, [espacio])
 
-  const [loading, setLoading] = useState(false)
+  const cargarDatos = async () => {
+    try {
+      const [tutoresData, materiasData] = await Promise.all([
+        getTutores(),
+        getMaterias()
+      ])
+      setTutores(tutoresData)
+      setMaterias(materiasData)
+    } catch (error) {
+      console.error("Error al cargar datos:", error)
+      alert("Error al cargar tutores y materias")
+    }
+  }
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target
@@ -36,14 +61,28 @@ export function EditEspacioModal({ onClose, onEdit, espacio, tutores = [], mater
     })
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
 
-    setTimeout(() => {
-      onEdit(formData)
+    try {
+      // Convertir IDs a números antes de enviar
+      const espacioData = {
+        ...formData,
+        tutor_id: Number(formData.tutor_id),
+        materia_id: Number(formData.materia_id)
+      }
+
+      const res = await updateEspacio(espacio.id_espacio || espacio.id, espacioData)
+
+      if (onEdited) onEdited(res)
+      onClose()
+    } catch (error) {
+      console.error("Error al actualizar espacio:", error)
+      alert("Error al actualizar el espacio")
+    } finally {
       setLoading(false)
-    }, 500)
+    }
   }
 
   return (
@@ -91,8 +130,9 @@ export function EditEspacioModal({ onClose, onEdit, espacio, tutores = [], mater
               value={formData.nombre}
               onChange={handleChange}
               className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg
-              focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-gray-900 placeholder:text-gray-400"
-              placeholder="Nombre del espacio"
+              focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none 
+              transition-all text-gray-900 placeholder:text-gray-400"
+              placeholder="Ej. Aula 101"
               required
             />
           </div>
@@ -108,27 +148,30 @@ export function EditEspacioModal({ onClose, onEdit, espacio, tutores = [], mater
               value={formData.descripcion}
               onChange={handleChange}
               className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg 
-              focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all resize-none text-gray-900 placeholder:text-gray-400"
+              focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none 
+              transition-all resize-none text-gray-900 placeholder:text-gray-400"
               rows={3}
-              placeholder="Escribe una descripción..."
+              placeholder="Ej. Laboratorio de computación"
               required
-            ></textarea>
+            />
           </div>
 
           {/* PORTADA */}
           <div className="space-y-1.5">
             <label className="flex items-center gap-2 text-xs font-medium text-gray-700">
               <Image className="h-3.5 w-3.5 text-gray-400" />
-              Portada (opcional)
+              URL de portada
             </label>
             <input
-              type="url"
+              type="text"
               name="portada"
               value={formData.portada}
               onChange={handleChange}
               className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg
-              focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-gray-900 placeholder:text-gray-400"
-              placeholder="https://imagen.com/portada.jpg"
+              focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none 
+              transition-all text-gray-900 placeholder:text-gray-400"
+              placeholder="https://ejemplo.com/imagen.jpg"
+              required
             />
           </div>
 
@@ -138,19 +181,20 @@ export function EditEspacioModal({ onClose, onEdit, espacio, tutores = [], mater
               <BookOpen className="h-3.5 w-3.5 text-gray-400" />
               Materia
             </label>
-
             <select
-              name="materiaId"
-              value={formData.materiaId}
+              name="materia_id"
+              value={formData.materia_id}
               onChange={handleChange}
               required
               className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg
-              focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-gray-900"
+              focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none 
+              transition-all text-gray-900"
             >
-              <option value="">Seleccione una materia</option>
+              <option value="">Selecciona una materia</option>
               {materias.map((materia) => (
-                <option key={materia.id} value={materia.id}>
-                  {materia.nombre}
+                <option key={materia.id_materia} value={materia.id_materia}>
+                  {materia.nombre_materia}
+                  {materia.carrera && ` - ${materia.carrera.nombre_carrera}`}
                 </option>
               ))}
             </select>
@@ -163,23 +207,24 @@ export function EditEspacioModal({ onClose, onEdit, espacio, tutores = [], mater
               Tutor encargado
             </label>
             <select
-              name="tutorId"
-              value={formData.tutorId}
+              name="tutor_id"
+              value={formData.tutor_id}
               onChange={handleChange}
               required
               className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg
-              focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-gray-900"
+              focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none 
+              transition-all text-gray-900"
             >
-              <option value="">Seleccione un tutor</option>
+              <option value="">Selecciona un tutor</option>
               {tutores.map((tutor) => (
-                <option key={tutor.id} value={tutor.id}>
+                <option key={tutor.id_usuario} value={tutor.id_usuario}>
                   {tutor.nombre} {tutor.apellido}
                 </option>
               ))}
             </select>
           </div>
 
-          {/* ESTADO */}
+          {/* ESTADO (oculto) */}
           <div className="flex items-center gap-2 hidden">
             <input
               type="checkbox"
@@ -207,7 +252,8 @@ export function EditEspacioModal({ onClose, onEdit, espacio, tutores = [], mater
               disabled={loading}
               className="flex-1 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r 
               from-blue-600 to-blue-700 rounded-lg hover:from-blue-700 hover:to-blue-800 
-              transition-all shadow-md shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+              transition-all shadow-md shadow-blue-500/20 disabled:opacity-50 
+              disabled:cursor-not-allowed disabled:shadow-none"
             >
               {loading ? "Actualizando..." : "Actualizar"}
             </button>

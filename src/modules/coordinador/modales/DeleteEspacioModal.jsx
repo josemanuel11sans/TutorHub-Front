@@ -1,8 +1,31 @@
 "use client"
 
+import { useState } from "react"
 import { X, AlertTriangle } from "lucide-react"
+import { deleteEspacio } from "../../../api/espacios.api"
 
-export function DeleteEspacioModal({ onClose, onDelete, espacio }) {
+export function DeleteEspacioModal({ onClose, onDeleted, espacio }) {
+  const [loading, setLoading] = useState(false)
+
+  const handleDelete = async () => {
+    setLoading(true)
+
+    try {
+      // Usar el ID correcto del espacio (puede venir como id_espacio o id)
+      const espacioId = espacio.id_espacio || espacio.id
+      
+      const res = await deleteEspacio(espacioId)
+
+      if (onDeleted) onDeleted(res)
+      onClose()
+    } catch (error) {
+      console.error("Error al eliminar espacio:", error)
+      alert("Error al eliminar el espacio")
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div 
       className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4"
@@ -39,7 +62,7 @@ export function DeleteEspacioModal({ onClose, onDelete, espacio }) {
           <div className="bg-red-50 border border-red-100 rounded-lg p-3 flex gap-2 mb-6">
             <AlertTriangle className="h-4 w-4 text-red-600 flex-shrink-0 mt-0.5" />
             <p className="text-xs text-red-700">
-              Esta acción eliminará el registro de forma lógica.
+              Esta acción eliminará el registro de forma lógica. El espacio será marcado como inactivo.
             </p>
           </div>
 
@@ -48,16 +71,22 @@ export function DeleteEspacioModal({ onClose, onDelete, espacio }) {
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-all"
+              disabled={loading}
+              className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg 
+              hover:bg-gray-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancelar
             </button>
             <button
               type="button"
-              onClick={() => onDelete(espacio)}
-              className="flex-1 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-red-600 to-red-700 rounded-lg hover:from-red-700 hover:to-red-800 transition-all shadow-md shadow-red-500/20"
+              onClick={handleDelete}
+              disabled={loading}
+              className="flex-1 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r 
+              from-red-600 to-red-700 rounded-lg hover:from-red-700 hover:to-red-800 
+              transition-all shadow-md shadow-red-500/20 disabled:opacity-50 
+              disabled:cursor-not-allowed disabled:shadow-none"
             >
-              Eliminar
+              {loading ? "Eliminando..." : "Eliminar"}
             </button>
           </div>
         </div>
