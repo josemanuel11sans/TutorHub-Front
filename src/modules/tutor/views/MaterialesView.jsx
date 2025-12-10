@@ -53,59 +53,9 @@ const Badge = ({ children, variant = "default" }) => {
   )
 }
 
-// Datos de prueba
-const MATERIALES_MOCK = [
-  {
-    id: 1,
-    nombre: "Introducción a React Hooks",
-    espacio: "Desarrollo Web Avanzado",
-    tipo_archivo: "PDF",
-    estado: true,
-    fecha: "2024-01-15",
-  },
-  {
-    id: 2,
-    nombre: "Patrones de diseño en JavaScript",
-    espacio: "Desarrollo Web Avanzado",
-    tipo_archivo: "PPT",
-    estado: true,
-    fecha: "2024-01-12",
-  },
-  {
-    id: 3,
-    nombre: "Normalización de Bases de Datos",
-    espacio: "Bases de Datos II",
-    tipo_archivo: "PDF",
-    estado: true,
-    fecha: "2024-01-10",
-  },
-  {
-    id: 4,
-    nombre: "SQL Avanzado - Optimización",
-    espacio: "Bases de Datos II",
-    tipo_archivo: "PDF",
-    estado: true,
-    fecha: "2024-01-08",
-  },
-  {
-    id: 5,
-    nombre: "Arquitectura Hexagonal",
-    espacio: "Arquitectura de Software",
-    tipo_archivo: "PPT",
-    estado: false,
-    fecha: "2024-01-05",
-  },
-  {
-    id: 6,
-    nombre: "Clean Code Principles",
-    espacio: "Arquitectura de Software",
-    tipo_archivo: "PDF",
-    estado: true,
-    fecha: "2024-01-03",
-  },
-]
+// NOTE: removed local mock data — materiales are loaded from backend via getFilesByUser or other endpoints
 
-export default function MaterialesView({ tutorId: propTutorId }) {
+export default function MaterialesView({ tutorId: propTutorId, espacioId: propEspacioId }) {
   const { user } = useContext(AuthContext)
   const [materiales, setMateriales] = useState([])
   const [searchTerm, setSearchTerm] = useState("")
@@ -281,7 +231,9 @@ export default function MaterialesView({ tutorId: propTutorId }) {
       </div>
 
       {/* Modales */}
-      {showAddModal && <AddMaterialModal onClose={() => setShowAddModal(false)} />}
+      {showAddModal && (
+        <AddMaterialModal onClose={() => setShowAddModal(false)} espacioId={propEspacioId} />
+      )}
       {showEditModal && selectedMaterial && (
         <EditMaterialModal
           material={selectedMaterial}

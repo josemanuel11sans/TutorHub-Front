@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   ArrowLeft,
   Plus,
@@ -13,6 +13,7 @@ import {
   Users,
   BookOpen,
   FolderOpen,
+  Eye,
 } from "lucide-react"
 import { AddMaterialModal } from "../modales/AddMaterialModal"
 import { DeleteMaterialModal } from "../modales/DeleteMaterialModal"
@@ -21,6 +22,7 @@ import  {AddAsesoriaModal}  from "../modales/AddAsesoriaModal"
 import { DeleteAsesoriaModal } from "../modales/DeleteAsesoriaModal"
 import { EditAsesoriaModal } from "../modales/EditAsesoriaModal"
 import { AttendanceAsesoriaModal } from "../modales/AttendanceAsesoriaModal"
+import { useToast } from "../../../context/ToastContext"
 
 const Button = ({ children, onClick, variant = "default", size = "default", className = "" }) => {
   const baseStyles = "inline-flex items-center justify-center rounded-md font-medium transition-colors"
@@ -61,65 +63,53 @@ const Badge = ({ children, variant = "default" }) => {
   )
 }
 
-// Mock data filtrado por espacio
-const MATERIALES_MOCK = [
-  {
-    id: 1,
-    nombre: "Introducción a React Hooks",
-    espacioId: 1,
-    tipo_archivo: "PDF",
-    estado: true,
-    fecha: "2024-01-15",
-  },
-  {
-    id: 2,
-    nombre: "Patrones de diseño en JavaScript",
-    espacioId: 1,
-    tipo_archivo: "PPT",
-    estado: true,
-    fecha: "2024-01-12",
-  },
-  {
-    id: 3,
-    nombre: "Next.js Server Components",
-    espacioId: 1,
-    tipo_archivo: "PDF",
-    estado: true,
-    fecha: "2024-01-10",
-  },
-]
+// NOTE: removed local mock data — materiales and asesorias should come from backend
 
-const ASESORIAS_MOCK = [
-  {
-    id: 1,
-    titulo: "Dudas sobre React Hooks",
-    fecha: "2024-01-20",
-    hora: "10:00",
-    duracion: "1h",
-    lugar: "Aula 101",
-    espacioId: 1,
-    asistentes: 8,
-    estado: "programada",
-  },
-  {
-    id: 2,
-    titulo: "Revisión de proyectos finales",
-    fecha: "2024-01-22",
-    hora: "14:00",
-    duracion: "2h",
-    lugar: "Lab. Computación",
-    espacioId: 1,
-    asistentes: 12,
-    estado: "programada",
-  },
-]
+export default function EspacioDetailView({ espacio, onBack, initialOpenAddMaterial = false }) {
+  const [materiales, setMateriales] = useState([])
+  const [asesorias, setAsesorias] = useState([])
+  const toast = useToast()
 
-export default function EspacioDetailView({ espacio, onBack }) {
-  const [materiales, setMateriales] = useState(MATERIALES_MOCK)
-  const [asesorias, setAsesorias] = useState(ASESORIAS_MOCK)
+  useEffect(() => {
+    console.log('EspacioDetailView mounted or espacio changed:', espacio)
+    // Obtener materiales del espacio desde la API
+    const fetchMateriales = async () => {
+      try {
+        if (!espacio?.id) return
+        const { getFilesByEspacio } = await import("../../../api/claudinary.api")
+        const files = await getFilesByEspacio(espacio.id)
+        // Normalizar a la estructura usada localmente
+        const normalized = (Array.isArray(files) ? files : []).map((f) => {
+          const mt = (f.mimetype || "").toLowerCase()
+          let tipo_archivo = "OTRO"
+          if (mt.includes("pdf")) tipo_archivo = "PDF"
+          else if (mt.includes("presentation") || mt.includes("powerpoint") || (f.originalName || "").toLowerCase().endsWith(".ppt") || (f.originalName || "").toLowerCase().endsWith(".pptx")) tipo_archivo = "PPT"
+          else if (mt.includes("word") || (f.originalName || "").toLowerCase().endsWith(".doc") || (f.originalName || "").toLowerCase().endsWith(".docx")) tipo_archivo = "DOC"
+          else if (mt.includes("image")) tipo_archivo = "IMG"
+
+          return {
+            id: f.id,
+            nombre: f.originalName || f.publicId || "Archivo",
+            espacioId: f.espacioId ?? f.espacio ?? espacio.id,
+            tipo_archivo,
+            estado: true,
+            fecha: f.createdAt ? f.createdAt.split("T")[0] : new Date().toISOString().split("T")[0],
+            url: f.url,
+            _raw: f,
+          }
+        })
+
+        setMateriales(normalized)
+      } catch (err) {
+        console.error('Error al obtener materiales del espacio:', err)
+      }
+    }
+
+    fetchMateriales()
+  }, [espacio])
 
   // Material modals
-  const [showAddMaterialModal, setShowAddMaterialModal] = useState(false)
+  const [showAddMaterialModal, setShowAddMaterialModal] = useState(initialOpenAddMaterial)
   const [showEditMaterialModal, setShowEditMaterialModal] = useState(false)
   const [showDeleteMaterialModal, setShowDeleteMaterialModal] = useState(false)
   const [selectedMaterial, setSelectedMaterial] = useState(null)
@@ -155,7 +145,21 @@ export default function EspacioDetailView({ espacio, onBack }) {
 
         {/* Banner del espacio */}
         <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
-          <div className={`${espacio.color} h-32 relative`}>
+          <div className="relative h-40 overflow-hidden">
+            {espacio.portada ? (
+              <img src={espacio.portada} alt={`${espacio.nombre} - portada`} className="w-full h-40 object-cover" />
+            ) : (
+              <div className={`${espacio.color} w-full h-40 flex items-center justify-center`}>
+                <svg width="160" height="80" viewBox="0 0 160 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="opacity-60">
+                  <rect width="160" height="80" rx="6" fill="#E5E7EB" />
+                  <g fill="#9CA3AF">
+                    <rect x="12" y="18" width="40" height="28" rx="3" />
+                    <rect x="60" y="14" width="88" height="12" rx="2" />
+                    <rect x="60" y="32" width="56" height="8" rx="2" />
+                  </g>
+                </svg>
+              </div>
+            )}
             <div className="absolute inset-0 bg-gradient-to-br from-black/20 to-transparent" />
           </div>
           <div className="p-6">
@@ -200,11 +204,38 @@ export default function EspacioDetailView({ espacio, onBack }) {
           </div>
         </div>
 
+        {/* Detalles (muestra todos los datos del espacio) */}
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-3">Detalles del espacio</h2>
+          <div className="grid gap-2 grid-cols-1 md:grid-cols-2 text-sm text-gray-700">
+            {Object.entries(espacio._raw || espacio).map(([k, v]) => {
+              let display = v
+              try {
+                if (v === null || v === undefined) display = "-"
+                else if (typeof v === "object") display = JSON.stringify(v)
+                else display = String(v)
+              } catch (err) {
+                display = "(no disponible)"
+              }
+
+              // Truncar si es muy largo
+              if (typeof display === "string" && display.length > 200) display = display.slice(0, 200) + "..."
+
+              return (
+                <div key={k} className="flex items-start gap-2">
+                  <div className="w-36 text-gray-500 capitalize">{k.replace(/_/g, " ")}</div>
+                  <div className="flex-1 break-words">{display}</div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
         {/* Sección de Materiales */}
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-gray-900">Materiales</h2>
-            <Button onClick={() => setShowAddMaterialModal(true)}>
+            <Button onClick={() => { console.log('Abrir AddMaterialModal desde detalle, espacioId:', espacio.id); setShowAddMaterialModal(true) }}>
               <Plus className="mr-2 h-4 w-4" />
               Publicar Material
             </Button>
@@ -219,10 +250,10 @@ export default function EspacioDetailView({ espacio, onBack }) {
               </div>
             ) : (
               espacioMateriales.map((material) => (
-                <div
-                  key={material.id}
-                  className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow"
-                >
+                  <div
+                    key={material.id}
+                    className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow"
+                  >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start gap-3 flex-1">
                       <FileText className="h-5 w-5 text-gray-400 mt-0.5" />
@@ -241,19 +272,31 @@ export default function EspacioDetailView({ espacio, onBack }) {
                     </div>
 
                     <div className="flex items-center gap-1">
+                      {/* Visualizar si es PDF o imagen */}
+                      {(material.tipo_archivo === "PDF" || material.tipo_archivo === "IMG") && (
+                        <a
+                          href={material.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="Visualizar"
+                          className="text-gray-600 hover:text-gray-900 p-2 hover:bg-gray-100 rounded transition-colors"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </a>
+                      )}
                       <button
-                        onClick={() => {
-                          setSelectedMaterial(material)
-                          setShowEditMaterialModal(true)
-                        }}
-                        className="text-gray-600 hover:text-gray-900 p-2 hover:bg-gray-100 rounded transition-colors"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => {
-                          setSelectedMaterial(material)
-                          setShowDeleteMaterialModal(true)
+                        onClick={async () => {
+                          // eliminar el archivo en backend
+                          try {
+                            const { deleteFile } = await import("../../../api/claudinary.api")
+                            await deleteFile(material.id)
+                            setMateriales((prev) => prev.filter((m) => m.id !== material.id))
+                            try { toast?.showToast?.('Archivo eliminado', 'success') } catch (e) { console.warn(e) }
+                          } catch (err) {
+                            console.error('Error eliminando archivo:', err)
+                            try { toast?.showToast?.('No se pudo eliminar el archivo', 'error') } catch (e) { console.warn(e) }
+                          }
                         }}
                         className="text-gray-600 hover:text-red-600 p-2 hover:bg-gray-100 rounded transition-colors"
                       >
@@ -369,12 +412,33 @@ export default function EspacioDetailView({ espacio, onBack }) {
 
       {/* Material Modals */}
       {showAddMaterialModal && (
-        <AddMaterialModal
+          <AddMaterialModal
           onClose={() => setShowAddMaterialModal(false)}
-          onAdd={(newMaterial) => {
+          espacioId={espacio.id}
+          onUploaded={(res) => {
+            console.log('AddMaterialModal onUploaded:', res, 'espacioId:', espacio.id)
+            // res puede ser { message, file } o directamente el file
+            const file = res?.file ?? res
+            const nombre = file?.originalName || file?.publicId || "Archivo"
+            const fecha = file?.createdAt ? file.createdAt.split("T")[0] : new Date().toISOString().split("T")[0]
+            const mt = (file?.mimetype || "").toLowerCase()
+            let tipo_archivo = "OTRO"
+            if (mt.includes("pdf")) tipo_archivo = "PDF"
+            else if (mt.includes("presentation") || mt.includes("powerpoint") || file?.originalName?.toLowerCase().endsWith(".ppt") || file?.originalName?.toLowerCase().endsWith(".pptx")) tipo_archivo = "PPT"
+            else if (mt.includes("word") || file?.originalName?.toLowerCase().endsWith(".doc") || file?.originalName?.toLowerCase().endsWith(".docx")) tipo_archivo = "DOC"
+            else if (mt.includes("image")) tipo_archivo = "IMG"
+
             setMateriales([
               ...materiales,
-              { ...newMaterial, id: Date.now(), espacioId: espacio.id, fecha: new Date().toISOString().split("T")[0] },
+              {
+                id: file?.id ?? Date.now(),
+                nombre,
+                espacioId: espacio.id,
+                tipo_archivo,
+                estado: true,
+                fecha,
+                url: file?.url,
+              },
             ])
             setShowAddMaterialModal(false)
           }}
@@ -440,3 +504,4 @@ export default function EspacioDetailView({ espacio, onBack }) {
     </>
   )
 }
+

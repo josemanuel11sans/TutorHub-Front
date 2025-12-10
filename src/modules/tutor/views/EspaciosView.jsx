@@ -50,92 +50,45 @@ const Badge = ({ children, variant = "default" }) => {
   )
 }
 
-// Datos mock
-const ESPACIOS_MOCK = [
-  {
-    id: 1,
-    nombre: "Desarrollo Web Avanzado",
-    materia: "Desarrollo Web",
-    descripcion: "Curso de React y Next.js",
-    capacidad: 30,
-    alumnos: 28,
-    materiales: 12,
-    color: "bg-blue-500",
-  },
-  {
-    id: 2,
-    nombre: "Bases de Datos II",
-    materia: "Bases de Datos",
-    descripcion: "PostgreSQL y diseño avanzado",
-    capacidad: 35,
-    alumnos: 32,
-    materiales: 8,
-    color: "bg-green-500",
-  },
-  {
-    id: 3,
-    nombre: "Arquitectura de Software",
-    materia: "Arquitectura",
-    descripcion: "Patrones y mejores prácticas",
-    capacidad: 25,
-    alumnos: 20,
-    materiales: 15,
-    color: "bg-purple-500",
-  },
-  {
-    id: 4,
-    nombre: "Programación Funcional",
-    materia: "Programación",
-    descripcion: "Paradigma funcional con ejemplos",
-    capacidad: 30,
-    alumnos: 25,
-    materiales: 10,
-    color: "bg-orange-500",
-  },
-  {
-    id: 5,
-    nombre: "Machine Learning Básico",
-    materia: "IA",
-    descripcion: "Introducción a ML",
-    capacidad: 20,
-    alumnos: 18,
-    materiales: 9,
-    color: "bg-pink-500",
-  },
-]
+// NOTE: removed local mock data — espacios now come from backend via getEspaciosByTutor
 
 export default function EspaciosView({ onSelectEspacio, tutorId: propTutorId }) {
   const { user } = useContext(AuthContext)
-  const [espacios, setEspacios] = useState(ESPACIOS_MOCK)
+  const [espacios, setEspacios] = useState([])
   const [searchTerm, setSearchTerm] = useState("")
   const [showAddModal, setShowAddModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [selectedEspacio, setSelectedEspacio] = useState(null)
 
-  const filteredEspacios = espacios.filter(
-    (e) =>
-      e.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      e.materia.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      e.descripcion.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+  const filteredEspacios = espacios.filter((e) => {
+    const nombre = (e.nombre || "").toString().toLowerCase()
+    const materia = (e.materia || "").toString().toLowerCase()
+    const descripcion = (e.descripcion || "").toString().toLowerCase()
+    const term = (searchTerm || "").toLowerCase()
+    return nombre.includes(term) || materia.includes(term) || descripcion.includes(term)
+  })
 
   const handleEdit = (espacio) => {
+    console.log('Abrir EditEspacioModal para espacio:', espacio)
     setSelectedEspacio(espacio)
     setShowEditModal(true)
   }
 
   const handleDelete = (espacio) => {
+    console.log('Abrir DeleteEspacioModal para espacio:', espacio)
     setSelectedEspacio(espacio)
     setShowDeleteModal(true)
   }
 
   const handleAddEspacio = (newEspacio) => {
+    console.log('Agregar espacio local:', newEspacio)
     setEspacios([...espacios, { ...newEspacio, id: Date.now(), alumnos: 0, materiales: 0, color: "bg-blue-500" }])
     setShowAddModal(false)
   }
 
   const handleUpdateEspacio = (updated) => {
+    console.log('Actualizar espacio local:', updated)
     setEspacios(espacios.map((e) => (e.id === updated.id ? updated : e)))
     setShowEditModal(false)
   }
@@ -146,11 +99,40 @@ export default function EspaciosView({ onSelectEspacio, tutorId: propTutorId }) 
         const id = propTutorId ?? user?.id
         if (!id) return
         const data = await getEspaciosByTutor(id)
-        // Si el backend devuelve un objeto con property 'espacios', manejarlo
-        if (Array.isArray(data)) setEspacios(data)
-        else if (Array.isArray(data.espacios)) setEspacios(data.espacios)
-        else if (Array.isArray(data.data)) setEspacios(data.data)
-        else console.warn('Respuesta inesperada al obtener espacios:', data)
+
+        // Normalizar la respuesta a un arreglo y mapear campos esperados
+        let raw = []
+        if (Array.isArray(data)) raw = data
+        else if (Array.isArray(data.espacios)) raw = data.espacios
+        else if (Array.isArray(data.data)) raw = data.data
+        else {
+          console.warn('Respuesta inesperada al obtener espacios:', data)
+        }
+
+        const normalized = raw.map((r) => ({
+          id: r.id_espacio ?? r.id ?? r._id ?? null,
+          nombre: r.nombre ?? r.name ?? "",
+          materia: r.materia ?? r.subject ?? "",
+          descripcion: r.descripcion ?? r.descripcion_corta ?? r.description ?? "",
+          portada: r.portada ?? r.cover ?? r.image ?? null,
+          alumnos: Number(r.alumnos ?? r.alumnosCount ?? r.studentCount ?? 0),
+          capacidad: Number(r.capacidad ?? r.capacity ?? 0),
+          materiales: Number(r.materiales ?? r.materialCount ?? r.filesCount ?? 0),
+          color: r.color ?? r.bgColor ?? "bg-blue-500",
+          _raw: r,
+        }))
+
+        console.log('Espacios (normalizados):', normalized.map((x) => ({ id: x.id, nombre: x.nombre, alumnos: x.alumnos, materiales: x.materiales })))
+        setEspacios(normalized)
+
+        // Guardar ids de espacios en localStorage para referencia posterior
+        try {
+          const ids = normalized.map((e) => e.id)
+          console.log('Espacios obtenidos:', ids)
+          if (ids.length) localStorage.setItem('espaciosIds', JSON.stringify(ids))
+        } catch (err) {
+          console.warn('No se pudo guardar espaciosIds en localStorage', err)
+        }
       } catch (err) {
         console.error('Error al obtener espacios:', err)
       }
@@ -160,8 +142,21 @@ export default function EspaciosView({ onSelectEspacio, tutorId: propTutorId }) 
   }, [user?.id, propTutorId])
 
   const handleConfirmDelete = () => {
-    setEspacios(espacios.filter((e) => e.id !== selectedEspacio.id))
-    setShowDeleteModal(false)
+    const doDelete = async () => {
+      try {
+        // Llamar a la API para eliminar el espacio
+        const { deleteEspacio } = await import("../../../api/espacios.api")
+        await deleteEspacio(selectedEspacio.id)
+        setEspacios(espacios.filter((e) => e.id !== selectedEspacio.id))
+      } catch (err) {
+        console.error('Error eliminando espacio:', err)
+        // seguir removiendo localmente como fallback? por ahora mostramos en consola
+      } finally {
+        setShowDeleteModal(false)
+      }
+    }
+
+    doDelete()
   }
 
   return (
@@ -200,14 +195,35 @@ export default function EspaciosView({ onSelectEspacio, tutorId: propTutorId }) 
               </div>
             </div>
           ) : (
-            filteredEspacios.map((espacio) => (
+            filteredEspacios.map((espacio, _idx) => (
               <div
-                key={espacio.id}
-                onClick={() => onSelectEspacio(espacio)}
+                key={espacio.id ?? `espacio-${_idx}`}
+                onClick={() => {
+                  try {
+                    localStorage.setItem('lastSelectedEspacioId', String(espacio.id))
+                  } catch (err) {
+                    /* noop */
+                  }
+                  onSelectEspacio(espacio)
+                }}
                 className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden hover:shadow-md transition-all cursor-pointer hover:scale-[1.02]"
               >
-                {/* Header con color */}
-                <div className={`${espacio.color} h-24 relative`}>
+                {/* Header con portada o color */}
+                <div className={`h-24 relative overflow-hidden ${!espacio.portada ? espacio.color : ''}`}>
+                  {espacio.portada ? (
+                    <img src={espacio.portada} alt={`${espacio.nombre} - portada`} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                      <svg width="120" height="60" viewBox="0 0 160 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="opacity-60">
+                        <rect width="160" height="80" rx="6" fill="#F3F4F6" />
+                        <g fill="#9CA3AF">
+                          <rect x="12" y="18" width="40" height="28" rx="3" />
+                          <rect x="60" y="14" width="88" height="12" rx="2" />
+                          <rect x="60" y="32" width="56" height="8" rx="2" />
+                        </g>
+                      </svg>
+                    </div>
+                  )}
                   <div className="absolute top-3 right-3 flex gap-1">
                     <button
                       onClick={(e) => {

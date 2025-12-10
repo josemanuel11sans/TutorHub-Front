@@ -158,7 +158,9 @@ export function AddEspacioModal({ onClose, onCreated }) {
               name="materia_id"
               value={formData.materia_id}
               onChange={handleChange}
-              className="..."
+              className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg 
+    focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none 
+    transition-all text-gray-900 placeholder:text-gray-400"
               required
             >
               <option value="">Selecciona una materia</option>

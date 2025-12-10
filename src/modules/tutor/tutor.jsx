@@ -1,11 +1,20 @@
 "use client"
 import { Navbar } from "./components/Navbar"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import EspaciosView from "./views/EspaciosView"
 import EspacioDetailView from "./views/EspacioDetailView"
 
 export default function TutorPage() {
   const [selectedEspacio, setSelectedEspacio] = useState(null)
+  
+
+  useEffect(() => {
+    console.log('TutorPage mounted')
+  }, [])
+
+  useEffect(() => {
+    console.log('TutorPage selectedEspacio changed:', selectedEspacio)
+  }, [selectedEspacio])
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -15,7 +24,7 @@ export default function TutorPage() {
         {selectedEspacio ? (
           <EspacioDetailView espacio={selectedEspacio} onBack={() => setSelectedEspacio(null)} />
         ) : (
-          <EspaciosView onSelectEspacio={setSelectedEspacio} />
+          <EspaciosView onSelectEspacio={(espacio) => setSelectedEspacio(espacio)} />
         )}
       </div>
     </div>

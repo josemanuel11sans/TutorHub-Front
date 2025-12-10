@@ -2,15 +2,18 @@
 
 import { useState } from "react"
 import { X, DoorOpen, FileText, Building2, Users } from "lucide-react"
+import { updateEspacio } from "../../../api/espacios.api"
+import { useToast } from "../../../context/ToastContext"
 
 export function EditEspacioModal({ espacio, onClose, onUpdate }) {
+  const toast = useToast()
   const [formData, setFormData] = useState({
-    id_espacio: espacio.id_espacio,
+    id_espacio: espacio.id_espacio ?? espacio.id,
     nombre: espacio.nombre,
     descripcion: espacio.descripcion || "",
-    edificio: espacio.edificio,
-    capacidad: espacio.capacidad,
-    estado: espacio.estado,
+    portada: espacio.portada || (espacio._raw && (espacio._raw.portada || espacio._raw.cover)) || "",
+    tutor_id: espacio._raw?.tutor_id ?? espacio._raw?.tutorId ?? undefined,
+    materia_id: espacio._raw?.materia_id ?? espacio._raw?.materiaId ?? undefined,
   })
 
   const [loading, setLoading] = useState(false)
@@ -23,15 +26,41 @@ export function EditEspacioModal({ espacio, onClose, onUpdate }) {
     })
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
-
-    // Simulación de actualización
-    setTimeout(() => {
-      onUpdate(formData)
+    try {
+      const id = formData.id_espacio
+      const payload = {
+        nombre: formData.nombre,
+        descripcion: formData.descripcion,
+        portada: formData.portada,
+        tutor_id: formData.tutor_id,
+        materia_id: formData.materia_id,
+      }
+      const res = await updateEspacio(id, payload)
+      // Respuesta esperada: { message, espacio: {...} }
+      const updatedRaw = res?.espacio ?? res
+      const normalized = {
+        id: updatedRaw.id_espacio ?? updatedRaw.id ?? id,
+        nombre: updatedRaw.nombre ?? formData.nombre,
+        descripcion: updatedRaw.descripcion ?? formData.descripcion,
+        portada: updatedRaw.portada ?? formData.portada,
+        alumnos: espacio.alumnos ?? 0,
+        capacidad: updatedRaw.capacidad ?? espacio.capacidad ?? 0,
+        materiales: espacio.materiales ?? 0,
+        color: espacio.color ?? "bg-blue-500",
+        _raw: updatedRaw,
+      }
+      try { toast?.showToast?.('Espacio actualizado', 'success') } catch (e) { console.warn(e) }
+      onUpdate(normalized)
       setLoading(false)
-    }, 500)
+      onClose()
+    } catch (err) {
+      console.error('Error actualizando espacio:', err)
+      try { toast?.showToast?.(err?.response?.data?.message || 'No se pudo actualizar el espacio', 'error') } catch (e) { console.warn(e) }
+      setLoading(false)
+    }
   }
 
   return (

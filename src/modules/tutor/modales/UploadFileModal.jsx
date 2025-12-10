@@ -4,9 +4,11 @@ import { useState, useContext } from "react"
 import { X, Upload } from "lucide-react"
 import { AuthContext } from "../../../context/AuthContext"
 import { uploadFile } from "../../../api/claudinary.api"
+import { useToast } from "../../../context/ToastContext"
 
-export function UploadFileModal({ onClose }) {
+export function UploadFileModal({ onClose, espacioId }) {
   const { user } = useContext(AuthContext)
+  const toast = useToast()
   const [file, setFile] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -33,13 +35,17 @@ export function UploadFileModal({ onClose }) {
 
     try {
       setLoading(true)
-      await uploadFile(file, usuarioId)
+      console.log('UploadFileModal: iniciando upload', { usuarioId: user?.id, espacioId, file: file?.name })
+      await uploadFile(file, usuarioId, espacioId)
+      console.log('UploadFileModal: upload completado')
+      try { toast?.showToast?.('Archivo subido correctamente', 'success') } catch (e) { console.warn(e) }
       setLoading(false)
       // Cerrar modal tras subida correcta
       onClose()
     } catch (err) {
       console.error(err)
       setError("Error al subir el archivo")
+      try { toast?.showToast?.(err?.response?.data?.message || 'No se pudo subir el archivo', 'error') } catch (e) { console.warn(e) }
       setLoading(false)
     }
   }

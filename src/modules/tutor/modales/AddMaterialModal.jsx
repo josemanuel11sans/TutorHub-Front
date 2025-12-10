@@ -4,9 +4,11 @@ import { useState, useContext } from "react"
 import { X, FileText } from "lucide-react"
 import { AuthContext } from "../../../context/AuthContext"
 import { uploadFile } from "../../../api/claudinary.api"
+import { useToast } from "../../../context/ToastContext"
 
-export function AddMaterialModal({ onClose }) {
+export function AddMaterialModal({ onClose, onUploaded, espacioId }) {
   const { user } = useContext(AuthContext)
+  const toast = useToast()
   const [file, setFile] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -30,14 +32,47 @@ export function AddMaterialModal({ onClose }) {
       return
     }
 
+    // Determinar espacioId: preferir el prop, sino usar el último seleccionado guardado
+    let espacioIdToSend = espacioId
+    try {
+      if (!espacioIdToSend) {
+        const last = localStorage.getItem('lastSelectedEspacioId')
+        if (last) espacioIdToSend = Number(last)
+      }
+    } catch (err) {
+      /* noop */
+    }
+
+    if (!espacioIdToSend) {
+      setError('No se pudo determinar el espacio al que pertenece el material.')
+      return
+    }
+
     try {
       setLoading(true)
-      await uploadFile(file, usuarioId)
+      console.log('Iniciando upload desde modal. usuarioId:', usuarioId, 'espacioId:', espacioIdToSend, 'file:', file.name)
+      const res = await uploadFile(file, usuarioId, espacioIdToSend)
+      console.log('Upload respuesta:', res)
       setLoading(false)
+      // Notificar éxito
+      try {
+        toast?.showToast?.('Material subido correctamente', 'success')
+      } catch (err) {
+        console.warn('toast.showToast fallo:', err)
+      }
+      // Si el padre pidió la info subida, enviarla
+      if (onUploaded) onUploaded(res)
       onClose()
     } catch (err) {
       console.error(err)
       setError("Error al subir el archivo")
+      try {
+        // Mostrar mensaje y detalle si está disponible
+        const msg = err?.response?.data?.message || err?.message || 'No se pudo subir el material'
+        toast?.showToast?.(msg, 'error')
+      } catch (err) {
+        console.warn('toast.showToast fallo:', err)
+      }
       setLoading(false)
     }
   }
@@ -73,7 +108,6 @@ export function AddMaterialModal({ onClose }) {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-
           {/* Archivo */}
           <div className="space-y-1.5">
             <label className="flex items-center gap-2 text-xs font-medium text-gray-700">
