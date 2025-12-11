@@ -67,6 +67,7 @@ export default function EdificiosTable() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
     const [searchTerm, setSearchTerm] = useState("")
+    const [statusFilter, setStatusFilter] = useState("todos") // todos | activos | inactivos
     const [showAddModal, setShowAddModal] = useState(false)
     const [showEditModal, setShowEditModal] = useState(false)
     const [showDeleteModal, setShowDeleteModal] = useState(false)
@@ -98,11 +99,17 @@ export default function EdificiosTable() {
         if (!edificio) return false
         
         const searchLower = searchTerm.toLowerCase()
-        return (
+        const matchesSearch = (
             (edificio.nombre?.toLowerCase() || "").includes(searchLower) ||
             (edificio.descripcion?.toLowerCase() || "").includes(searchLower) ||
             (edificio.ubicacion?.toLowerCase() || "").includes(searchLower)
         )
+        const matchesStatus = (
+            statusFilter === 'todos' ||
+            (statusFilter === 'activos' && edificio.estado === true) ||
+            (statusFilter === 'inactivos' && edificio.estado === false)
+        )
+        return matchesSearch && matchesStatus
     })
 
     const handleEdit = (edificio) => {
@@ -228,7 +235,7 @@ Administra los edificios del sistema                        </p>
                     </div>
                 </div>
 
-                {/* Buscador y estadísticas */}
+                {/* Buscador + Filtro estado */}
                 <div className="bg-white rounded-lg border border-gray-200 p-4">
                     <div className="flex flex-col sm:flex-row gap-4 items-center">
                         <div className="flex-1 w-full">
@@ -239,8 +246,16 @@ Administra los edificios del sistema                        </p>
                                 icon
                             />
                         </div>
-                        <div className="flex items-center gap-3">
-
+                        <div className="w-full sm:w-56">
+                            <select
+                                value={statusFilter}
+                                onChange={(e) => setStatusFilter(e.target.value)}
+                                className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                            >
+                                <option value="todos">Estado</option>
+                                <option value="activos">Activos</option>
+                                <option value="inactivos">Inactivos</option>
+                            </select>
                         </div>
                     </div>
                 </div>

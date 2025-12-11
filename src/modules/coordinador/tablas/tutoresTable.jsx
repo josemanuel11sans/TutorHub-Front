@@ -81,6 +81,7 @@ export default function TutoresTable() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [actionLoading, setActionLoading] = useState(false)
+  const [statusFilter, setStatusFilter] = useState("todos") // todos | activos | inactivos
   const toast = useToast()
 
   // Cargar tutores al montar el componente
@@ -102,15 +103,21 @@ export default function TutoresTable() {
     }
   }
 
-  // Filtrar tutores
+  // Filtrar tutores por texto + estado
   const filteredTutores = tutores.filter(tutor => {
     const searchLower = searchTerm.toLowerCase()
     const fullName = `${tutor.nombre || ''} ${tutor.apellido_paterno || ''} ${tutor.apellido_materno || ''}`.toLowerCase()
-    return (
+    const matchesSearch = (
       fullName.includes(searchLower) ||
       (tutor.email || '').toLowerCase().includes(searchLower) ||
       (tutor.telefono || '').includes(searchTerm)
     )
+    const matchesStatus = (
+      statusFilter === 'todos' ||
+      (statusFilter === 'activos' && tutor.estado === true) ||
+      (statusFilter === 'inactivos' && tutor.estado === false)
+    )
+    return matchesSearch && matchesStatus
   })
 
   const handleEdit = (tutor) => {
@@ -212,15 +219,31 @@ export default function TutoresTable() {
           />
         )}
 
-        {/* Buscador */}
+        {/* Buscador + Filtro estado */}
         <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <Input
-            placeholder="Buscar tutores..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            icon
-            disabled={loading}
-          />
+          <div className="flex flex-col sm:flex-row items-center gap-4">
+            <div className="flex-1 w-full">
+              <Input
+                placeholder="Buscar tutores..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                icon
+                disabled={loading}
+              />
+            </div>
+            <div className="w-full sm:w-56">
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                disabled={loading}
+                className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+              >
+                <option value="todos">Estado</option>
+                <option value="activos">Activos</option>
+                <option value="inactivos">Inactivos</option>
+              </select>
+            </div>
+          </div>
         </div>
 
         {/* Tabla */}

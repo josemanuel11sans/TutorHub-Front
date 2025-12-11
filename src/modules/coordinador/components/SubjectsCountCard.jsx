@@ -74,12 +74,7 @@ export default function SubjectsCountCard() {
         <div>
           <p className="text-sm font-medium text-gray-600">Materias</p>
           <p className="text-3xl font-bold text-gray-900 mt-2">{totalMaterias}</p>
-          <p className="text-xs text-gray-500 mt-1">
-            {carrerasUnicas > 0 
-              ? `${carrerasUnicas} ${carrerasUnicas === 1 ? 'carrera' : 'carreras'}`
-              : 'Sin carreras asignadas'
-            }
-          </p>
+
         </div>
         <BookOpen className="h-8 w-8 text-gray-400" />
       </div>

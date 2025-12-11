@@ -83,6 +83,7 @@ export default function CoordinadoresTable() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [actionLoading, setActionLoading] = useState(false)
+  const [statusFilter, setStatusFilter] = useState("todos") // todos | activos | inactivos
   const toast = useToast()
 
   // Cargar coordinadores al montar el componente
@@ -104,15 +105,21 @@ export default function CoordinadoresTable() {
     }
   }
 
-  // Filtrar coordinadores
+  // Filtrar coordinadores (texto + estado)
   const filteredCoordinadores = coordinadores.filter(coord => {
     const searchLower = searchTerm.toLowerCase()
     const fullName = `${coord.nombre || ''} ${coord.apellido_paterno || ''} ${coord.apellido_materno || ''}`.toLowerCase()
-    return (
+    const matchesSearch = (
       fullName.includes(searchLower) ||
       (coord.email || '').toLowerCase().includes(searchLower) ||
       (coord.telefono || '').includes(searchTerm)
     )
+    const matchesStatus = (
+      statusFilter === 'todos' ||
+      (statusFilter === 'activos' && coord.estado === true) ||
+      (statusFilter === 'inactivos' && coord.estado === false)
+    )
+    return matchesSearch && matchesStatus
   })
 
   const handleEdit = (coordinador) => {
@@ -214,15 +221,31 @@ export default function CoordinadoresTable() {
           />
         )}
 
-        {/* Buscador */}
+        {/* Buscador + Filtro estado */}
         <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <Input
-            placeholder="Buscar coordinadores..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            icon
-            disabled={loading}
-          />
+          <div className="flex flex-col sm:flex-row items-center gap-4">
+            <div className="flex-1 w-full">
+              <Input
+                placeholder="Buscar coordinadores..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                icon
+                disabled={loading}
+              />
+            </div>
+            <div className="w-full sm:w-56">
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                disabled={loading}
+                className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+              >
+                <option value="todos">Estado</option>
+                <option value="activos">Activos</option>
+                <option value="inactivos">Inactivos</option>
+              </select>
+            </div>
+          </div>
         </div>
 
         {/* Tabla */}

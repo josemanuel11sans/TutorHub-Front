@@ -66,6 +66,7 @@ export default function EspaciosTable() {
     const [selectedEspacio, setSelectedEspacio] = useState(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
+    const [statusFilter, setStatusFilter] = useState("todos") // todos | activos | inactivos
     const toast = useToast()
 
     // Cargar datos iniciales
@@ -112,12 +113,18 @@ export default function EspaciosTable() {
     // Filtrar espacios
     const filteredEspacios = espacios.filter(espacio => {
         const searchLower = searchTerm.toLowerCase()
-        return (
+        const matchesSearch = (
             espacio.nombre?.toLowerCase().includes(searchLower) ||
             espacio.descripcion?.toLowerCase().includes(searchLower) ||
             espacio.tutor?.nombre?.toLowerCase().includes(searchLower) ||
             espacio.tutor?.apellido?.toLowerCase().includes(searchLower)
         )
+        const matchesStatus = (
+            statusFilter === 'todos' ||
+            (statusFilter === 'activos' && espacio.estado === true) ||
+            (statusFilter === 'inactivos' && espacio.estado === false)
+        )
+        return matchesSearch && matchesStatus
     })
 
     const handleEdit = (espacio) => {
@@ -285,14 +292,29 @@ export default function EspaciosTable() {
                     </div>
                 </div>
 
-                {/* Buscador */}
+                {/* Buscador + Filtro estado */}
                 <div className="bg-white rounded-lg border border-gray-200 p-4">
-                    <Input
-                        placeholder="Buscar por nombre, descripción o tutor..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        icon
-                    />
+                    <div className="flex flex-col sm:flex-row items-center gap-4">
+                        <div className="flex-1 w-full">
+                            <Input
+                                placeholder="Buscar por nombre, descripción o tutor..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                icon
+                            />
+                        </div>
+                        <div className="w-full sm:w-56">
+                            <select
+                                value={statusFilter}
+                                onChange={(e) => setStatusFilter(e.target.value)}
+                                className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                            >
+                                <option value="todos">Estado</option>
+                                <option value="activos">Activos</option>
+                                <option value="inactivos">Inactivos</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Tabla */}

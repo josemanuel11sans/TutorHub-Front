@@ -65,6 +65,7 @@ export default function AulasTable() {
     const [selectedAula, setSelectedAula] = useState(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
+    const [statusFilter, setStatusFilter] = useState("todos") // todos | activos | inactivos
     const toast = useToast()
 
     // Cargar aulas al montar el componente
@@ -114,11 +115,20 @@ export default function AulasTable() {
     }, [])
 
     // Filtrar aulas
-    const filteredAulas = aulas.filter(aula =>
-        aula.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        aula.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        aula.edificioNombre.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+    const filteredAulas = aulas.filter(aula => {
+        const searchLower = searchTerm.toLowerCase()
+        const matchesSearch = (
+            (aula.nombre || '').toLowerCase().includes(searchLower) ||
+            (aula.descripcion || '').toLowerCase().includes(searchLower) ||
+            (aula.edificioNombre || '').toLowerCase().includes(searchLower)
+        )
+        const matchesStatus = (
+            statusFilter === 'todos' ||
+            (statusFilter === 'activos' && aula.estado === true) ||
+            (statusFilter === 'inactivos' && aula.estado === false)
+        )
+        return matchesSearch && matchesStatus
+    })
 
     const handleEdit = (aula) => {
         setSelectedAula(aula)
@@ -222,15 +232,31 @@ export default function AulasTable() {
                     </div>
                 )}
 
-                {/* Buscador */}
+                {/* Buscador + Filtro estado */}
                 <div className="bg-white rounded-lg border border-gray-200 p-4">
-                    <Input
-                        placeholder="Buscar aulas..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        icon
-                        disabled={loading}
-                    />
+                    <div className="flex flex-col sm:flex-row items-center gap-4">
+                        <div className="flex-1 w-full">
+                            <Input
+                                placeholder="Buscar aulas..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                icon
+                                disabled={loading}
+                            />
+                        </div>
+                        <div className="w-full sm:w-56">
+                            <select
+                                value={statusFilter}
+                                onChange={(e) => setStatusFilter(e.target.value)}
+                                disabled={loading}
+                                className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                            >
+                                <option value="todos">Estado</option>
+                                <option value="activos">Activos</option>
+                                <option value="inactivos">Inactivos</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Tabla */}

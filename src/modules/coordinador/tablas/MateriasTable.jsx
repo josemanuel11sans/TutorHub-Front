@@ -59,6 +59,7 @@ export default function MateriasTable() {
     const [materias, setMaterias] = useState([])
     const [carreras, setCarreras] = useState([])
     const [searchTerm, setSearchTerm] = useState("")
+    const [statusFilter, setStatusFilter] = useState("todos") // todos | activos | inactivos
     const [showAddModal, setShowAddModal] = useState(false)
     const [showEditModal, setShowEditModal] = useState(false)
     const [showDeleteModal, setShowDeleteModal] = useState(false)
@@ -96,11 +97,20 @@ export default function MateriasTable() {
         }
     }
 
-    // Filtrar materias
-    const filteredMaterias = materias.filter(materia =>
-        materia.nombre_materia?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        materia.descripcion?.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+    // Filtrar materias (texto + estado)
+    const filteredMaterias = materias.filter(materia => {
+        const searchLower = searchTerm.toLowerCase()
+        const matchesSearch = (
+            (materia.nombre_materia || '').toLowerCase().includes(searchLower) ||
+            (materia.descripcion || '').toLowerCase().includes(searchLower)
+        )
+        const matchesStatus = (
+            statusFilter === 'todos' ||
+            (statusFilter === 'activos' && materia.activo === true) ||
+            (statusFilter === 'inactivos' && materia.activo === false)
+        )
+        return matchesSearch && matchesStatus
+    })
 
     const handleEdit = (materia) => {
         setSelectedMateria(materia)
@@ -243,14 +253,29 @@ export default function MateriasTable() {
                     </div>
                 </div>
 
-                {/* Buscador */}
+                {/* Buscador + Filtro estado */}
                 <div className="bg-white rounded-lg border border-gray-200 p-4">
-                    <Input
-                        placeholder="Buscar por nombre o descripción..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        icon
-                    />
+                    <div className="flex flex-col sm:flex-row items-center gap-4">
+                        <div className="flex-1 w-full">
+                            <Input
+                                placeholder="Buscar por nombre o descripción..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                icon
+                            />
+                        </div>
+                        <div className="w-full sm:w-56">
+                            <select
+                                value={statusFilter}
+                                onChange={(e) => setStatusFilter(e.target.value)}
+                                className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                            >
+                                <option value="todos">Estado</option>
+                                <option value="activos">Activos</option>
+                                <option value="inactivos">Inactivos</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Tabla */}
