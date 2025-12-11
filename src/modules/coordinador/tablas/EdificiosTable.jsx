@@ -288,18 +288,7 @@ export default function EdificiosTable() {
                             />
                         </div>
                         <div className="flex items-center gap-3">
-                            <div className="flex items-center gap-1">
-                                <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                                <span className="text-sm text-gray-600">
-                                    {edificios.filter(e => e.estado).length} Activos
-                                </span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                                <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                                <span className="text-sm text-gray-600">
-                                    {edificios.filter(e => !e.estado).length} Inactivos
-                                </span>
-                            </div>
+
                         </div>
                     </div>
                 </div>

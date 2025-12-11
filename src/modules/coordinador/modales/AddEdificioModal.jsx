@@ -2,8 +2,9 @@
 
 import { useState } from "react"
 import { X, Building2, FileText, MapPin } from "lucide-react"
+import { createEdificio } from "../../../api/edificios.api"
 
-export function AddEdificioModal({ onClose, onAdd }) {
+export function AddEdificioModal({ onClose, onCreated }) {
     const [formData, setFormData] = useState({
         nombre: "",
         descripcion: "",
@@ -24,11 +25,23 @@ export function AddEdificioModal({ onClose, onAdd }) {
         e.preventDefault()
         setLoading(true)
 
-        // Simulación de guardado
-        setTimeout(() => {
-            onAdd(formData)
+        try {
+            const res = await createEdificio(formData)
+
+            if (onCreated) onCreated(res)
+            onClose()
+        } catch (error) {
+            console.error("Error al crear edificio:", error)
+            
+            // Manejo de errores específicos
+            if (error.message) {
+                alert(error.message)
+            } else {
+                alert("Error al crear el edificio")
+            }
+        } finally {
             setLoading(false)
-        }, 500)
+        }
     }
 
     return (
@@ -72,8 +85,10 @@ export function AddEdificioModal({ onClose, onAdd }) {
                             name="nombre"
                             value={formData.nombre}
                             onChange={handleChange}
-                            className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-gray-900 placeholder:text-gray-400"
-                            placeholder="Ingresa el nombre del edificio"
+                            className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg 
+                            focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none 
+                            transition-all text-gray-900 placeholder:text-gray-400"
+                            placeholder="Ej. Edificio A"
                             required
                         />
                     </div>
@@ -82,16 +97,17 @@ export function AddEdificioModal({ onClose, onAdd }) {
                     <div className="space-y-1.5">
                         <label className="flex items-center gap-2 text-xs font-medium text-gray-700">
                             <FileText className="h-3.5 w-3.5 text-gray-400" />
-                            Descripción
+                            Descripción (opcional)
                         </label>
                         <textarea
                             name="descripcion"
                             value={formData.descripcion}
                             onChange={handleChange}
-                            className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all resize-none text-gray-900 placeholder:text-gray-400"
+                            className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg 
+                            focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none 
+                            transition-all resize-none text-gray-900 placeholder:text-gray-400"
                             placeholder="Escribe una descripción del edificio"
                             rows={3}
-                            required
                         />
                     </div>
 
@@ -105,7 +121,9 @@ export function AddEdificioModal({ onClose, onAdd }) {
                             name="ubicacion"
                             value={formData.ubicacion}
                             onChange={handleChange}
-                            className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-gray-900"
+                            className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg 
+                            focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none 
+                            transition-all text-gray-900"
                             required
                         >
                             <option value="">Selecciona una ubicación</option>
@@ -117,7 +135,7 @@ export function AddEdificioModal({ onClose, onAdd }) {
                         </select>
                     </div>
 
-                    {/* Estado */}
+                    {/* Estado (oculto) */}
                     <div className="flex items-center gap-2 hidden">
                         <input
                             type="checkbox"
@@ -134,16 +152,20 @@ export function AddEdificioModal({ onClose, onAdd }) {
                         <button
                             type="button"
                             onClick={onClose}
-                            className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-all"
+                            className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg 
+                            hover:bg-gray-200 transition-all"
                         >
                             Cancelar
                         </button>
                         <button
                             type="submit"
                             disabled={loading}
-                            className="flex-1 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+                            className="flex-1 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r 
+                            from-blue-600 to-blue-700 rounded-lg hover:from-blue-700 hover:to-blue-800 
+                            transition-all shadow-md shadow-blue-500/20 disabled:opacity-50 
+                            disabled:cursor-not-allowed disabled:shadow-none"
                         >
-                            {loading ? "Guardando..." : "Guardar"}
+                            {loading ? "Guardando..." : "Crear"}
                         </button>
                     </div>
                 </form>
