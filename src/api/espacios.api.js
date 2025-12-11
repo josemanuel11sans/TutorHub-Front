@@ -14,15 +14,19 @@ export const getEspacios = async () => {
 };
 
 // Obtener espacios de un tutor específico
-export const getEspaciosByTutor = async (tutorId) => {
+export const getEspaciosByTutor = async (tutorId, options = {}) => {
+  // options: { includeDeleted: boolean }
+  const params = {}
+  if (options.includeDeleted) params.estado = 0
+
   try {
-    const response = await api.get(`${endpoint}/tutor/${tutorId}`);
-    return response.data;
+    const response = await api.get(`${endpoint}/tutor/${tutorId}`, { params })
+    return response.data
   } catch (error) {
-    console.error("Error al obtener espacios del tutor:", error);
-    throw error;
+    console.error("Error al obtener espacios del tutor:", error)
+    throw error
   }
-};
+}
 
 // Buscar espacios por nombre
 export const searchEspacios = async (nombre) => {

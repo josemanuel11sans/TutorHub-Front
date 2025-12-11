@@ -1,12 +1,13 @@
 "use client"
 
 import { useState, useEffect, useContext } from "react"
-import { Search, Plus, Edit, Trash2, Users, FolderOpen } from "lucide-react"
+import { Search, Plus, Edit, Trash2, Users, FolderOpen, RotateCcw, Archive } from "lucide-react"
 import  {AddEspacioModal}   from "../modales/AddEspacioModal"
 import { DeleteEspacioModal } from "../modales/DeleteEspacioModal"
 import { EditEspacioModal } from "../modales/EditEspacioModal"
 import { AuthContext } from "../../../context/AuthContext"
-import { getEspaciosByTutor } from "../../../api/espacios.api"
+import { getEspaciosByTutor, updateEspacio } from "../../../api/espacios.api"
+import { useToast } from "../../../context/ToastContext"
 
 const Button = ({ children, onClick, variant = "default", size = "default", className = "" }) => {
   const baseStyles = "inline-flex items-center justify-center rounded-md font-medium transition-colors"
@@ -16,7 +17,7 @@ const Button = ({ children, onClick, variant = "default", size = "default", clas
   }
   const sizes = {
     default: "px-4 py-2",
-    sm: "px-2 py-1 text-sm",
+    sm: "px-2 py-1 text-xs",
   }
 
   return (
@@ -59,7 +60,11 @@ export default function EspaciosView({ onSelectEspacio, tutorId: propTutorId }) 
   const [showAddModal, setShowAddModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [showDeletedModal, setShowDeletedModal] = useState(false)
   const [selectedEspacio, setSelectedEspacio] = useState(null)
+  const [deletedEspacios, setDeletedEspacios] = useState([])
+  const [loadingDeleted, setLoadingDeleted] = useState(false)
+  const { showToast } = useToast() || {}
 
   // fetchEspacios moved to component scope so we can call it on demand
   const fetchEspacios = async () => {
@@ -109,6 +114,7 @@ export default function EspaciosView({ onSelectEspacio, tutorId: propTutorId }) 
           capacidad: Number(r.capacidad ?? r.capacity ?? 0),
           materiales: Number(materialesCount ?? 0),
           color: r.color ?? r.bgColor ?? "bg-blue-500",
+          estado: r.estado ?? r.active ?? r.activo ?? r.isActive ?? 1,
           _raw: r,
         }
       })
@@ -126,6 +132,38 @@ export default function EspaciosView({ onSelectEspacio, tutorId: propTutorId }) 
       }
     } catch (err) {
       console.error('Error al obtener espacios:', err)
+    }
+  }
+
+  const fetchDeletedEspacios = async () => {
+    try {
+      setLoadingDeleted(true)
+      const id = propTutorId ?? user?.id
+      if (!id) return
+      const data = await getEspaciosByTutor(id, { includeDeleted: true })
+
+      let raw = []
+      if (Array.isArray(data)) raw = data
+      else if (Array.isArray(data.espacios)) raw = data.espacios
+      else if (Array.isArray(data.data)) raw = data.data
+
+      const normalized = raw
+        .map((r) => ({
+          id: r.id_espacio ?? r.id ?? r._id ?? null,
+          nombre: r.nombre ?? r.name ?? "",
+          materia: r.materia ?? r.subject ?? "",
+          descripcion: r.descripcion ?? r.descripcion_corta ?? r.description ?? "",
+          capacidad: Number(r.capacidad ?? r.capacity ?? 0),
+          estado: r.estado ?? r.active ?? r.activo ?? r.isActive ?? 1,
+        }))
+        .filter((r) => r.estado === 0 || r.estado === false || String(r.estado) === "0")
+
+      setDeletedEspacios(normalized)
+    } catch (err) {
+      console.error('Error al obtener espacios borrados:', err)
+      setDeletedEspacios([])
+    } finally {
+      setLoadingDeleted(false)
     }
   }
 
@@ -155,6 +193,7 @@ export default function EspaciosView({ onSelectEspacio, tutorId: propTutorId }) 
     console.log('Actualizar espacio local:', updated)
     setEspacios(espacios.map((e) => (e.id === updated.id ? updated : e)))
     setShowEditModal(false)
+    showToast?.("Espacio actualizado", "success")
   }
 
   useEffect(() => {
@@ -168,9 +207,10 @@ export default function EspaciosView({ onSelectEspacio, tutorId: propTutorId }) 
         const { deleteEspacio } = await import("../../../api/espacios.api")
         await deleteEspacio(selectedEspacio.id)
         setEspacios(espacios.filter((e) => e.id !== selectedEspacio.id))
+        showToast?.("Espacio eliminado", "success")
       } catch (err) {
         console.error('Error eliminando espacio:', err)
-        // seguir removiendo localmente como fallback? por ahora mostramos en consola
+        showToast?.("No se pudo eliminar el espacio", "error")
       } finally {
         setShowDeleteModal(false)
       }
@@ -198,11 +238,13 @@ export default function EspaciosView({ onSelectEspacio, tutorId: propTutorId }) 
       capacidad: Number(r.capacidad ?? 0),
       materiales: Number(r.materiales ?? 0),
       color: r.color ?? "bg-blue-500",
+      estado: r.estado ?? r.active ?? r.activo ?? r.isActive ?? 1,
       _raw: r,
     }
 
     setEspacios((prev) => [normalized, ...prev])
     setShowAddModal(false)
+    showToast?.("Espacio creado", "success")
   }
 
   return (
@@ -215,11 +257,24 @@ export default function EspaciosView({ onSelectEspacio, tutorId: propTutorId }) 
             <p className="text-sm text-gray-500 mt-1">Selecciona un espacio para ver sus materiales y asesorías</p>
           </div>
 
-          <div className="flex items-center gap-3">
-            <Button onClick={() => fetchEspacios()} variant="ghost" className="mr-2">
+          <div className="flex items-center gap-2">
+            <Button onClick={() => fetchEspacios()} variant="ghost" size="sm" className="shrink-0">
+              <RotateCcw className="mr-2 h-4 w-4" />
               Actualizar
             </Button>
-            <Button onClick={() => setShowAddModal(true)}>
+            <Button
+              onClick={() => {
+                fetchDeletedEspacios()
+                setShowDeletedModal(true)
+              }}
+              variant="ghost"
+              size="sm"
+              className="shrink-0"
+            >
+              <Archive className="mr-2 h-4 w-4" />
+              Espacios borrados
+            </Button>
+            <Button onClick={() => setShowAddModal(true)} size="sm" className="shrink-0">
               <Plus className="mr-2 h-4 w-4" />
               Crear Espacio
             </Button>
@@ -337,6 +392,65 @@ export default function EspaciosView({ onSelectEspacio, tutorId: propTutorId }) 
           onClose={() => setShowDeleteModal(false)}
           onConfirm={handleConfirmDelete}
         />
+      )}
+      {showDeletedModal && (
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl mx-auto overflow-hidden border border-gray-200">
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
+              <div className="bg-blue-100 p-2 rounded-lg">
+                <Archive className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">Espacios borrados</h3>
+                <p className="text-sm text-gray-500">Mostrando espacios que fueron eliminados</p>
+              </div>
+            </div>
+            <div className="max-h-96 overflow-y-auto divide-y divide-gray-200 px-6">
+              {loadingDeleted ? (
+                <p className="text-sm text-gray-500 py-6 text-center">Cargando...</p>
+              ) : deletedEspacios.length === 0 ? (
+                <p className="text-sm text-gray-500 py-6 text-center">No hay espacios borrados</p>
+              ) : (
+                deletedEspacios.map((e) => (
+                  <div key={e.id} className="py-3 flex items-start gap-3">
+                    <div className="w-10 h-10 rounded bg-gray-100 flex items-center justify-center text-gray-500 text-xs font-semibold uppercase">
+                      {String(e.nombre || "?").slice(0, 2)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-900 line-clamp-1">{e.nombre}</p>
+                      <p className="text-xs text-gray-500 line-clamp-1">{e.materia}</p>
+                      <p className="text-xs text-gray-600 line-clamp-2 mt-1">{e.descripcion}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        className="shrink-0"
+                        onClick={async () => {
+                          try {
+                            await updateEspacio(e.id, { estado: true })
+                            setDeletedEspacios((prev) => prev.filter((x) => x.id !== e.id))
+                            fetchEspacios()
+                            showToast?.("Espacio restaurado", "success")
+                          } catch (err) {
+                            console.error('Error restaurando espacio:', err)
+                            showToast?.("No se pudo restaurar el espacio", "error")
+                          }
+                        }}
+                      >
+                        Restaurar
+                      </Button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+            <div className="mt-4 flex justify-end px-6 pb-5">
+              <Button onClick={() => setShowDeletedModal(false)} variant="ghost" size="sm" className="shrink-0">
+                Cerrar
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   )

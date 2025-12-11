@@ -37,10 +37,11 @@ export function UserMenu({ user }) {
   }, [isOpen])
 
   const handleDownloadManual = () => {
-    // Aquí va la lógica para descargar el PDF
+    // Descargar el PDF desde la carpeta public
     const link = document.createElement("a")
-    link.href = "/manuals/manual-usuario.pdf"
+    link.href = "/ManualDeUsuario_TutorHub.pdf"
     link.download = "Manual_de_Usuario.pdf"
+    link.target = "_blank"
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)

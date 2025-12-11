@@ -33,7 +33,7 @@ const Button = ({ children, onClick, variant = "default", size = "default", clas
   }
   const sizes = {
     default: "px-4 py-2",
-    sm: "px-2 py-1 text-sm",
+    sm: "px-2 py-1 text-xs",
   }
 
   return (
@@ -270,7 +270,11 @@ export default function EspacioDetailView({ espacio, onBack, initialOpenAddMater
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-gray-900">Materiales</h2>
-            <Button onClick={() => { console.log('Abrir AddMaterialModal desde detalle, espacioId:', espacio.id); setShowAddMaterialModal(true) }}>
+            <Button
+              onClick={() => { console.log('Abrir AddMaterialModal desde detalle, espacioId:', espacio.id); setShowAddMaterialModal(true) }}
+              size="sm"
+              className="shrink-0"
+            >
               <Plus className="mr-2 h-4 w-4" />
               Publicar Material
             </Button>
@@ -307,19 +311,19 @@ export default function EspacioDetailView({ espacio, onBack, initialOpenAddMater
                     </div>
 
                     <div className="flex items-center gap-1">
-                      {/* Visualizar si es PDF o imagen */}
-                      {(material.tipo_archivo === "PDF" || material.tipo_archivo === "IMG") && (
-                        <a
-                          href={material.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          title="Visualizar"
-                          className="text-gray-600 hover:text-gray-900 p-2 hover:bg-gray-100 rounded transition-colors"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </a>
-                      )}
+                      {/* Descargar archivo */}
+                      <a
+                        href={material.url}
+                        download={material.nombre || 'archivo'}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          try { toast?.showToast?.('Descargando archivo...', 'success') } catch (ex) { console.warn(ex) }
+                        }}
+                        title="Descargar"
+                        className="text-gray-600 hover:text-gray-900 p-2 hover:bg-gray-100 rounded transition-colors inline-flex items-center justify-center"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </a>
                       <button
                         onClick={async () => {
                           // eliminar el archivo en backend
@@ -510,6 +514,7 @@ export default function EspacioDetailView({ espacio, onBack, initialOpenAddMater
                 url: file?.url,
               },
             ])
+            try { toast?.showToast?.('Material publicado', 'success') } catch (e) { console.warn(e) }
             setShowAddMaterialModal(false)
           }}
         />

@@ -81,15 +81,6 @@ export function UserMenu({ user }) {
               </p>
             </div>
 
-            {/* Menu Items */}
-            <button
-              onClick={handleDownloadManual}
-              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left"
-            >
-              <FileText className="h-4 w-4 text-gray-400 flex-shrink-0" />
-              <span>Manual de Usuario</span>
-            </button>
-
             <button
               onClick={handleChangePassword}
               className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left"
