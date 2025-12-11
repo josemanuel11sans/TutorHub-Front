@@ -5,6 +5,7 @@ import { EditMateriaModal } from "../modales/EditMateriaModal"
 import { DeleteMateriaModal } from "../modales/DeleteMateriaModal"
 import * as materiasAPI from "../../../api/materias.api"
 import * as carrerasAPI from "../../../api/carreras.api"
+import { useToast } from "../../../context/ToastContext"
 
 // Botón compacto
 const Button = ({ children, onClick, variant = "default", size = "sm", className = "" }) => {
@@ -64,6 +65,7 @@ export default function MateriasTable() {
     const [selectedMateria, setSelectedMateria] = useState(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
+    const toast = useToast()
 
     // Cargar datos iniciales
     useEffect(() => {
@@ -120,9 +122,19 @@ export default function MateriasTable() {
             })
             setMaterias([...materias, created])
             setShowAddModal(false)
+            try {
+                toast?.showToast?.('Materia agregada correctamente', 'success')
+            } catch (e) {
+                console.warn(e)
+            }
         } catch (err) {
             console.error("Error al crear materia:", err)
-            alert("Error al crear la materia")
+            const errorMessage = err.response?.data?.message || 'Error al agregar materia'
+            try {
+                toast?.showToast?.(errorMessage, 'error')
+            } catch (e) {
+                console.warn(e)
+            }
         }
     }
 
@@ -138,9 +150,19 @@ export default function MateriasTable() {
                 m.id_materia === updated.id_materia ? updated : m
             ))
             setShowEditModal(false)
+            try {
+                toast?.showToast?.('Materia actualizada correctamente', 'success')
+            } catch (e) {
+                console.warn(e)
+            }
         } catch (err) {
             console.error("Error al actualizar materia:", err)
-            alert("Error al actualizar la materia")
+            const errorMessage = err.response?.data?.message || 'Error al actualizar materia'
+            try {
+                toast?.showToast?.(errorMessage, 'error')
+            } catch (e) {
+                console.warn(e)
+            }
         }
     }
 
@@ -150,9 +172,19 @@ export default function MateriasTable() {
             setMaterias(materias.filter(m => m.id_materia !== selectedMateria.id_materia))
             setShowDeleteModal(false)
             setSelectedMateria(null)
+            try {
+                toast?.showToast?.('Materia eliminada correctamente', 'success')
+            } catch (e) {
+                console.warn(e)
+            }
         } catch (err) {
             console.error("Error al eliminar materia:", err)
-            alert("Error al eliminar la materia")
+            const errorMessage = err.response?.data?.message || 'Error al eliminar materia'
+            try {
+                toast?.showToast?.(errorMessage, 'error')
+            } catch (e) {
+                console.warn(e)
+            }
         }
     }
 
@@ -196,7 +228,7 @@ export default function MateriasTable() {
                             Gestión de Materias
                         </h2>
                         <p className="text-sm text-gray-500">
-                            Total: {materias.length} materias
+                            Administra las materias del sistema
                         </p>
                     </div>
                     <div className="flex gap-2">

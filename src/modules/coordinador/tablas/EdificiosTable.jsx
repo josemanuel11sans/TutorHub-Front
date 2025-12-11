@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import { Search, Plus, Edit, Trash2, Loader2, RefreshCw, AlertCircle } from "lucide-react"
+import { useToast } from "../../../context/ToastContext"
 import { AddEdificioModal } from "../modales/AddEdificioModal"
 import { EditEdificioModal } from "../modales/EditEdificioModal"
 import { DeleteEdificioModal } from "../modales/DeleteEdificioModal"
@@ -124,16 +125,20 @@ export default function EdificiosTable() {
                 setEdificios(prev => [...prev, response.data])
             }
             setShowAddModal(false)
+            try {
+                toast?.showToast?.('Edificio agregado correctamente', 'success')
+            } catch (e) {
+                console.warn(e)
+            }
         } catch (error) {
             console.error("Error al crear edificio:", error)
             
             // Mostrar mensaje de error específico si existe
-            if (error.message) {
-                alert(error.message)
-            } else if (error.errors) {
-                // Para errores de validación de Sequelize
-                const errorMessages = error.errors.map(err => err.message).join('\n')
-                alert(`Errores de validación:\n${errorMessages}`)
+            const errorMessage = error.response?.data?.message || error.message || 'Error al agregar edificio'
+            try {
+                toast?.showToast?.(errorMessage, 'error')
+            } catch (e) {
+                console.warn(e)
             }
             
             throw error // Para que el modal maneje el error
@@ -153,11 +158,19 @@ export default function EdificiosTable() {
                 ))
             }
             setShowEditModal(false)
+            try {
+                toast?.showToast?.('Edificio actualizado correctamente', 'success')
+            } catch (e) {
+                console.warn(e)
+            }
         } catch (error) {
             console.error("Error al actualizar edificio:", error)
             
-            if (error.message) {
-                alert(error.message)
+            const errorMessage = error.response?.data?.message || error.message || 'Error al actualizar edificio'
+            try {
+                toast?.showToast?.(errorMessage, 'error')
+            } catch (e) {
+                console.warn(e)
             }
             
             throw error
@@ -174,14 +187,20 @@ export default function EdificiosTable() {
             setEdificios(prev => prev.filter(e => e.id !== selectedEdificio.id))
             setShowDeleteModal(false)
             setSelectedEdificio(null)
+            try {
+                toast?.showToast?.('Edificio eliminado correctamente', 'success')
+            } catch (e) {
+                console.warn(e)
+            }
         } catch (error) {
             console.error("Error al eliminar edificio:", error)
             
             // Mostrar error específico
-            if (error.message) {
-                alert(error.message)
-            } else {
-                alert("No se pudo eliminar el edificio. Puede que tenga aulas asociadas.")
+            const errorMessage = error.response?.data?.message || error.message || 'No se pudo eliminar el edificio. Puede que tenga aulas asociadas.'
+            try {
+                toast?.showToast?.(errorMessage, 'error')
+            } catch (e) {
+                console.warn(e)
             }
         } finally {
             setActionLoading(false)
@@ -196,13 +215,19 @@ export default function EdificiosTable() {
             setEdificios(prev => prev.map(e =>
                 e.id === id ? { ...e, estado: false } : e
             ))
+            try {
+                toast?.showToast?.('Edificio desactivado correctamente', 'success')
+            } catch (e) {
+                console.warn(e)
+            }
         } catch (error) {
             console.error("Error al desactivar edificio:", error)
             
-            if (error.message) {
-                alert(error.message)
-            } else {
-                alert("No se pudo desactivar el edificio")
+            const errorMessage = error.response?.data?.message || error.message || 'No se pudo desactivar el edificio'
+            try {
+                toast?.showToast?.(errorMessage, 'error')
+            } catch (e) {
+                console.warn(e)
             }
         } finally {
             setActionLoading(false)
@@ -251,8 +276,7 @@ export default function EdificiosTable() {
                             Gestión de Edificios
                         </h2>
                         <p className="text-sm text-gray-500">
-                            {edificios.length} edificio{edificios.length !== 1 ? 's' : ''} registrado{edificios.length !== 1 ? 's' : ''}
-                        </p>
+Administra los edificios del sistema                        </p>
                     </div>
                     <div className="flex gap-2">
                         <Button 

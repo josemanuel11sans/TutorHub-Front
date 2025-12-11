@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import { Search, Plus, Edit, Trash2, AlertCircle, Loader2, RefreshCw } from "lucide-react"
+import { useToast } from "../../../context/ToastContext"
 import { AddCoordinadorModal } from "../modales/AddCoordinadorModal"
 import { EditCoordinadorModal } from "../modales/EditCoordinadorModal"
 import { DeleteConfirmModal } from "../modales/DeleteConfirmModal"
@@ -82,6 +83,7 @@ export default function CoordinadoresTable() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [actionLoading, setActionLoading] = useState(false)
+  const toast = useToast()
 
   // Cargar coordinadores al montar el componente
   useEffect(() => {
@@ -129,9 +131,11 @@ export default function CoordinadoresTable() {
       const newCoordinador = await createCoordinador(newCoordinadorData)
       setCoordinadores([...coordinadores, newCoordinador])
       setShowAddModal(false)
+      try { toast?.showToast?.("Coordinador agregado correctamente", "success") } catch (e) { console.warn(e) }
     } catch (err) {
       console.error("Error al crear coordinador:", err)
-      alert(err.response?.data?.message || "Error al crear coordinador")
+      const errorMsg = err.response?.data?.message || "Error al crear coordinador"
+      try { toast?.showToast?.(errorMsg, "error") } catch (e) { console.warn(e) }
     } finally {
       setActionLoading(false)
     }
@@ -145,9 +149,11 @@ export default function CoordinadoresTable() {
         c.id_usuario === selectedCoordinador.id_usuario ? updated : c
       ))
       setShowEditModal(false)
+      try { toast?.showToast?.("Coordinador actualizado correctamente", "success") } catch (e) { console.warn(e) }
     } catch (err) {
       console.error("Error al actualizar coordinador:", err)
-      alert(err.response?.data?.message || "Error al actualizar coordinador")
+      const errorMsg = err.response?.data?.message || "Error al actualizar coordinador"
+      try { toast?.showToast?.(errorMsg, "error") } catch (e) { console.warn(e) }
     } finally {
       setActionLoading(false)
     }
@@ -160,9 +166,11 @@ export default function CoordinadoresTable() {
       setCoordinadores(coordinadores.filter(c => c.id_usuario !== selectedCoordinador.id_usuario))
       setShowDeleteModal(false)
       setSelectedCoordinador(null)
+      try { toast?.showToast?.("Coordinador eliminado correctamente", "success") } catch (e) { console.warn(e) }
     } catch (err) {
       console.error("Error al eliminar coordinador:", err)
-      alert(err.response?.data?.message || "Error al eliminar coordinador")
+      const errorMsg = err.response?.data?.message || "Error al eliminar coordinador"
+      try { toast?.showToast?.(errorMsg, "error") } catch (e) { console.warn(e) }
     } finally {
       setActionLoading(false)
     }
@@ -178,7 +186,7 @@ export default function CoordinadoresTable() {
               Gestión de Coordinadores
             </h2>
             <p className="text-sm text-gray-500">
-              Administra los coordinadores del sistema ({coordinadores.length} coordinadores)
+              Administra los coordinadores del sistema 
             </p>
           </div>
           <div className="flex gap-2">

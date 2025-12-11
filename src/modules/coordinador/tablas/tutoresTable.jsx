@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import { Search, Plus, Edit, Trash2, AlertCircle, Loader2, RefreshCw } from "lucide-react"
+import { useToast } from "../../../context/ToastContext"
 import { AddTutorModal } from "../modales/AddTutorModal"
 import { EditTutorModal } from "../modales/EditTutorModal"
 import { DeleteConfirmModal } from "../modales/DeleteConfirmModal"
@@ -80,6 +81,7 @@ export default function TutoresTable() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [actionLoading, setActionLoading] = useState(false)
+  const toast = useToast()
 
   // Cargar tutores al montar el componente
   useEffect(() => {
@@ -127,9 +129,11 @@ export default function TutoresTable() {
       const newTutor = await createTutor(newTutorData)
       setTutores([...tutores, newTutor])
       setShowAddModal(false)
+      try { toast?.showToast?.("Tutor agregado correctamente", "success") } catch (e) { console.warn(e) }
     } catch (err) {
       console.error("Error al crear tutor:", err)
-      alert(err.response?.data?.message || "Error al crear tutor")
+      const errorMsg = err.response?.data?.message || "Error al crear tutor"
+      try { toast?.showToast?.(errorMsg, "error") } catch (e) { console.warn(e) }
     } finally {
       setActionLoading(false)
     }
@@ -143,9 +147,11 @@ export default function TutoresTable() {
         t.id_usuario === selectedTutor.id_usuario ? updated : t
       ))
       setShowEditModal(false)
+      try { toast?.showToast?.("Tutor actualizado correctamente", "success") } catch (e) { console.warn(e) }
     } catch (err) {
       console.error("Error al actualizar tutor:", err)
-      alert(err.response?.data?.message || "Error al actualizar tutor")
+      const errorMsg = err.response?.data?.message || "Error al actualizar tutor"
+      try { toast?.showToast?.(errorMsg, "error") } catch (e) { console.warn(e) }
     } finally {
       setActionLoading(false)
     }
@@ -158,9 +164,11 @@ export default function TutoresTable() {
       setTutores(tutores.filter(t => t.id_usuario !== selectedTutor.id_usuario))
       setShowDeleteModal(false)
       setSelectedTutor(null)
+      try { toast?.showToast?.("Tutor eliminado correctamente", "success") } catch (e) { console.warn(e) }
     } catch (err) {
       console.error("Error al eliminar tutor:", err)
-      alert(err.response?.data?.message || "Error al eliminar tutor")
+      const errorMsg = err.response?.data?.message || "Error al eliminar tutor"
+      try { toast?.showToast?.(errorMsg, "error") } catch (e) { console.warn(e) }
     } finally {
       setActionLoading(false)
     }
@@ -176,7 +184,7 @@ export default function TutoresTable() {
               Gestión de Tutores
             </h2>
             <p className="text-sm text-gray-500">
-              Administra los tutores del sistema ({tutores.length} tutores)
+              Administra los tutores del sistema
             </p>
           </div>
           <div className="flex gap-2">

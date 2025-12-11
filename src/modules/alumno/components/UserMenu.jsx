@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { User, FileText, Lock, LogOut } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
+import { useToast } from "../../../context/ToastContext";
 import { ChangePasswordModal } from "./ChangePasswordModal";
 
 export function UserMenu({ user }) {
@@ -10,6 +11,7 @@ export function UserMenu({ user }) {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const menuRef = useRef(null);
   const { logout } = useAuth();
+  const toast = useToast();
 
   // Obtener la inicial del nombre
   const getInitial = () => {
@@ -53,6 +55,7 @@ export function UserMenu({ user }) {
   };
 
   const handleLogout = () => {
+    try { toast?.showToast?.("Sesión cerrada correctamente", "success") } catch (e) { console.warn(e) }
     logout();
     setIsOpen(false);
   };

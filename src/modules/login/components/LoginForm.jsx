@@ -1,13 +1,15 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { usePasswordRecovery } from "../hooks/usePasswordRecovery"
+import { useToast } from "../../../context/ToastContext"
 
 export const LoginForm = ({ onSubmit, loading, error }) => {
   const [form, setForm] = useState({ email: "", password: "" })
   const [recoveryForm, setRecoveryForm] = useState({ email: "", code: "", newPassword: "", confirmPassword: "" })
   const [isFlipped, setIsFlipped] = useState(false)
   const [recoveryStep, setRecoveryStep] = useState("email")
+  const toast = useToast()
 
   const {
     sendCode,
@@ -17,6 +19,20 @@ export const LoginForm = ({ onSubmit, loading, error }) => {
     error: recoveryError,
     success: recoverySuccess,
   } = usePasswordRecovery()
+
+  // Mostrar toasts para errores de recuperación
+  useEffect(() => {
+    if (recoveryError) {
+      try { toast?.showToast?.(recoveryError, "error") } catch (e) { console.warn(e) }
+    }
+  }, [recoveryError])
+
+  // Mostrar toasts para éxitos de recuperación
+  useEffect(() => {
+    if (recoverySuccess) {
+      try { toast?.showToast?.(recoverySuccess, "success") } catch (e) { console.warn(e) }
+    }
+  }, [recoverySuccess])
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value })
 
@@ -161,7 +177,7 @@ export const LoginForm = ({ onSubmit, loading, error }) => {
                     </div>
                   </div>
 
-                  {error && <div className="text-red-600 text-sm text-center bg-red-50 p-3 rounded-lg">{error}</div>}
+                  {/* Mensaje inline removido: ahora los errores se muestran por toast */}
 
                   <button
                     type="submit"
@@ -316,15 +332,7 @@ export const LoginForm = ({ onSubmit, loading, error }) => {
                     </>
                   )}
 
-                  {recoveryError && (
-                    <div className="text-red-600 text-sm text-center bg-red-50 p-3 rounded-lg">{recoveryError}</div>
-                  )}
-
-                  {recoverySuccess && (
-                    <div className="text-green-600 text-sm text-center bg-green-50 p-3 rounded-lg">
-                      {recoverySuccess}
-                    </div>
-                  )}
+                  {/* Mensajes inline removidos: ahora los errores y éxitos se muestran por toast */}
 
                   <button
                     type="submit"

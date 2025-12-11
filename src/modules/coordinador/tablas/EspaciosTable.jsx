@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import { Search, Plus, Edit, Trash2, RefreshCw } from "lucide-react"
+import { useToast } from "../../../context/ToastContext"
 import  AddEspacioModal  from "../modales/AddEspacioModal"
 import { EditEspacioModal } from "../modales/EditEspacioModal"
 import { DeleteEspacioModal } from "../modales/DeleteEspacioModal"
@@ -65,6 +66,7 @@ export default function EspaciosTable() {
     const [selectedEspacio, setSelectedEspacio] = useState(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
+    const toast = useToast()
 
     // Cargar datos iniciales
     useEffect(() => {
@@ -135,7 +137,7 @@ export default function EspaciosTable() {
             await fetchInitialData()
             
             setShowAddModal(false)
-            alert('Espacio creado exitosamente')
+            try { toast?.showToast?.('Espacio creado exitosamente', 'success') } catch (e) { console.warn(e) }
         } catch (err) {
             console.error('Error al crear espacio:', err)
             let errorMessage = 'Error al crear el espacio'
@@ -144,7 +146,7 @@ export default function EspaciosTable() {
                 errorMessage = err.response.data.message
             }
             
-            alert(errorMessage)
+            try { toast?.showToast?.(errorMessage, 'error') } catch (e) { console.warn(e) }
         }
     }
 
@@ -164,7 +166,7 @@ export default function EspaciosTable() {
             
             setShowEditModal(false)
             setSelectedEspacio(null)
-            alert('Espacio actualizado exitosamente')
+            try { toast?.showToast?.('Espacio actualizado exitosamente', 'success') } catch (e) { console.warn(e) }
         } catch (err) {
             console.error('Error al actualizar espacio:', err)
             let errorMessage = 'Error al actualizar el espacio'
@@ -173,7 +175,7 @@ export default function EspaciosTable() {
                 errorMessage = err.response.data.message
             }
             
-            alert(errorMessage)
+            try { toast?.showToast?.(errorMessage, 'error') } catch (e) { console.warn(e) }
         }
     }
 
@@ -186,7 +188,7 @@ export default function EspaciosTable() {
             
             setShowDeleteModal(false)
             setSelectedEspacio(null)
-            alert('Espacio eliminado exitosamente')
+            try { toast?.showToast?.('Espacio eliminado exitosamente', 'success') } catch (e) { console.warn(e) }
         } catch (err) {
             console.error('Error al eliminar espacio:', err)
             let errorMessage = 'Error al eliminar el espacio'
@@ -198,7 +200,7 @@ export default function EspaciosTable() {
                 errorMessage = err.response.data.message
             }
             
-            alert(errorMessage)
+            try { toast?.showToast?.(errorMessage, 'error') } catch (e) { console.warn(e) }
             setShowDeleteModal(false)
             setSelectedEspacio(null)
         }
@@ -250,7 +252,7 @@ export default function EspaciosTable() {
                             Gestión de Espacios
                         </h2>
                         <p className="text-sm text-gray-500">
-                            Administra los espacios y aulas ({espacios.length} espacios)
+                            Administra los espacios del sistema
                         </p>
                     </div>
                     <div className="flex gap-2">

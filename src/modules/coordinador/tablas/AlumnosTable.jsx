@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import { Search, Plus, Edit, Trash2, AlertCircle, Loader2, RefreshCw } from "lucide-react"
+import { useToast } from "../../../context/ToastContext"
 import { AddAlumnoModal } from "../modales/AddAlumnoModal"
 import { EditAlumnoModal } from "../modales/EditAlumnoModal"
 import { DeleteConfirmModal } from "../modales/DeleteConfirmModal"
@@ -80,6 +81,7 @@ export default function AlumnosTable() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [actionLoading, setActionLoading] = useState(false)
+  const toast = useToast()
 
   // Cargar alumnos al montar el componente
   useEffect(() => {
@@ -127,9 +129,11 @@ export default function AlumnosTable() {
       const newAlumno = await createAlumno(newAlumnoData)
       setAlumnos([...alumnos, newAlumno])
       setShowAddModal(false)
+      try { toast?.showToast?.("Alumno agregado correctamente", "success") } catch (e) { console.warn(e) }
     } catch (err) {
       console.error("Error al crear alumno:", err)
-      alert(err.response?.data?.message || "Error al crear alumno")
+      const errorMsg = err.response?.data?.message || "Error al crear alumno"
+      try { toast?.showToast?.(errorMsg, "error") } catch (e) { console.warn(e) }
     } finally {
       setActionLoading(false)
     }
@@ -143,9 +147,11 @@ export default function AlumnosTable() {
         a.id_usuario === selectedAlumno.id_usuario ? updated : a
       ))
       setShowEditModal(false)
+      try { toast?.showToast?.("Alumno actualizado correctamente", "success") } catch (e) { console.warn(e) }
     } catch (err) {
       console.error("Error al actualizar alumno:", err)
-      alert(err.response?.data?.message || "Error al actualizar alumno")
+      const errorMsg = err.response?.data?.message || "Error al actualizar alumno"
+      try { toast?.showToast?.(errorMsg, "error") } catch (e) { console.warn(e) }
     } finally {
       setActionLoading(false)
     }
@@ -158,9 +164,11 @@ export default function AlumnosTable() {
       setAlumnos(alumnos.filter(a => a.id_usuario !== selectedAlumno.id_usuario))
       setShowDeleteModal(false)
       setSelectedAlumno(null)
+      try { toast?.showToast?.("Alumno eliminado correctamente", "success") } catch (e) { console.warn(e) }
     } catch (err) {
       console.error("Error al eliminar alumno:", err)
-      alert(err.response?.data?.message || "Error al eliminar alumno")
+      const errorMsg = err.response?.data?.message || "Error al eliminar alumno"
+      try { toast?.showToast?.(errorMsg, "error") } catch (e) { console.warn(e) }
     } finally {
       setActionLoading(false)
     }
@@ -176,7 +184,7 @@ export default function AlumnosTable() {
               Gestión de Alumnos
             </h2>
             <p className="text-sm text-gray-500">
-              Administra los alumnos del sistema ({alumnos.length} alumnos)
+              Administra los alumnos del sistema 
             </p>
           </div>
           <div className="flex gap-2">
