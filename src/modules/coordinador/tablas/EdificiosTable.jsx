@@ -118,10 +118,12 @@ export default function EdificiosTable() {
     const handleAddEdificio = async (newEdificio) => {
         try {
             const response = await createEdificio(newEdificio)
-            const nuevoEdificio = response.data || response
-            setEdificios([nuevoEdificio, ...edificios])
+            const nuevoEdificio = response?.data || response
+            // Cerrar modal y notificar
             setShowAddModal(false)
             toast?.showToast('Edificio agregado correctamente', 'success')
+            // Refrescar desde el servidor para asegurar datos consistentes
+            await fetchEdificios()
         } catch (error) {
             console.error("Error al crear edificio:", error)
             const errorMessage = error.response?.data?.message || 'Error al agregar edificio'
