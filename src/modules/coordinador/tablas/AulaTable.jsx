@@ -3,7 +3,8 @@ import { Search, Plus, Edit, Trash2, RefreshCw } from "lucide-react"
 import { AddAulaModal } from "../modales/AddAulaModal"
 import { EditAulaModal } from "../modales/EditAulaModal"
 import { DeleteAulaModal } from "../modales/DeleteAulaModal"
-import { getAulas } from "../../../api/aulas.api" // Ajusta la ruta según tu estructura
+import { getAulas, createAula, updateAula, deleteAula } from "../../../api/aulas.api" // Ajusta la ruta según tu estructura
+import { useToast } from "../../../context/ToastContext"
 
 // Botón compacto
 const Button = ({ children, onClick, variant = "default", size = "sm", className = "", disabled = false }) => {
@@ -64,6 +65,7 @@ export default function AulasTable() {
     const [selectedAula, setSelectedAula] = useState(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
+    const toast = useToast()
 
     // Cargar aulas al montar el componente
     const fetchAulas = async () => {
@@ -79,7 +81,7 @@ export default function AulasTable() {
                 descripcion: aula.descripcion,
                 edificioId: aula.edificioId,
                 edificioNombre: aula.Edificio?.nombre || 'Sin edificio',
-                estado: aula.Edificio?.estado ?? true, // Tomamos el estado del edificio
+                estado: aula.estado ?? true, // Usamos el estado propio del aula
             }))
             
             setAulas(aulasTransformadas)
@@ -99,7 +101,8 @@ export default function AulasTable() {
             
             setEdificios(edificiosUnicos)
         } catch (err) {
-            setError("Error al cargar las aulas. Por favor, intenta de nuevo.")
+            const msg = err?.message || "Error al cargar las aulas. Por favor, intenta de nuevo."
+            setError(msg)
             console.error("Error al cargar aulas:", err)
         } finally {
             setLoading(false)
@@ -128,23 +131,59 @@ export default function AulasTable() {
     }
 
     const handleAddAula = async (newAula) => {
-        // Aquí llamarías a createAula(newAula)
-        // Por ahora solo actualizo el estado local
-        await fetchAulas() // Recargar la lista después de agregar
-        setShowAddModal(false)
+        try {
+            const payload = {
+                nombre: newAula.nombre?.trim(),
+                descripcion: newAula.descripcion?.trim(),
+                edificioId: newAula.edificioId ? parseInt(newAula.edificioId, 10) : undefined,
+                estado: true,
+            }
+            await createAula(payload)
+            await fetchAulas()
+            setShowAddModal(false)
+            toast?.showToast("Aula creada correctamente", "success")
+        } catch (error) {
+            console.error("Error al crear aula:", error)
+            const msg = error?.response?.data?.message || "No se pudo crear el aula"
+            toast?.showToast(msg, "error")
+            throw error
+        }
     }
 
     const handleUpdateAula = async (updatedAula) => {
-        // Aquí llamarías a updateAula(updatedAula)
-        await fetchAulas() // Recargar la lista después de actualizar
-        setShowEditModal(false)
+        try {
+            const { id, nombre, descripcion, edificioId, estado } = updatedAula
+            const payload = {
+                nombre: nombre?.trim(),
+                descripcion: descripcion?.trim(),
+                edificioId: edificioId ? parseInt(edificioId, 10) : undefined,
+                estado,
+            }
+            await updateAula(id, payload)
+            await fetchAulas()
+            setShowEditModal(false)
+            toast?.showToast("Aula actualizada correctamente", "success")
+        } catch (error) {
+            console.error("Error al actualizar aula:", error)
+            const msg = error?.response?.data?.message || "No se pudo actualizar el aula"
+            toast?.showToast(msg, "error")
+            throw error
+        }
     }
 
     const handleConfirmDelete = async () => {
-        // Aquí llamarías a deleteAula(selectedAula.id)
-        await fetchAulas() // Recargar la lista después de eliminar
-        setShowDeleteModal(false)
-        setSelectedAula(null)
+        try {
+            await deleteAula(selectedAula.id)
+            await fetchAulas()
+            setShowDeleteModal(false)
+            setSelectedAula(null)
+            // Mensaje genérico porque el toggle lo decide el backend
+            toast?.showToast("Estado del aula actualizado", "success")
+        } catch (error) {
+            console.error("Error al eliminar/activar aula:", error)
+            const msg = error?.response?.data?.message || "No se pudo cambiar el estado del aula"
+            toast?.showToast(msg, "error")
+        }
     }
 
     return (

@@ -19,3 +19,23 @@ export const getAulas = async () => {
     throw error;
   }
 };
+
+export const updateAula = async (id, data) => {
+  try {
+    const res = await api.put(`/aulas/${id}`, data);
+    return res.data;
+  } catch (error) {
+    console.error("Error al actualizar aula:", error);
+    throw error;
+  }
+};
+
+export const deleteAula = async (id) => {
+  try {
+    const res = await api.delete(`/aulas/${id}`);
+    return res.data ?? true;
+  } catch (error) {
+    console.error("Error al eliminar aula:", error);
+    throw error;
+  }
+};

@@ -55,7 +55,7 @@ export function DeleteAulaModal({ onClose, onDelete, aula }) {
             <button
               type="button"
               onClick={() => onDelete(aula)}
-              className="flex-1 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-red-600 to-red-700 rounded-lg hover:from-red-700 hover:to-red-800 transition-all shadow-md shadow-red-500/20"
+              className="flex-1 px-4 py-2 text-sm font-medium text-white bg-linear-to-r from-red-600 to-red-700 rounded-lg hover:from-red-700 hover:to-red-800 transition-all shadow-md shadow-red-500/20"
             >
               Eliminar
             </button>
