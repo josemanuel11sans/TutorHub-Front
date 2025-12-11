@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { Search, Plus, Edit, Trash2, RefreshCw } from "lucide-react"
+import { Search, Plus, Edit, Trash2, RefreshCw, RotateCcw } from "lucide-react"
 import { AddMateriaModal } from "../modales/AddMateriaModal"
 import { EditMateriaModal } from "../modales/EditMateriaModal"
 import { DeleteMateriaModal } from "../modales/DeleteMateriaModal"
@@ -345,7 +345,7 @@ export default function MateriasTable() {
                                                         className="text-gray-600 hover:text-red-600 p-1"
                                                         title="Eliminar"
                                                     >
-                                                        <Trash2 className="h-4 w-4" />
+                                                        <RotateCcw className="h-4 w-4" />
                                                     </button>
                                                 </div>
                                             </td>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { Search, Plus, Edit, Trash2, AlertCircle, Loader2, RefreshCw } from "lucide-react"
+import { Search, Plus, Edit, Trash2, AlertCircle, Loader2, RefreshCw, RotateCcw } from "lucide-react"
 import { useToast } from "../../../context/ToastContext"
 import { AddTutorModal } from "../modales/AddTutorModal"
 import { EditTutorModal } from "../modales/EditTutorModal"
@@ -327,7 +327,7 @@ export default function TutoresTable() {
                               className="text-gray-600 hover:text-red-600 p-1 disabled:opacity-50"
                               disabled={actionLoading}
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <RotateCcw className="h-4 w-4" />
                             </button>
                           </div>
                         </td>
@@ -361,7 +361,7 @@ export default function TutoresTable() {
 
       {showDeleteModal && selectedTutor && (
         <DeleteConfirmModal
-          title="Eliminar Tutor"
+          title="Cambiar estado del Tutor"
           message={`¿Estás seguro de que deseas cambiarle el estado al tutor ${selectedTutor.nombre} ${selectedTutor.apellido}?`}
           onClose={() => setShowDeleteModal(false)}
           onConfirm={handleConfirmDelete}

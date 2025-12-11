@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { Search, Plus, Edit, Trash2, AlertCircle, Loader2, RefreshCw } from "lucide-react"
+import { Search, Plus, Edit, Trash2, AlertCircle, Loader2, RefreshCw, RotateCcw } from "lucide-react"
 import { useToast } from "../../../context/ToastContext"
 import { AddCoordinadorModal } from "../modales/AddCoordinadorModal"
 import { EditCoordinadorModal } from "../modales/EditCoordinadorModal"
@@ -329,7 +329,7 @@ export default function CoordinadoresTable() {
                               className="text-gray-600 hover:text-red-600 p-1 disabled:opacity-50"
                               disabled={actionLoading}
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <RotateCcw className="h-4 w-4" />
                             </button>
                           </div>
                         </td>
@@ -363,7 +363,7 @@ export default function CoordinadoresTable() {
 
       {showDeleteModal && selectedCoordinador && (
         <DeleteConfirmModal
-          title="Eliminar Coordinador"
+          title="Cambiar estado del Coordinador"
           message={`¿Estás seguro de que deseas cambiarle el estado al coordinador ${selectedCoordinador.nombre} ${selectedCoordinador.apellido}?`}
           onClose={() => setShowDeleteModal(false)}
           onConfirm={handleConfirmDelete}

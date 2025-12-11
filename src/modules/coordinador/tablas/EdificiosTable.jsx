@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { Search, Plus, Edit, Trash2, Loader2, RefreshCw, AlertCircle } from "lucide-react"
+import { Search, Plus, Edit, Trash2, Loader2, RefreshCw, AlertCircle, RotateCcw } from "lucide-react"
 import { useToast } from "../../../context/ToastContext"
 import { AddEdificioModal } from "../modales/AddEdificioModal"
 import { EditEdificioModal } from "../modales/EditEdificioModal"
@@ -341,7 +341,7 @@ Administra los edificios del sistema                        </p>
                                                         className="text-gray-600 hover:text-red-600 p-1"
                                                         title={edificio.estado ? "Desactivar edificio" : "Activar edificio"}
                                                     >
-                                                        <Trash2 className="h-4 w-4" />
+                                                        <RotateCcw className="h-4 w-4" />
                                                     </button>
                                                 </div>
                                             </td>

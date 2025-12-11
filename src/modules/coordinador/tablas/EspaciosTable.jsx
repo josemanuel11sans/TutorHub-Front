@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { Search, Plus, Edit, Trash2, RefreshCw } from "lucide-react"
+import { Search, Plus, Edit, Trash2, RefreshCw, RotateCcw } from "lucide-react"
 import { useToast } from "../../../context/ToastContext"
 import  AddEspacioModal  from "../modales/AddEspacioModal"
 import { EditEspacioModal } from "../modales/EditEspacioModal"
@@ -409,7 +409,7 @@ export default function EspaciosTable() {
                                                         className="text-gray-600 hover:text-red-600 p-1"
                                                         title="Eliminar espacio"
                                                     >
-                                                        <Trash2 className="h-4 w-4" />
+                                                        <RotateCcw className="h-4 w-4" />
                                                     </button>
                                                 </div>
                                             </td>

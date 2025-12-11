@@ -19,7 +19,7 @@ export function DeleteAulaModal({ onClose, onDelete, aula }) {
               <AlertTriangle className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-gray-900">Eliminar Aula</h2>
+              <h2 className="text-lg font-bold text-gray-900">Cambiar estado del Aula</h2>
               <p className="text-gray-500 text-xs">Esta acción se puede deshacer</p>
             </div>
           </div>
@@ -34,12 +34,12 @@ export function DeleteAulaModal({ onClose, onDelete, aula }) {
         {/* Content */}
         <div className="p-6">
           <p className="text-sm text-gray-700 mb-4">
-            ¿Estás seguro de que deseas eliminar el aula <span className="font-semibold">{aula?.nombre}</span>?
+            ¿Estás seguro de que deseas cambiar el estado del aula <span className="font-semibold">{aula?.nombre}</span>?
           </p>
           <div className="bg-red-50 border border-red-100 rounded-lg p-3 flex gap-2 mb-6">
             <AlertTriangle className="h-4 w-4 text-red-600 flex-shrink-0 mt-0.5" />
             <p className="text-xs text-red-700">
-              Esta acción eliminará el registro de forma lógica.
+              En caso de cambiar el estado a "inactivo", este registro no estará disponible para su uso.
             </p>
           </div>
 

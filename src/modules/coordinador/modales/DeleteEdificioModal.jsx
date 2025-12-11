@@ -19,7 +19,7 @@ export function DeleteEdificioModal({ onClose, onDelete, edificio }) {
               <AlertTriangle className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-gray-900">Eliminar Edificio</h2>
+              <h2 className="text-lg font-bold text-gray-900">Cambiar el estado del Edificio</h2>
               <p className="text-gray-500 text-xs">Esta acción se puede deshacer</p>
             </div>
           </div>
@@ -34,12 +34,12 @@ export function DeleteEdificioModal({ onClose, onDelete, edificio }) {
         {/* Content */}
         <div className="p-6">
           <p className="text-sm text-gray-700 mb-4">
-            ¿Estás seguro de que deseas eliminar el edificio <span className="font-semibold">{edificio?.nombre}</span>?
+            ¿Estás seguro de que deseas cambiar el estado del edificio <span className="font-semibold">{edificio?.nombre}</span>?
           </p>
           <div className="bg-red-50 border border-red-100 rounded-lg p-3 flex gap-2 mb-6">
             <AlertTriangle className="h-4 w-4 text-red-600 flex-shrink-0 mt-0.5" />
             <p className="text-xs text-red-700">
-              Esta acción eliminará el registro de forma lógica.
+              En caso de cambiar el estado a "inactivo", este registro no estará disponible para su uso.
             </p>
           </div>
 

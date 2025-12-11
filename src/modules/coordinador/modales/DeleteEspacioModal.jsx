@@ -42,7 +42,7 @@ export function DeleteEspacioModal({ onClose, onDeleted, espacio }) {
               <AlertTriangle className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-gray-900">Eliminar Espacio</h2>
+              <h2 className="text-lg font-bold text-gray-900">Cambiar estado del Espacio</h2>
               <p className="text-gray-500 text-xs">Esta acción se puede deshacer</p>
             </div>
           </div>
@@ -62,7 +62,7 @@ export function DeleteEspacioModal({ onClose, onDeleted, espacio }) {
           <div className="bg-red-50 border border-red-100 rounded-lg p-3 flex gap-2 mb-6">
             <AlertTriangle className="h-4 w-4 text-red-600 flex-shrink-0 mt-0.5" />
             <p className="text-xs text-red-700">
-              Esta acción eliminará el registro de forma lógica. 
+              En caso de cambiar el estado a "inactivo", este registro no estará disponible para su uso.
             </p>
           </div>
 

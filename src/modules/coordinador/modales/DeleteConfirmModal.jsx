@@ -39,7 +39,7 @@ export function DeleteConfirmModal({ title = "Eliminar", message = "", onClose, 
           <div className="bg-red-50 border border-red-100 rounded-lg p-3 flex gap-2 mb-6">
             <AlertTriangle className="h-4 w-4 text-red-600 flex-shrink-0 mt-0.5" />
             <p className="text-xs text-red-700">
-              Esta acción eliminará lógicamente al asociado.
+              En caso de cambiar el estado a "inactivo", este registro no estará disponible para su uso.
             </p>
           </div>
 
