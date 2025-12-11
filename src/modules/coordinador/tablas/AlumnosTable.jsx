@@ -160,14 +160,19 @@ export default function AlumnosTable() {
   const handleConfirmDelete = async () => {
     try {
       setActionLoading(true)
+      // Alternar el estado: si está activo, desactivar; si está inactivo, activar
+      const nuevoEstado = !selectedAlumno.estado
       await deleteAlumno(selectedAlumno.id_usuario)
-      setAlumnos(alumnos.filter(a => a.id_usuario !== selectedAlumno.id_usuario))
+      setAlumnos(alumnos.map(a =>
+        a.id_usuario === selectedAlumno.id_usuario ? { ...a, estado: nuevoEstado } : a
+      ))
       setShowDeleteModal(false)
       setSelectedAlumno(null)
-      try { toast?.showToast?.("Alumno eliminado correctamente", "success") } catch (e) { console.warn(e) }
+      const mensaje = nuevoEstado ? "Alumno reactivado correctamente" : "Alumno desactivado correctamente"
+      try { toast?.showToast?.(mensaje, "success") } catch (e) { console.warn(e) }
     } catch (err) {
-      console.error("Error al eliminar alumno:", err)
-      const errorMsg = err.response?.data?.message || "Error al eliminar alumno"
+      console.error("Error al cambiar estado del alumno:", err)
+      const errorMsg = err.response?.data?.message || "Error al cambiar estado del alumno"
       try { toast?.showToast?.(errorMsg, "error") } catch (e) { console.warn(e) }
     } finally {
       setActionLoading(false)

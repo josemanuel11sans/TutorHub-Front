@@ -160,14 +160,19 @@ export default function TutoresTable() {
   const handleConfirmDelete = async () => {
     try {
       setActionLoading(true)
+      // Alternar el estado: si está activo, desactivar; si está inactivo, activar
+      const nuevoEstado = !selectedTutor.estado
       await deleteTutor(selectedTutor.id_usuario)
-      setTutores(tutores.filter(t => t.id_usuario !== selectedTutor.id_usuario))
+      setTutores(tutores.map(t =>
+        t.id_usuario === selectedTutor.id_usuario ? { ...t, estado: nuevoEstado } : t
+      ))
       setShowDeleteModal(false)
       setSelectedTutor(null)
-      try { toast?.showToast?.("Tutor eliminado correctamente", "success") } catch (e) { console.warn(e) }
+      const mensaje = nuevoEstado ? "Tutor reactivado correctamente" : "Tutor desactivado correctamente"
+      try { toast?.showToast?.(mensaje, "success") } catch (e) { console.warn(e) }
     } catch (err) {
-      console.error("Error al eliminar tutor:", err)
-      const errorMsg = err.response?.data?.message || "Error al eliminar tutor"
+      console.error("Error al cambiar estado del tutor:", err)
+      const errorMsg = err.response?.data?.message || "Error al cambiar estado del tutor"
       try { toast?.showToast?.(errorMsg, "error") } catch (e) { console.warn(e) }
     } finally {
       setActionLoading(false)

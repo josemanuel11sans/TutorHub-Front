@@ -49,10 +49,10 @@ export const updateAlumno = async (id, alumnoData) => {
   }
 };
 
-// Eliminar un alumno
+// Eliminar un alumno (soft delete)
 export const deleteAlumno = async (id) => {
   try {
-    const response = await api.delete(`${endpoint}/${id}`);
+    const response = await api.delete(`${endpoint}/delete/${id}`);
     return response.data;
   } catch (error) {
     console.error("Error al eliminar alumno:", error);

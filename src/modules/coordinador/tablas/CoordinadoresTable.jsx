@@ -162,14 +162,19 @@ export default function CoordinadoresTable() {
   const handleConfirmDelete = async () => {
     try {
       setActionLoading(true)
+      // Alternar el estado: si está activo, desactivar; si está inactivo, activar
+      const nuevoEstado = !selectedCoordinador.estado
       await deleteCoordinador(selectedCoordinador.id_usuario)
-      setCoordinadores(coordinadores.filter(c => c.id_usuario !== selectedCoordinador.id_usuario))
+      setCoordinadores(coordinadores.map(c =>
+        c.id_usuario === selectedCoordinador.id_usuario ? { ...c, estado: nuevoEstado } : c
+      ))
       setShowDeleteModal(false)
       setSelectedCoordinador(null)
-      try { toast?.showToast?.("Coordinador eliminado correctamente", "success") } catch (e) { console.warn(e) }
+      const mensaje = nuevoEstado ? "Coordinador reactivado correctamente" : "Coordinador desactivado correctamente"
+      try { toast?.showToast?.(mensaje, "success") } catch (e) { console.warn(e) }
     } catch (err) {
-      console.error("Error al eliminar coordinador:", err)
-      const errorMsg = err.response?.data?.message || "Error al eliminar coordinador"
+      console.error("Error al cambiar estado del coordinador:", err)
+      const errorMsg = err.response?.data?.message || "Error al cambiar estado del coordinador"
       try { toast?.showToast?.(errorMsg, "error") } catch (e) { console.warn(e) }
     } finally {
       setActionLoading(false)
@@ -335,7 +340,8 @@ export default function CoordinadoresTable() {
 
       {showDeleteModal && selectedCoordinador && (
         <DeleteConfirmModal
-          coordinador={selectedCoordinador}
+          title="Eliminar Coordinador"
+          message={`¿Estás seguro de que deseas eliminar al coordinador ${selectedCoordinador.nombre} ${selectedCoordinador.apellido_paterno}? Esta acción no se puede deshacer.`}
           onClose={() => setShowDeleteModal(false)}
           onConfirm={handleConfirmDelete}
           loading={actionLoading}
