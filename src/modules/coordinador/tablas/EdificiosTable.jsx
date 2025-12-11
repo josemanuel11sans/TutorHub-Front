@@ -20,7 +20,7 @@ const Button = ({ children, onClick, variant = "default", size = "sm", className
         danger: "bg-red-600 text-white hover:bg-red-700 disabled:bg-red-300",
     }
     const sizes = {
-        sm: "px-3 py-1.5 text-xs",
+        sm: "px-2 py-1 text-xs",
         md: "px-4 py-2 text-sm",
     }
 
@@ -243,32 +243,31 @@ export default function EdificiosTable() {
 
     return (
         <>
-            <div className="space-y-6">
+            <div className="space-y-4">
                 {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900">
+                        <h2 className="text-xl font-semibold text-gray-900">
                             Gestión de Edificios
-                        </h1>
-                        <p className="text-sm text-gray-500 mt-1">
+                        </h2>
+                        <p className="text-sm text-gray-500">
                             {edificios.length} edificio{edificios.length !== 1 ? 's' : ''} registrado{edificios.length !== 1 ? 's' : ''}
                         </p>
                     </div>
-                    <div className="flex flex-col sm:flex-row gap-2">
+                    <div className="flex gap-2">
                         <Button 
                             onClick={fetchEdificios} 
                             variant="ghost" 
-                            size="md"
+                            size="sm"
                             disabled={loading || actionLoading}
-                            className="sm:w-auto w-full"
                         >
                             <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
                             Actualizar
                         </Button>
                         <Button 
                             onClick={() => setShowAddModal(true)} 
+                            size="sm"
                             disabled={actionLoading}
-                            className="sm:w-auto w-full"
                         >
                             <Plus className="mr-2 h-4 w-4" />
                             Nuevo Edificio
@@ -321,7 +320,6 @@ export default function EdificiosTable() {
                                     <tr>
                                         <td colSpan="5" className="px-6 py-12 text-center">
                                             <div className="text-gray-500">
-                                                <Search className="h-12 w-12 mx-auto mb-4 opacity-30" />
                                                 <p className="text-sm font-medium mb-1">
                                                     {searchTerm ? 'No se encontraron resultados' : 'No hay edificios registrados'}
                                                 </p>

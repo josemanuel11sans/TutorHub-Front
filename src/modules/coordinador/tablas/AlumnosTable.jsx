@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { Search, Plus, Edit, Trash2, AlertCircle, Loader2 } from "lucide-react"
+import { Search, Plus, Edit, Trash2, AlertCircle, Loader2, RefreshCw } from "lucide-react"
 import { AddAlumnoModal } from "../modales/AddAlumnoModal"
 import { EditAlumnoModal } from "../modales/EditAlumnoModal"
 import { DeleteConfirmModal } from "../modales/DeleteConfirmModal"
@@ -18,8 +18,8 @@ const Button = ({ children, onClick, variant = "default", size = "sm", className
     ghost: "hover:bg-gray-100 text-gray-700",
   }
   const sizes = {
-    sm: "px-3 py-2 text-sm",
-    xs: "px-2 py-1 text-xs",
+    sm: "px-2 py-1 text-xs",
+    xs: "px-1.5 py-0.5 text-[10px]",
   }
 
   return (
@@ -176,13 +176,19 @@ export default function AlumnosTable() {
               Gestión de Alumnos
             </h2>
             <p className="text-sm text-gray-500">
-              Administra los alumnos del sistema
+              Administra los alumnos del sistema ({alumnos.length} alumnos)
             </p>
           </div>
-          <Button onClick={() => setShowAddModal(true)} disabled={loading}>
-            <Plus className="mr-2 h-4 w-4" />
-            Nuevo Alumno
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={loadAlumnos} variant="ghost" size="sm">
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Actualizar
+            </Button>
+            <Button onClick={() => setShowAddModal(true)} size="sm">
+              <Plus className="mr-2 h-4 w-4" />
+              Nuevo Alumno
+            </Button>
+          </div>
         </div>
 
         {/* Error Alert */}

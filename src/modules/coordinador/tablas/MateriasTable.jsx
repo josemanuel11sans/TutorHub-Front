@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { Search, Plus, Edit, Trash2 } from "lucide-react"
+import { Search, Plus, Edit, Trash2, RefreshCw } from "lucide-react"
 import { AddMateriaModal } from "../modales/AddMateriaModal"
 import { EditMateriaModal } from "../modales/EditMateriaModal"
 import { DeleteMateriaModal } from "../modales/DeleteMateriaModal"
@@ -199,10 +199,16 @@ export default function MateriasTable() {
                             Total: {materias.length} materias
                         </p>
                     </div>
-                    <Button onClick={() => setShowAddModal(true)}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        Nueva Materia
-                    </Button>
+                    <div className="flex gap-2">
+                        <Button onClick={loadMaterias} variant="ghost" size="sm">
+                            <RefreshCw className="mr-2 h-4 w-4" />
+                            Actualizar
+                        </Button>
+                        <Button onClick={() => setShowAddModal(true)} size="sm">
+                            <Plus className="mr-2 h-4 w-4" />
+                            Nueva Materia
+                        </Button>
+                    </div>
                 </div>
 
                 {/* Buscador */}
