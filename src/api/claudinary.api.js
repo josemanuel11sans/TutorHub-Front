@@ -41,9 +41,12 @@ export const getFilesByUser = async (usuarioId) => {
 	}
 }
 
-export const getFilesByEspacio = async (espacioId) => {
+export const getFilesByEspacio = async (espacioId, options = {}) => {
 	try {
-		const res = await api.get(`/files/espacio/${espacioId}`)
+		const params = {}
+		if (options.includeDeleted) params.includeDeleted = true
+
+		const res = await api.get(`/files/espacio/${espacioId}` , { params })
 		return res.data
 	} catch (error) {
 		console.error('Error al obtener archivos por espacio:', error)
@@ -57,6 +60,16 @@ export const deleteFile = async (fileId) => {
 		return res.data
 	} catch (error) {
 		console.error('Error al eliminar archivo:', error)
+		throw error
+	}
+}
+
+export const restoreFile = async (fileId) => {
+	try {
+		const res = await api.put(`/files/${fileId}/restore`)
+		return res.data
+	} catch (error) {
+		console.error('Error al restaurar archivo:', error)
 		throw error
 	}
 }

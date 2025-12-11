@@ -83,26 +83,18 @@ export default function EspaciosView({ onSelectEspacio, tutorId: propTutorId }) 
       }
 
       const normalized = raw.map((r) => {
-        // alumnos: puede venir como número, como array o en _count
+        // alumnos: campo manual desde el modelo (no hay contador automático)
         let alumnosCount = 0
-        if (Array.isArray(r.alumnos)) alumnosCount = r.alumnos.length
-        else if (typeof r.alumnos === 'number') alumnosCount = r.alumnos
-        else if (typeof r.alumnosCount === 'number') alumnosCount = r.alumnosCount
-        else if (typeof r.studentCount === 'number') alumnosCount = r.studentCount
-        else if (r._count && typeof r._count.alumnos === 'number') alumnosCount = r._count.alumnos
-        else if (r._count && typeof r._count.students === 'number') alumnosCount = r._count.students
-        else if (r.alumnos && typeof r.alumnos === 'string' && !isNaN(Number(r.alumnos))) alumnosCount = Number(r.alumnos)
+        if (typeof r.alumnos === 'number') alumnosCount = r.alumnos
+        else if (typeof r.alumnos === 'string' && !isNaN(Number(r.alumnos))) alumnosCount = Number(r.alumnos)
 
-        // materiales: puede venir como array, como files, en _count o en filesCount/materialCount
+        // materiales: puede venir como materialesCount desde el backend
         let materialesCount = 0
-        if (Array.isArray(r.materiales)) materialesCount = r.materiales.length
+        if (typeof r.materialesCount === 'number') materialesCount = r.materialesCount
+        else if (typeof r.materialesCount === 'string') materialesCount = Number(r.materialesCount)
+        else if (Array.isArray(r.materiales)) materialesCount = r.materiales.length
         else if (Array.isArray(r.files)) materialesCount = r.files.length
         else if (typeof r.materiales === 'number') materialesCount = r.materiales
-        else if (typeof r.filesCount === 'number') materialesCount = r.filesCount
-        else if (typeof r.materialCount === 'number') materialesCount = r.materialCount
-        else if (r._count && typeof r._count.files === 'number') materialesCount = r._count.files
-        else if (r._count && typeof r._count.materiales === 'number') materialesCount = r._count.materiales
-        else if (r.materiales && typeof r.materiales === 'string' && !isNaN(Number(r.materiales))) materialesCount = Number(r.materiales)
 
         return {
           id: r.id_espacio ?? r.id ?? r._id ?? null,
@@ -359,12 +351,6 @@ export default function EspaciosView({ onSelectEspacio, tutorId: propTutorId }) 
                   <p className="text-sm text-gray-600 mb-4 line-clamp-2">{espacio.descripcion}</p>
 
                   <div className="flex items-center gap-4 text-sm text-gray-600 border-t pt-3">
-                    <div className="flex items-center gap-1.5">
-                      <Users className="h-4 w-4" />
-                      <span>
-                        {espacio.alumnos}/{espacio.capacidad}
-                      </span>
-                    </div>
                     <div className="flex items-center gap-1.5">
                       <FolderOpen className="h-4 w-4" />
                       <span>{espacio.materiales} materiales</span>
