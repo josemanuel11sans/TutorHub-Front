@@ -99,6 +99,17 @@ export default function EspaciosTable() {
         }
     }
 
+    // Función para recargar solo los espacios (más rápido)
+    const fetchEspacios = async () => {
+        try {
+            const espaciosData = await getEspacios()
+            setEspacios(espaciosData)
+        } catch (err) {
+            console.error('Error al recargar espacios:', err)
+            try { toast?.showToast?.('Error al recargar espacios', 'error') } catch (e) { console.warn(e) }
+        }
+    }
+
     // Filtrar espacios
     const filteredEspacios = espacios.filter(espacio => {
         const searchLower = searchTerm.toLowerCase()
@@ -133,8 +144,8 @@ export default function EspaciosTable() {
 
             const response = await createEspacio(espacioToCreate)
             
-            // Recargar la lista de espacios
-            await fetchInitialData()
+            // Recargar solo los espacios (más rápido)
+            await fetchEspacios()
             
             setShowAddModal(false)
             try { toast?.showToast?.('Espacio creado exitosamente', 'success') } catch (e) { console.warn(e) }
@@ -161,8 +172,8 @@ export default function EspaciosTable() {
 
             await updateEspacio(selectedEspacio.id_espacio, espacioToUpdate)
             
-            // Recargar la lista
-            await fetchInitialData()
+            // Recargar solo los espacios (más rápido)
+            await fetchEspacios()
             
             setShowEditModal(false)
             setSelectedEspacio(null)
@@ -183,8 +194,8 @@ export default function EspaciosTable() {
         try {
             await deleteEspacio(selectedEspacio.id_espacio)
             
-            // Recargar la lista
-            await fetchInitialData()
+            // Recargar solo los espacios (más rápido)
+            await fetchEspacios()
             
             setShowDeleteModal(false)
             setSelectedEspacio(null)
@@ -386,7 +397,7 @@ export default function EspaciosTable() {
             {showAddModal && (
                 <AddEspacioModal
                     onClose={() => setShowAddModal(false)}
-                    onAdd={handleAddEspacio}
+                    onCreated={handleAddEspacio}
                     tutores={tutores}
                     materias={materias}
                 />
