@@ -11,7 +11,7 @@ export const getEdificios = async () => {
     console.error("Error al obtener edificios:", error);
     
     // Manejo específico de errores
-    if (error.response?.status === 401) {
+    if (error.response?.status ===  401) {
       throw new Error("No autenticado. Por favor, inicia sesión nuevamente.");
     } else if (error.response?.status === 403) {
       throw new Error("No tienes permiso para realizar esta acción.");
