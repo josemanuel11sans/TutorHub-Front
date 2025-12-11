@@ -339,7 +339,7 @@ export default function TutoresTable() {
       {showDeleteModal && selectedTutor && (
         <DeleteConfirmModal
           title="Eliminar Tutor"
-          message={`¿Estás seguro de que deseas eliminar al tutor ${selectedTutor.nombre} ${selectedTutor.apellido_paterno}? Esta acción no se puede deshacer.`}
+          message={`¿Estás seguro de que deseas cambiarle el estado al tutor ${selectedTutor.nombre} ${selectedTutor.apellido}?`}
           onClose={() => setShowDeleteModal(false)}
           onConfirm={handleConfirmDelete}
           loading={actionLoading}

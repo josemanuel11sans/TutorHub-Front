@@ -71,7 +71,7 @@ export default function EdificiosTable() {
     const [showEditModal, setShowEditModal] = useState(false)
     const [showDeleteModal, setShowDeleteModal] = useState(false)
     const [selectedEdificio, setSelectedEdificio] = useState(null)
-    const [actionLoading, setActionLoading] = useState(false)
+    const toast = useToast()
 
     // Cargar edificios al montar el componente
     useEffect(() => {
@@ -79,16 +79,15 @@ export default function EdificiosTable() {
     }, [])
 
     const fetchEdificios = async () => {
-        setLoading(true)
-        setError(null)
         try {
+            setLoading(true)
+            setError(null)
             const response = await getEdificios()
-            // Asegurarse de que tenemos un array
             const data = Array.isArray(response) ? response : []
             setEdificios(data)
         } catch (err) {
             console.error("Error al cargar edificios:", err)
-            setError(err.message || "No se pudieron cargar los edificios. Intenta de nuevo más tarde.")
+            setError(err.response?.data?.message || "Error al conectar con el servidor")
         } finally {
             setLoading(false)
         }
@@ -117,129 +116,65 @@ export default function EdificiosTable() {
     }
 
     const handleAddEdificio = async (newEdificio) => {
-        setActionLoading(true)
         try {
             const response = await createEdificio(newEdificio)
-            // Agregar el nuevo edificio a la lista
-            if (response.data) {
-                setEdificios(prev => [...prev, response.data])
-            }
+            const nuevoEdificio = response.data || response
+            setEdificios([nuevoEdificio, ...edificios])
             setShowAddModal(false)
-            try {
-                toast?.showToast?.('Edificio agregado correctamente', 'success')
-            } catch (e) {
-                console.warn(e)
-            }
+            toast?.showToast('Edificio agregado correctamente', 'success')
         } catch (error) {
             console.error("Error al crear edificio:", error)
-            
-            // Mostrar mensaje de error específico si existe
-            const errorMessage = error.response?.data?.message || error.message || 'Error al agregar edificio'
-            try {
-                toast?.showToast?.(errorMessage, 'error')
-            } catch (e) {
-                console.warn(e)
-            }
-            
-            throw error // Para que el modal maneje el error
-        } finally {
-            setActionLoading(false)
+            const errorMessage = error.response?.data?.message || 'Error al agregar edificio'
+            toast?.showToast(errorMessage, 'error')
+            throw error
         }
     }
 
     const handleUpdateEdificio = async (updatedEdificio) => {
-        setActionLoading(true)
         try {
-            const response = await updateEdificio(selectedEdificio.id, updatedEdificio)
-            // Actualizar el edificio en la lista
-            if (response.data) {
-                setEdificios(prev => prev.map(e =>
-                    e.id === selectedEdificio.id ? response.data : e
-                ))
-            }
+            await updateEdificio(selectedEdificio.id, updatedEdificio)
+            setEdificios(edificios.map(e =>
+                e.id === selectedEdificio.id 
+                    ? { ...e, ...updatedEdificio } 
+                    : e
+            ))
             setShowEditModal(false)
-            try {
-                toast?.showToast?.('Edificio actualizado correctamente', 'success')
-            } catch (e) {
-                console.warn(e)
-            }
+            setSelectedEdificio(null)
+            toast?.showToast('Edificio actualizado correctamente', 'success')
         } catch (error) {
             console.error("Error al actualizar edificio:", error)
-            
-            const errorMessage = error.response?.data?.message || error.message || 'Error al actualizar edificio'
-            try {
-                toast?.showToast?.(errorMessage, 'error')
-            } catch (e) {
-                console.warn(e)
-            }
-            
+            const errorMessage = error.response?.data?.message || 'Error al actualizar edificio'
+            toast?.showToast(errorMessage, 'error')
             throw error
-        } finally {
-            setActionLoading(false)
         }
     }
 
     const handleConfirmDelete = async () => {
-        setActionLoading(true)
         try {
             await deleteEdificio(selectedEdificio.id)
-            // Eliminar el edificio de la lista
-            setEdificios(prev => prev.filter(e => e.id !== selectedEdificio.id))
+            const nuevoEstado = !selectedEdificio.estado
+            setEdificios(edificios.map(e =>
+                e.id === selectedEdificio.id ? { ...e, estado: nuevoEstado } : e
+            ))
             setShowDeleteModal(false)
             setSelectedEdificio(null)
-            try {
-                toast?.showToast?.('Edificio eliminado correctamente', 'success')
-            } catch (e) {
-                console.warn(e)
-            }
+            const mensaje = nuevoEstado ? 'Edificio activado correctamente' : 'Edificio desactivado correctamente'
+            toast?.showToast(mensaje, 'success')
         } catch (error) {
-            console.error("Error al eliminar edificio:", error)
-            
-            // Mostrar error específico
-            const errorMessage = error.response?.data?.message || error.message || 'No se pudo eliminar el edificio. Puede que tenga aulas asociadas.'
-            try {
-                toast?.showToast?.(errorMessage, 'error')
-            } catch (e) {
-                console.warn(e)
-            }
-        } finally {
-            setActionLoading(false)
-        }
-    }
-
-    const handleDeactivate = async (id) => {
-        setActionLoading(true)
-        try {
-            await deactivateEdificio(id)
-            // Actualizar estado en la lista
-            setEdificios(prev => prev.map(e =>
-                e.id === id ? { ...e, estado: false } : e
-            ))
-            try {
-                toast?.showToast?.('Edificio desactivado correctamente', 'success')
-            } catch (e) {
-                console.warn(e)
-            }
-        } catch (error) {
-            console.error("Error al desactivar edificio:", error)
-            
-            const errorMessage = error.response?.data?.message || error.message || 'No se pudo desactivar el edificio'
-            try {
-                toast?.showToast?.(errorMessage, 'error')
-            } catch (e) {
-                console.warn(e)
-            }
-        } finally {
-            setActionLoading(false)
+            console.error("Error al cambiar estado del edificio:", error)
+            const errorMessage = error.response?.data?.message || 'No se pudo cambiar el estado del edificio'
+            toast?.showToast(errorMessage, 'error')
         }
     }
 
     // Render de loading
     if (loading) {
         return (
-            <div className="flex flex-col justify-center items-center h-64 space-y-4">
-                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-                <span className="text-gray-600">Cargando edificios...</span>
+            <div className="flex items-center justify-center h-64">
+                <div className="text-center">
+                    <RefreshCw className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-2" />
+                    <p className="text-sm text-gray-600">Cargando edificios...</p>
+                </div>
             </div>
         )
     }
@@ -247,19 +182,17 @@ export default function EdificiosTable() {
     // Render de error
     if (error) {
         return (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-                <div className="flex items-center mb-4">
-                    <AlertCircle className="h-6 w-6 text-red-600 mr-2" />
-                    <h3 className="text-lg font-medium text-red-800">Error al cargar edificios</h3>
-                </div>
-                <p className="text-red-700 mb-4">{error}</p>
-                <div className="flex gap-2">
-                    <Button onClick={fetchEdificios}>
-                        <RefreshCw className="mr-2 h-4 w-4" />
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                        <div className="text-red-600 mr-3">⚠️</div>
+                        <div>
+                            <p className="text-sm font-medium text-red-800">{error}</p>
+                        </div>
+                    </div>
+                    <Button onClick={fetchEdificios} variant="ghost" size="sm">
+                        <RefreshCw className="h-4 w-4 mr-1" />
                         Reintentar
-                    </Button>
-                    <Button onClick={() => setError(null)} variant="ghost">
-                        Ocultar error
                     </Button>
                 </div>
             </div>
@@ -281,18 +214,12 @@ Administra los edificios del sistema                        </p>
                     <div className="flex gap-2">
                         <Button 
                             onClick={fetchEdificios} 
-                            variant="ghost" 
-                            size="sm"
-                            disabled={loading || actionLoading}
+                            variant="ghost"
                         >
-                            <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                            <RefreshCw className="mr-2 h-4 w-4" />
                             Actualizar
                         </Button>
-                        <Button 
-                            onClick={() => setShowAddModal(true)} 
-                            size="sm"
-                            disabled={actionLoading}
-                        >
+                        <Button onClick={() => setShowAddModal(true)}>
                             <Plus className="mr-2 h-4 w-4" />
                             Nuevo Edificio
                         </Button>
@@ -319,22 +246,22 @@ Administra los edificios del sistema                        </p>
                 {/* Tabla */}
                 <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
                     <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
+                        <table className="w-full text-center">
                             <thead className="bg-gray-50">
-                                <tr>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <tr className="border-b border-gray-200">
+                                    <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">
                                         Nombre
                                     </th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">
                                         Descripción
                                     </th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">
                                         Ubicación
                                     </th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">
                                         Estado
                                     </th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">
                                         Acciones
                                     </th>
                                 </tr>
@@ -344,80 +271,61 @@ Administra los edificios del sistema                        </p>
                                     <tr>
                                         <td colSpan="5" className="px-6 py-12 text-center">
                                             <div className="text-gray-500">
-                                                <p className="text-sm font-medium mb-1">
-                                                    {searchTerm ? 'No se encontraron resultados' : 'No hay edificios registrados'}
-                                                </p>
-                                                <p className="text-xs">
+                                                <p className="text-sm">
                                                     {searchTerm 
-                                                        ? 'Intenta con otros términos de búsqueda' 
-                                                        : 'Haz clic en "Nuevo Edificio" para crear el primero'
-                                                    }
+                                                        ? 'No se encontraron edificios con ese criterio' 
+                                                        : 'No hay edificios registrados'}
                                                 </p>
+                                                {searchTerm && (
+                                                    <button
+                                                        onClick={() => setSearchTerm('')}
+                                                        className="text-xs text-blue-600 hover:underline mt-1"
+                                                    >
+                                                        Limpiar búsqueda
+                                                    </button>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>
                                 ) : (
                                     filteredEdificios.map((edificio) => (
                                         <tr key={edificio.id} className="hover:bg-gray-50 transition-colors">
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="text-sm font-semibold text-gray-900">
-                                                    {edificio.nombre}
-                                                </div>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                {edificio.nombre}
                                             </td>
-                                            <td className="px-6 py-4">
-                                                <div className="text-sm text-gray-600 max-w-xs">
-                                                    {edificio.descripcion || (
-                                                        <span className="text-gray-400 italic">Sin descripción</span>
-                                                    )}
-                                                </div>
+                                            <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">
+                                                {edificio.descripcion || 'Sin descripción'}
+                                            </td>
+                                            <td className="px-6 py-4 text-sm text-gray-600">
+                                                {edificio.ubicacion}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="text-sm text-gray-600">
-                                                    {edificio.ubicacion}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <Badge variant={edificio.estado ? "active" : "inactive"}>
+                                                <span
+                                                    className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${
+                                                        edificio.estado 
+                                                            ? "bg-green-100 text-green-800" 
+                                                            : "bg-gray-100 text-gray-500"
+                                                    }`}
+                                                >
                                                     {edificio.estado ? "Activo" : "Inactivo"}
-                                                </Badge>
+                                                </span>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                                <div className="flex items-center space-x-2">
-                                                    <Button
+                                            <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                <div className="flex items-center justify-center gap-2">
+                                                    <button
                                                         onClick={() => handleEdit(edificio)}
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        disabled={actionLoading}
-                                                        title="Editar"
+                                                        className="text-gray-600 hover:text-gray-900 p-1"
+                                                        title="Editar edificio"
                                                     >
                                                         <Edit className="h-4 w-4" />
-                                                    </Button>
-                                                    
-                                                    {edificio.estado ? (
-                                                        <Button
-                                                            onClick={() => handleDeactivate(edificio.id)}
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            disabled={actionLoading}
-                                                            title="Desactivar"
-                                                            className="text-yellow-600 hover:text-yellow-700"
-                                                        >
-                                                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                            </svg>
-                                                        </Button>
-                                                    ) : (
-                                                        <Button
-                                                            onClick={() => handleDelete(edificio)}
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            disabled={actionLoading}
-                                                            title="Eliminar"
-                                                            className="text-red-600 hover:text-red-700"
-                                                        >
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </Button>
-                                                    )}
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDelete(edificio)}
+                                                        className="text-gray-600 hover:text-red-600 p-1"
+                                                        title={edificio.estado ? "Desactivar edificio" : "Activar edificio"}
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -434,7 +342,6 @@ Administra los edificios del sistema                        </p>
                 <AddEdificioModal
                     onClose={() => setShowAddModal(false)}
                     onAdd={handleAddEdificio}
-                    loading={actionLoading}
                 />
             )}
 
@@ -443,7 +350,6 @@ Administra los edificios del sistema                        </p>
                     edificio={selectedEdificio}
                     onClose={() => setShowEditModal(false)}
                     onUpdate={handleUpdateEdificio}
-                    loading={actionLoading}
                 />
             )}
 
@@ -452,7 +358,6 @@ Administra los edificios del sistema                        </p>
                     edificio={selectedEdificio}
                     onClose={() => setShowDeleteModal(false)}
                     onDelete={handleConfirmDelete}
-                    loading={actionLoading}
                 />
             )}
         </>

@@ -339,7 +339,7 @@ export default function AlumnosTable() {
       {showDeleteModal && selectedAlumno && (
         <DeleteConfirmModal
           title="Eliminar Alumno"
-          message={`¿Estás seguro de que deseas eliminar al alumno ${selectedAlumno.nombre} ${selectedAlumno.apellido_paterno}? Esta acción no se puede deshacer.`}
+          message={`¿Estás seguro de que deseas cambiarle el estado al alumno ${selectedAlumno.nombre} ${selectedAlumno.apellido}?`}
           onClose={() => setShowDeleteModal(false)}
           onConfirm={handleConfirmDelete}
           loading={actionLoading}

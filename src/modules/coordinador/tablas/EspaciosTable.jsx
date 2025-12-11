@@ -106,7 +106,6 @@ export default function EspaciosTable() {
             setEspacios(espaciosData)
         } catch (err) {
             console.error('Error al recargar espacios:', err)
-            try { toast?.showToast?.('Error al recargar espacios', 'error') } catch (e) { console.warn(e) }
         }
     }
 
@@ -142,13 +141,13 @@ export default function EspaciosTable() {
                 materia_id: parseInt(newEspacioData.materiaId)
             }
 
-            const response = await createEspacio(espacioToCreate)
+            await createEspacio(espacioToCreate)
             
-            // Recargar solo los espacios (más rápido)
+            // Recargar espacios para obtener los datos completos con relaciones
             await fetchEspacios()
             
             setShowAddModal(false)
-            try { toast?.showToast?.('Espacio creado exitosamente', 'success') } catch (e) { console.warn(e) }
+            toast?.showToast('Espacio creado exitosamente', 'success')
         } catch (err) {
             console.error('Error al crear espacio:', err)
             let errorMessage = 'Error al crear el espacio'
@@ -157,7 +156,7 @@ export default function EspaciosTable() {
                 errorMessage = err.response.data.message
             }
             
-            try { toast?.showToast?.(errorMessage, 'error') } catch (e) { console.warn(e) }
+            toast?.showToast(errorMessage, 'error')
         }
     }
 
@@ -172,12 +171,16 @@ export default function EspaciosTable() {
 
             await updateEspacio(selectedEspacio.id_espacio, espacioToUpdate)
             
-            // Recargar solo los espacios (más rápido)
-            await fetchEspacios()
+            // Actualizar solo el espacio editado en el estado local
+            setEspacios(espacios.map(e =>
+                e.id_espacio === selectedEspacio.id_espacio 
+                    ? { ...e, nombre: espacioToUpdate.nombre, descripcion: espacioToUpdate.descripcion, portada: espacioToUpdate.portada } 
+                    : e
+            ))
             
             setShowEditModal(false)
             setSelectedEspacio(null)
-            try { toast?.showToast?.('Espacio actualizado exitosamente', 'success') } catch (e) { console.warn(e) }
+            toast?.showToast('Espacio actualizado exitosamente', 'success')
         } catch (err) {
             console.error('Error al actualizar espacio:', err)
             let errorMessage = 'Error al actualizar el espacio'
@@ -186,7 +189,7 @@ export default function EspaciosTable() {
                 errorMessage = err.response.data.message
             }
             
-            try { toast?.showToast?.(errorMessage, 'error') } catch (e) { console.warn(e) }
+            toast?.showToast(errorMessage, 'error')
         }
     }
 
@@ -194,12 +197,16 @@ export default function EspaciosTable() {
         try {
             await deleteEspacio(selectedEspacio.id_espacio)
             
-            // Recargar solo los espacios (más rápido)
-            await fetchEspacios()
+            // Actualizar el estado local alternando el estado
+            const nuevoEstado = !selectedEspacio.estado
+            setEspacios(espacios.map(e =>
+                e.id_espacio === selectedEspacio.id_espacio ? { ...e, estado: nuevoEstado } : e
+            ))
             
             setShowDeleteModal(false)
             setSelectedEspacio(null)
-            try { toast?.showToast?.('Espacio eliminado exitosamente', 'success') } catch (e) { console.warn(e) }
+            const mensaje = nuevoEstado ? 'Espacio activado exitosamente' : 'Espacio desactivado exitosamente'
+            toast?.showToast(mensaje, 'success')
         } catch (err) {
             console.error('Error al eliminar espacio:', err)
             let errorMessage = 'Error al eliminar el espacio'
@@ -211,7 +218,7 @@ export default function EspaciosTable() {
                 errorMessage = err.response.data.message
             }
             
-            try { toast?.showToast?.(errorMessage, 'error') } catch (e) { console.warn(e) }
+            toast?.showToast(errorMessage, 'error')
             setShowDeleteModal(false)
             setSelectedEspacio(null)
         }

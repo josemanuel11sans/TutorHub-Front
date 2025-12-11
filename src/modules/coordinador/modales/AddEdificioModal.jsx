@@ -9,7 +9,6 @@ export function AddEdificioModal({ onClose, onCreated }) {
         nombre: "",
         descripcion: "",
         ubicacion: "",
-        estado: true,
     })
     const [loading, setLoading] = useState(false)
 
@@ -26,7 +25,14 @@ export function AddEdificioModal({ onClose, onCreated }) {
         setLoading(true)
 
         try {
-            const res = await createEdificio(formData)
+            // Enviar datos con descripción incluida
+            const dataToSend = {
+                nombre: formData.nombre.trim(),
+                ubicacion: formData.ubicacion,
+                descripcion: formData.descripcion.trim() || null
+            }
+
+            const res = await createEdificio(dataToSend)
 
             if (onCreated) onCreated(res)
             onClose()
@@ -135,35 +141,19 @@ export function AddEdificioModal({ onClose, onCreated }) {
                         </select>
                     </div>
 
-                    {/* Estado (oculto) */}
-                    <div className="flex items-center gap-2 hidden">
-                        <input
-                            type="checkbox"
-                            name="estado"
-                            checked={formData.estado}
-                            onChange={handleChange}
-                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
-                        />
-                        <label className="text-sm text-gray-700">Activo</label>
-                    </div>
-
                     {/* Buttons */}
                     <div className="flex gap-3 pt-2">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg 
-                            hover:bg-gray-200 transition-all"
+                            className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-all"
                         >
                             Cancelar
                         </button>
                         <button
                             type="submit"
                             disabled={loading}
-                            className="flex-1 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r 
-                            from-blue-600 to-blue-700 rounded-lg hover:from-blue-700 hover:to-blue-800 
-                            transition-all shadow-md shadow-blue-500/20 disabled:opacity-50 
-                            disabled:cursor-not-allowed disabled:shadow-none"
+                            className="flex-1 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
                         >
                             {loading ? "Guardando..." : "Crear"}
                         </button>

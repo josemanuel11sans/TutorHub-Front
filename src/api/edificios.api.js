@@ -42,12 +42,11 @@ export const getEdificioById = async (id) => {
 // Crear nuevo edificio
 export const createEdificio = async (edificioData) => {
   try {
-    // Asegurar que el cuerpo tenga el formato correcto
+    // Enviar solo los campos necesarios
     const dataToSend = {
       nombre: edificioData.nombre?.trim(),
-      ubicacion: edificioData.ubicacion?.trim(),
-      descripcion: edificioData.descripcion?.trim() || null,
-      estado: edificioData.estado ?? true
+      ubicacion: edificioData.ubicacion,
+      descripcion: edificioData.descripcion?.trim() || undefined
     };
 
     const response = await api.post(`${endpoint}/create`, dataToSend);

@@ -341,7 +341,7 @@ export default function CoordinadoresTable() {
       {showDeleteModal && selectedCoordinador && (
         <DeleteConfirmModal
           title="Eliminar Coordinador"
-          message={`¿Estás seguro de que deseas eliminar al coordinador ${selectedCoordinador.nombre} ${selectedCoordinador.apellido_paterno}? Esta acción no se puede deshacer.`}
+          message={`¿Estás seguro de que deseas cambiarle el estado al coordinador ${selectedCoordinador.nombre} ${selectedCoordinador.apellido}?`}
           onClose={() => setShowDeleteModal(false)}
           onConfirm={handleConfirmDelete}
           loading={actionLoading}

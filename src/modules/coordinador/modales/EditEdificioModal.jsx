@@ -26,11 +26,21 @@ export function EditEdificioModal({ edificio, onClose, onUpdate }) {
     e.preventDefault()
     setLoading(true)
 
-    // Simulación de actualización
-    setTimeout(() => {
-      onUpdate(formData)
+    try {
+      // Enviar solo los campos necesarios
+      const dataToUpdate = {
+        nombre: formData.nombre.trim(),
+        ubicacion: formData.ubicacion,
+        descripcion: formData.descripcion?.trim() || null
+      }
+
+      await onUpdate(dataToUpdate)
       setLoading(false)
-    }, 500)
+    } catch (error) {
+      console.error("Error al actualizar edificio:", error)
+      setLoading(false)
+      throw error
+    }
   }
 
   return (
@@ -84,14 +94,13 @@ export function EditEdificioModal({ edificio, onClose, onUpdate }) {
           <div className="space-y-1.5">
             <label className="flex items-center gap-2 text-xs font-medium text-gray-700">
               <FileText className="h-3.5 w-3.5 text-gray-400" />
-              Descripción
+              Descripción (opcional)
             </label>
             <textarea
               name="descripcion"
-              value={formData.descripcion}
+              value={formData.descripcion || ''}
               onChange={handleChange}
               placeholder="Escribe una descripción del edificio"
-              required
               rows={3}
               className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all resize-none text-gray-900 placeholder:text-gray-400"
             />

@@ -57,12 +57,12 @@ export function DeleteEspacioModal({ onClose, onDeleted, espacio }) {
         {/* Content */}
         <div className="p-6">
           <p className="text-sm text-gray-700 mb-4">
-            ¿Estás seguro de que deseas eliminar el espacio <span className="font-semibold">{espacio?.nombre}</span>?
+            ¿Estás seguro de que deseas cambiarle el estado al espacio <span className="font-semibold">{espacio?.nombre}</span>?
           </p>
           <div className="bg-red-50 border border-red-100 rounded-lg p-3 flex gap-2 mb-6">
             <AlertTriangle className="h-4 w-4 text-red-600 flex-shrink-0 mt-0.5" />
             <p className="text-xs text-red-700">
-              Esta acción eliminará el registro de forma lógica. El espacio será marcado como inactivo.
+              Esta acción eliminará el registro de forma lógica. 
             </p>
           </div>
 
