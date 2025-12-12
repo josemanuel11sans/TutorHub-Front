@@ -126,8 +126,8 @@ export default function CarreraTable() {
   const handleAddCarrera = async (newCarreraData) => {
     try {
       setActionLoading(true)
-      const newCarrera = await createCarrera(newCarreraData)
-      setCarreras([...carreras, newCarrera])
+      await createCarrera(newCarreraData)
+      await loadCarreras()
       setShowAddModal(false)
       try { toast?.showToast?.("Carrera agregada correctamente", "success") } catch (e) { console.warn(e) }
     } catch (err) {
@@ -142,10 +142,8 @@ export default function CarreraTable() {
   const handleUpdateCarrera = async (updatedCarreraData) => {
     try {
       setActionLoading(true)
-      const updated = await updateCarrera(selectedCarrera.id_carrera, updatedCarreraData)
-      setCarreras(carreras.map(c =>
-        c.id_carrera === selectedCarrera.id_carrera ? updated : c
-      ))
+      await updateCarrera(selectedCarrera.id_carrera, updatedCarreraData)
+      await loadCarreras()
       setShowEditModal(false)
       try { toast?.showToast?.("Carrera actualizada correctamente", "success") } catch (e) { console.warn(e) }
     } catch (err) {
@@ -162,9 +160,7 @@ export default function CarreraTable() {
       setActionLoading(true)
       const nuevoEstado = !selectedCarrera.estado
       await deleteCarrera(selectedCarrera.id_carrera)
-      setCarreras(carreras.map(c =>
-        c.id_carrera === selectedCarrera.id_carrera ? { ...c, estado: nuevoEstado } : c
-      ))
+      await loadCarreras()
       setShowDeleteModal(false)
       setSelectedCarrera(null)
       const mensaje = nuevoEstado ? "Carrera reactivada correctamente" : "Carrera desactivada correctamente"
@@ -207,7 +203,7 @@ export default function CarreraTable() {
         {error && (
           <ErrorAlert 
             message={error} 
-            onRetry={loadAlumnos}
+            onRetry={loadCarreras}
           />
         )}
 
@@ -347,11 +343,9 @@ export default function CarreraTable() {
 
       {showDeleteModal && selectedCarrera && (
         <DeleteCarreraModal
-          title="Cambiar estado de la carrera"
-          message={`¿Estás seguro de que deseas cambiar el estado de la carrera ${selectedCarrera.nombre_carrera}?`}
+          carrera={selectedCarrera}
           onClose={() => setShowDeleteModal(false)}
           onConfirm={handleConfirmDelete}
-          loading={actionLoading}
         />
       )}
     </>
