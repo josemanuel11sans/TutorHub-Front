@@ -132,8 +132,8 @@ export default function EspaciosView({ onSelectEspacio, tutorId: propStudentId }
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-3xl font-bold text-gray-900">Mis Espacios</h2>
-            <p className="text-sm text-gray-500 mt-1">Selecciona un espacio para ver sus materiales y asesorías</p>
+            <h2 className="text-3xl font-bold text-gray-900">Espacios disponibles</h2>
+            <p className="text-sm text-gray-500 mt-1">Selecciona un espacio para ver sus materiales</p>
           </div>
 
           <div className="flex items-center gap-3">
