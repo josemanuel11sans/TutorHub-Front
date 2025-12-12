@@ -49,10 +49,10 @@ export const updateCoordinador = async (id, coordinadorData) => {
   }
 };
 
-// Eliminar un coordinador
+// Eliminar un coordinador (soft delete)
 export const deleteCoordinador = async (id) => {
   try {
-    const response = await api.delete(`${endpoint}/${id}`);
+    const response = await api.delete(`${endpoint}/delete/${id}`);
     return response.data;
   } catch (error) {
     console.error("Error al eliminar coordinador:", error);

@@ -1,28 +1,60 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { X, DoorOpen, FileText, Building2 } from "lucide-react"
+import { getEdificios } from "../../../api/edificios.api"
 
 export function EditAulaModal({ aula, onClose, onUpdate, edificios = [] }) {
   const [formData, setFormData] = useState({
     id: aula.id,
     nombre: aula.nombre,
     descripcion: aula.descripcion,
-    edificioId: aula.edificioId,
+    // Usar string para binding exacto con <option value>
+    edificioId: String(aula.edificioId ?? ""),
     edificioNombre: aula.edificioNombre,
     estado: aula.estado,
   })
 
   const [loading, setLoading] = useState(false)
+  const [edificiosList, setEdificiosList] = useState([])
+  const [loadingEdificios, setLoadingEdificios] = useState(false)
+  const [errorEdificios, setErrorEdificios] = useState(null)
+
+  useEffect(() => {
+    let isMounted = true
+    const fetchEdificios = async () => {
+      try {
+        setLoadingEdificios(true)
+        setErrorEdificios(null)
+        const data = await getEdificios()
+        if (!isMounted) return
+        setEdificiosList(Array.isArray(data) ? data : [])
+      } catch (err) {
+        if (!isMounted) return
+        setErrorEdificios(err?.message || "No se pudieron cargar los edificios")
+      } finally {
+        if (isMounted) setLoadingEdificios(false)
+      }
+    }
+    // Si no hay edificios o vienen sin campo 'estado', cargar desde API
+    if (!edificios || edificios.length === 0 || typeof edificios[0]?.estado === "undefined") {
+      fetchEdificios()
+    } else {
+      setEdificiosList(edificios)
+    }
+    return () => { isMounted = false }
+  }, [edificios])
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target
     
     if (name === "edificioId") {
-      const edificioSeleccionado = edificios.find(e => e.id === parseInt(value))
+      const base = (edificiosList && edificiosList.length ? edificiosList : (edificios || []))
+      const activos = base.filter(e => e?.estado !== false) // permitir undefined como activo
+      const edificioSeleccionado = activos.find(e => String(e.id) === String(value))
       setFormData({
         ...formData,
-        edificioId: value,
+        edificioId: String(value),
         edificioNombre: edificioSeleccionado ? edificioSeleccionado.nombre : ""
       })
     } else {
@@ -35,13 +67,12 @@ export function EditAulaModal({ aula, onClose, onUpdate, edificios = [] }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setLoading(true)
-
-    // Simulación de actualización
-    setTimeout(() => {
-      onUpdate(formData)
+    try {
+      setLoading(true)
+      await onUpdate(formData)
+    } finally {
       setLoading(false)
-    }, 500)
+    }
   }
 
   return (
@@ -116,18 +147,33 @@ export function EditAulaModal({ aula, onClose, onUpdate, edificios = [] }) {
             </label>
             <select
               name="edificioId"
-              value={formData.edificioId}
+              value={String(formData.edificioId)}
               onChange={handleChange}
               required
               className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-gray-900"
             >
-              <option value="">Selecciona un edificio</option>
-              {edificios.map((edificio) => (
-                <option key={edificio.id} value={edificio.id}>
-                  {edificio.nombre}
-                </option>
-              ))}
+              <option value="" disabled={loadingEdificios}>
+                {loadingEdificios ? "Cargando edificios..." : "Selecciona un edificio"}
+              </option>
+              {(() => {
+                const base = (edificiosList && edificiosList.length ? edificiosList : (edificios || []))
+                const activos = base.filter(e => e?.estado !== false)
+                const selectedId = String(formData.edificioId || "")
+                const existsInList = activos.some(e => String(e.id) === selectedId)
+                const selectedObj = base.find(e => String(e.id) === selectedId)
+                const finalList = existsInList || !selectedObj
+                  ? activos
+                  : [selectedObj, ...activos]
+                return finalList.map((edificio) => (
+                  <option key={edificio.id} value={String(edificio.id)}>
+                    {edificio.nombre}
+                  </option>
+                ))
+              })()}
             </select>
+            {errorEdificios && (
+              <p className="text-xs text-red-600">{errorEdificios}</p>
+            )}
           </div>
 
           {/* Buttons */}
@@ -142,7 +188,7 @@ export function EditAulaModal({ aula, onClose, onUpdate, edificios = [] }) {
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+              className="flex-1 px-4 py-2 text-sm font-medium text-white bg-linear-to-r from-blue-600 to-blue-700 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
             >
               {loading ? "Actualizando..." : "Actualizar"}
             </button>

@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { X, DoorOpen, FileText, Building2 } from "lucide-react"
+import { getEdificios } from "../../../api/edificios.api"
 
 export function AddAulaModal({ onClose, onAdd, edificios = [] }) {
     const [formData, setFormData] = useState({
@@ -12,12 +13,43 @@ export function AddAulaModal({ onClose, onAdd, edificios = [] }) {
         estado: true,
     })
     const [loading, setLoading] = useState(false)
+    const [edificiosList, setEdificiosList] = useState([])
+    const [loadingEdificios, setLoadingEdificios] = useState(false)
+    const [errorEdificios, setErrorEdificios] = useState(null)
+
+    // Cargar edificios y mostrar solo activos
+    useEffect(() => {
+        let isMounted = true
+        const fetchEdificios = async () => {
+            try {
+                setLoadingEdificios(true)
+                setErrorEdificios(null)
+                const data = await getEdificios()
+                if (!isMounted) return
+                const list = Array.isArray(data) ? data : []
+                setEdificiosList(list)
+            } catch (err) {
+                if (!isMounted) return
+                setErrorEdificios(err?.message || "No se pudieron cargar los edificios")
+            } finally {
+                if (isMounted) setLoadingEdificios(false)
+            }
+        }
+        // Si el padre no pasa edificios, o pasa vacío, cargamos nosotros
+        if (!edificios || edificios.length === 0) {
+            fetchEdificios()
+        } else {
+            setEdificiosList(edificios)
+        }
+        return () => { isMounted = false }
+    }, [edificios])
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target
         
         if (name === "edificioId") {
-            const edificioSeleccionado = edificios.find(e => e.id === parseInt(value))
+            const activos = (edificios?.length ? edificios : edificiosList).filter(e => e?.estado)
+            const edificioSeleccionado = activos.find(e => e.id === parseInt(value))
             setFormData({
                 ...formData,
                 edificioId: value,
@@ -33,13 +65,12 @@ export function AddAulaModal({ onClose, onAdd, edificios = [] }) {
 
     const handleSubmit = async (e) => {
         e.preventDefault()
-        setLoading(true)
-
-        // Simulación de guardado
-        setTimeout(() => {
-            onAdd(formData)
+        try {
+            setLoading(true)
+            await onAdd(formData)
+        } finally {
             setLoading(false)
-        }, 500)
+        }
     }
 
     return (
@@ -119,17 +150,24 @@ export function AddAulaModal({ onClose, onAdd, edificios = [] }) {
                             className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-gray-900"
                             required
                         >
-                            <option value="">Selecciona un edificio</option>
-                            {edificios.map((edificio) => (
-                                <option key={edificio.id} value={edificio.id}>
-                                    {edificio.nombre}
-                                </option>
-                            ))}
+                            <option value="" disabled={loadingEdificios}>
+                                {loadingEdificios ? "Cargando edificios..." : "Selecciona un edificio"}
+                            </option>
+                            {(edificios?.length ? edificios : edificiosList)
+                                .filter(e => e?.estado)
+                                .map((edificio) => (
+                                    <option key={edificio.id} value={edificio.id}>
+                                        {edificio.nombre}
+                                    </option>
+                                ))}
                         </select>
+                        {errorEdificios && (
+                            <p className="text-xs text-red-600">{errorEdificios}</p>
+                        )}
                     </div>
 
                     {/* Estado */}
-                    <div className="flex items-center gap-2 hidden">
+                    <div className="hidden items-center gap-2">
                         <input
                             type="checkbox"
                             name="estado"
@@ -152,7 +190,7 @@ export function AddAulaModal({ onClose, onAdd, edificios = [] }) {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="flex-1 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+                            className="flex-1 px-4 py-2 text-sm font-medium text-white bg-linear-to-r from-blue-600 to-blue-700 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
                         >
                             {loading ? "Guardando..." : "Guardar"}
                         </button>

@@ -93,7 +93,6 @@ export default function UsersCountCard() {
         <div>
           <p className="text-sm font-medium text-gray-600">Total Usuarios</p>
           <p className="text-3xl font-bold text-gray-900 mt-2">{total}</p>
-          <p className="text-xs text-gray-500 mt-1">{detailText}</p>
         </div>
         <Users className="h-8 w-8 text-gray-400" />
       </div>

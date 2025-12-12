@@ -2,7 +2,7 @@
 
 import { X, AlertTriangle } from "lucide-react"
 
-export function DeleteConfirmModal({ coordinador, onClose, onConfirm }) {
+export function DeleteConfirmModal({ title = "Eliminar", message = "", onClose, onConfirm, loading = false }) {
   return (
     <div 
       className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4"
@@ -19,7 +19,7 @@ export function DeleteConfirmModal({ coordinador, onClose, onConfirm }) {
               <AlertTriangle className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-gray-900">Eliminar Coordinador</h2>
+              <h2 className="text-lg font-bold text-gray-900">{title}</h2>
               <p className="text-gray-500 text-xs">Esta acción se puede deshacer</p>
             </div>
           </div>
@@ -34,12 +34,12 @@ export function DeleteConfirmModal({ coordinador, onClose, onConfirm }) {
         {/* Content */}
         <div className="p-6">
           <p className="text-sm text-gray-700 mb-4">
-            ¿Estás seguro de que deseas eliminar al coordinador <span className="font-semibold">{coordinador.nombre} {coordinador.apellido}</span>?
+            {message}
           </p>
           <div className="bg-red-50 border border-red-100 rounded-lg p-3 flex gap-2 mb-6">
             <AlertTriangle className="h-4 w-4 text-red-600 flex-shrink-0 mt-0.5" />
             <p className="text-xs text-red-700">
-              Esta acción eliminará lógicamente al asociado.
+              En caso de cambiar el estado a "inactivo", este registro no estará disponible para su uso.
             </p>
           </div>
 
@@ -48,16 +48,18 @@ export function DeleteConfirmModal({ coordinador, onClose, onConfirm }) {
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-all"
+              className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              disabled={loading}
             >
               Cancelar
             </button>
             <button
               type="button"
               onClick={onConfirm}
-              className="flex-1 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-red-600 to-red-700 rounded-lg hover:from-red-700 hover:to-red-800 transition-all shadow-md shadow-red-500/20"
+              className="flex-1 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+              disabled={loading}
             >
-              Eliminar
+              {loading ? "Eliminando..." : "Eliminar"}
             </button>
           </div>
         </div>

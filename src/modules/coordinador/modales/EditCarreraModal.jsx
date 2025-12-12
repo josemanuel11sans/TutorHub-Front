@@ -1,15 +1,24 @@
-import { useState } from "react"
-import { X, BookOpen, Target } from "lucide-react"
+"use client"
 
-export function EditMateriaModal({ materia, carreras = [], onClose, onUpdate }) {
+import { useState, useEffect } from "react"
+import { X, BookOpen, MapPin } from "lucide-react"
+
+const DIVISION_OPTIONS = ["DATIC", "DAMI", "TALLER PESADO"]
+
+export function EditCarreraModal({ carrera = {}, onClose, onUpdate, loading = false }) {
   const [formData, setFormData] = useState({
-    nombre: materia.nombre_materia || "",  
-    objetivo: materia.descripcion || "",       
-    estado: materia.activo || false,           
-    carrera_id: materia.carrera_id || ""        
+    nombre_carrera: carrera.nombre_carrera || "",
+    division: carrera.division || "",
+    estado: carrera.estado ?? true,
   })
 
-  const [loading, setLoading] = useState(false)
+  useEffect(() => {
+    setFormData({
+      nombre_carrera: carrera.nombre_carrera || "",
+      division: carrera.division || "",
+      estado: carrera.estado ?? true,
+    })
+  }, [carrera])
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target
@@ -21,15 +30,7 @@ export function EditMateriaModal({ materia, carreras = [], onClose, onUpdate }) 
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setLoading(true)
-
-    try {
-      await onUpdate(formData)
-    } catch (error) {
-      console.error("Error al actualizar:", error)
-    } finally {
-      setLoading(false)
-    }
+    await onUpdate?.(formData)
   }
 
   return (
@@ -48,8 +49,8 @@ export function EditMateriaModal({ materia, carreras = [], onClose, onUpdate }) 
               <BookOpen className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-gray-900">Editar Materia</h2>
-              <p className="text-gray-500 text-xs">Actualiza la información de la materia</p>
+              <h2 className="text-lg font-bold text-gray-900">Editar Carrera</h2>
+              <p className="text-gray-500 text-xs">Actualiza la información de la carrera</p>
             </div>
           </div>
           <button
@@ -66,66 +67,49 @@ export function EditMateriaModal({ materia, carreras = [], onClose, onUpdate }) 
           <div className="space-y-1.5">
             <label className="flex items-center gap-2 text-xs font-medium text-gray-700">
               <BookOpen className="h-3.5 w-3.5 text-gray-400" />
-              Nombre de la materia
+              Nombre de la carrera
             </label>
             <input
               type="text"
-              name="nombre"
-              value={formData.nombre}
+              name="nombre_carrera"
+              value={formData.nombre_carrera}
               onChange={handleChange}
-              placeholder="Ej: Matemáticas I"
-              required
               className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-gray-900 placeholder:text-gray-400"
+              placeholder="Ej: Ingeniería en Software"
+              required
             />
           </div>
 
-          {/* Objetivo */}
+          {/* División */}
           <div className="space-y-1.5">
             <label className="flex items-center gap-2 text-xs font-medium text-gray-700">
-              <Target className="h-3.5 w-3.5 text-gray-400" />
-              Objetivo
+              <MapPin className="h-3.5 w-3.5 text-gray-400" />
+              División
             </label>
-            <textarea
-              name="objetivo"
-              value={formData.objetivo}
+            <select
+              name="division"
+              value={formData.division}
               onChange={handleChange}
-              placeholder="Describe el objetivo de la materia"
+              className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-gray-900"
               required
-              rows={3}
-              className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all resize-none text-gray-900 placeholder:text-gray-400"
-            />
+            >
+              <option value="" disabled>Selecciona una división</option>
+              {DIVISION_OPTIONS.map(div => (
+                <option key={div} value={div}>{div}</option>
+              ))}
+            </select>
           </div>
 
-          {/* Estado */}
-          <div className="flex items-center gap-2">
+          {/* Estado oculto (mantener valor) */}
+          <div className="hidden items-center gap-2">
             <input
               type="checkbox"
               name="estado"
-              id="estado"
               checked={formData.estado}
               onChange={handleChange}
-              className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
             />
-            <label htmlFor="estado" className="text-sm font-medium text-gray-700">
-              Materia activa
-            </label>
-          </div>
-
-          {/* Carrera */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-gray-700">Carrera</label>
-            <select
-              name="carrera_id"
-              value={formData.carrera_id}
-              onChange={handleChange}
-              required
-              className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-gray-900"
-            >
-              <option value="" disabled>Selecciona una carrera</option>
-              {carreras.map(c => (
-                <option key={c.id_carrera} value={c.id_carrera}>{c.nombre_carrera}</option>
-              ))}
-            </select>
+            <label className="text-sm text-gray-700">Activo</label>
           </div>
 
           {/* Buttons */}

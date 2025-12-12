@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { X, Eye, EyeOff, Lock, KeyRound, ShieldCheck } from "lucide-react"
 import { useToast } from "../../../context/ToastContext"
+import { changePassword } from "../../../api/auth.api"
 
 export function ChangePasswordModal({ onClose }) {
     const [formData, setFormData] = useState({
@@ -17,6 +18,31 @@ export function ChangePasswordModal({ onClose }) {
     })
     const [loading, setLoading] = useState(false)
     const { showToast } = useToast()
+
+    // Obtener el ID del usuario del localStorage
+    const getUserId = () => {
+        const userStr = localStorage.getItem("user")
+        if (userStr) {
+            try {
+                const userData = JSON.parse(userStr)
+                // Intentar diferentes estructuras posibles
+                const id = userData.usuario?.id_usuario || 
+                          userData.id_usuario ||
+                          userData.usuario?.id ||
+                          userData.id
+                
+                if (id) {
+                    console.log("ID del usuario encontrado:", id)
+                    return id
+                } else {
+                    console.error("Estructura de usuario:", userData)
+                }
+            } catch (e) {
+                console.error("Error al parsear usuario:", e)
+            }
+        }
+        return null
+    }
 
     const handleChange = (e) => {
         setFormData({
@@ -36,7 +62,7 @@ export function ChangePasswordModal({ onClose }) {
         e.preventDefault()
 
         // Validaciones
-        if (!formData.currentPassword || !formData.newPassword || !formData.confirmPassword) {
+        if (!formData.newPassword || !formData.confirmPassword) {
             showToast("Todos los campos son obligatorios", "error")
             return
         }
@@ -51,32 +77,26 @@ export function ChangePasswordModal({ onClose }) {
             return
         }
 
+        const userId = getUserId()
+        if (!userId) {
+            showToast("Error: No se encontró el ID del usuario", "error")
+            return
+        }
+
         setLoading(true)
 
         try {
-            const response = await fetch("http://localhost:5173/api/auth/change-password", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                credentials: "include",
-                body: JSON.stringify({
-                    currentPassword: formData.currentPassword,
-                    newPassword: formData.newPassword,
-                }),
+            await changePassword(userId, formData.newPassword)
+            showToast("¡Contraseña cambiada exitosamente!", "success")
+            setFormData({
+                currentPassword: "",
+                newPassword: "",
+                confirmPassword: "",
             })
-
-            const data = await response.json()
-
-            if (response.ok) {
-                showToast("¡Contraseña cambiada exitosamente!", "success")
-                onClose()
-            } else {
-                const mensaje = data.message || "Error al cambiar la contraseña"
-                showToast(mensaje, "error")
-            }
+            onClose()
         } catch (error) {
-            showToast("Error de conexión. Intente nuevamente.", "error")
+            const mensaje = error.response?.data?.message || error.message || "Error al cambiar la contraseña"
+            showToast(mensaje, "error")
         } finally {
             setLoading(false)
         }
@@ -111,45 +131,6 @@ export function ChangePasswordModal({ onClose }) {
 
                 {/* Form */}
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                    {/* Contraseña Actual */}
-                    <div className="space-y-1.5">
-                        <label className="flex items-center gap-2 text-xs font-medium text-gray-700">
-                            <Lock className="h-3.5 w-3.5 text-gray-400" />
-                            Contraseña Actual
-                        </label>
-                        <div className="relative">
-                            <input
-                                type={showPasswords.current ? "text" : "password"}
-                                name="currentPassword"
-                                value={formData.currentPassword}
-                                onChange={handleChange}
-                                className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-gray-900 placeholder:text-gray-400"
-                                placeholder="Ingresa tu contraseña actual"
-                            />
-                            <button
-                                type="button"
-                                onClick={() => togglePasswordVisibility("current")}
-                                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                            >
-                                {showPasswords.current ? (
-                                    <EyeOff className="h-4 w-4" />
-                                ) : (
-                                    <Eye className="h-4 w-4" />
-                                )}
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Separador visual */}
-                    <div className="relative">
-                        <div className="absolute inset-0 flex items-center">
-                            <div className="w-full border-t border-gray-200"></div>
-                        </div>
-                        <div className="relative flex justify-center">
-                            <span className="bg-white px-2 text-xs text-gray-500">Nueva contraseña</span>
-                        </div>
-                    </div>
-
                     {/* Nueva Contraseña */}
                     <div className="space-y-1.5">
                         <label className="flex items-center gap-2 text-xs font-medium text-gray-700">

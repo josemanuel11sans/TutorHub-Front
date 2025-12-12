@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import { User, FileText, Lock, LogOut } from "lucide-react"
 import { useAuth } from "../hooks/useAuth"
+import { useToast } from "../../../context/ToastContext"
 import { ChangePasswordModal } from "./ChangePasswordModal"
 
 export function UserMenu({ user }) {
@@ -10,6 +11,7 @@ export function UserMenu({ user }) {
   const [showPasswordModal, setShowPasswordModal] = useState(false)
   const menuRef = useRef(null)
   const { logout } = useAuth()
+  const toast = useToast()
 
   // Obtener la inicial del nombre
   const getInitial = () => {
@@ -37,10 +39,11 @@ export function UserMenu({ user }) {
   }, [isOpen])
 
   const handleDownloadManual = () => {
-    // Aquí va la lógica para descargar el PDF
+    // Descargar el PDF desde la carpeta public
     const link = document.createElement("a")
-    link.href = "/manuals/manual-usuario.pdf"
+    link.href = "/ManualDeUsuario_TutorHub.pdf"
     link.download = "Manual_de_Usuario.pdf"
+    link.target = "_blank"
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
@@ -53,6 +56,7 @@ export function UserMenu({ user }) {
   }
 
   const handleLogout = () => {
+    try { toast?.showToast?.("Sesión cerrada correctamente", "success") } catch (e) { console.warn(e) }
     logout()
     setIsOpen(false)
   }

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
-import { Search, Plus, Edit, Trash2, AlertCircle, Loader2 } from "lucide-react"
+import { Search, Plus, Edit, Trash2, AlertCircle, Loader2, RefreshCw, RotateCcw } from "lucide-react"
+import { useToast } from "../../../context/ToastContext"
 import { AddTutorModal } from "../modales/AddTutorModal"
 import { EditTutorModal } from "../modales/EditTutorModal"
 import { DeleteConfirmModal } from "../modales/DeleteConfirmModal"
@@ -18,8 +19,8 @@ const Button = ({ children, onClick, variant = "default", size = "sm", className
     ghost: "hover:bg-gray-100 text-gray-700",
   }
   const sizes = {
-    sm: "px-3 py-2 text-sm",
-    xs: "px-2 py-1 text-xs",
+    sm: "px-2 py-1 text-xs",
+    xs: "px-1.5 py-0.5 text-[10px]",
   }
 
   return (
@@ -80,6 +81,8 @@ export default function TutoresTable() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [actionLoading, setActionLoading] = useState(false)
+  const [statusFilter, setStatusFilter] = useState("todos") // todos | activos | inactivos
+  const toast = useToast()
 
   // Cargar tutores al montar el componente
   useEffect(() => {
@@ -100,15 +103,21 @@ export default function TutoresTable() {
     }
   }
 
-  // Filtrar tutores
+  // Filtrar tutores por texto + estado
   const filteredTutores = tutores.filter(tutor => {
     const searchLower = searchTerm.toLowerCase()
     const fullName = `${tutor.nombre || ''} ${tutor.apellido_paterno || ''} ${tutor.apellido_materno || ''}`.toLowerCase()
-    return (
+    const matchesSearch = (
       fullName.includes(searchLower) ||
       (tutor.email || '').toLowerCase().includes(searchLower) ||
       (tutor.telefono || '').includes(searchTerm)
     )
+    const matchesStatus = (
+      statusFilter === 'todos' ||
+      (statusFilter === 'activos' && tutor.estado === true) ||
+      (statusFilter === 'inactivos' && tutor.estado === false)
+    )
+    return matchesSearch && matchesStatus
   })
 
   const handleEdit = (tutor) => {
@@ -127,9 +136,11 @@ export default function TutoresTable() {
       const newTutor = await createTutor(newTutorData)
       setTutores([...tutores, newTutor])
       setShowAddModal(false)
+      try { toast?.showToast?.("Tutor agregado correctamente", "success") } catch (e) { console.warn(e) }
     } catch (err) {
       console.error("Error al crear tutor:", err)
-      alert(err.response?.data?.message || "Error al crear tutor")
+      const errorMsg = err.response?.data?.message || "Error al crear tutor"
+      try { toast?.showToast?.(errorMsg, "error") } catch (e) { console.warn(e) }
     } finally {
       setActionLoading(false)
     }
@@ -143,9 +154,11 @@ export default function TutoresTable() {
         t.id_usuario === selectedTutor.id_usuario ? updated : t
       ))
       setShowEditModal(false)
+      try { toast?.showToast?.("Tutor actualizado correctamente", "success") } catch (e) { console.warn(e) }
     } catch (err) {
       console.error("Error al actualizar tutor:", err)
-      alert(err.response?.data?.message || "Error al actualizar tutor")
+      const errorMsg = err.response?.data?.message || "Error al actualizar tutor"
+      try { toast?.showToast?.(errorMsg, "error") } catch (e) { console.warn(e) }
     } finally {
       setActionLoading(false)
     }
@@ -154,13 +167,20 @@ export default function TutoresTable() {
   const handleConfirmDelete = async () => {
     try {
       setActionLoading(true)
+      // Alternar el estado: si está activo, desactivar; si está inactivo, activar
+      const nuevoEstado = !selectedTutor.estado
       await deleteTutor(selectedTutor.id_usuario)
-      setTutores(tutores.filter(t => t.id_usuario !== selectedTutor.id_usuario))
+      setTutores(tutores.map(t =>
+        t.id_usuario === selectedTutor.id_usuario ? { ...t, estado: nuevoEstado } : t
+      ))
       setShowDeleteModal(false)
       setSelectedTutor(null)
+      const mensaje = nuevoEstado ? "Tutor reactivado correctamente" : "Tutor desactivado correctamente"
+      try { toast?.showToast?.(mensaje, "success") } catch (e) { console.warn(e) }
     } catch (err) {
-      console.error("Error al eliminar tutor:", err)
-      alert(err.response?.data?.message || "Error al eliminar tutor")
+      console.error("Error al cambiar estado del tutor:", err)
+      const errorMsg = err.response?.data?.message || "Error al cambiar estado del tutor"
+      try { toast?.showToast?.(errorMsg, "error") } catch (e) { console.warn(e) }
     } finally {
       setActionLoading(false)
     }
@@ -179,10 +199,16 @@ export default function TutoresTable() {
               Administra los tutores del sistema
             </p>
           </div>
-          <Button onClick={() => setShowAddModal(true)} disabled={loading}>
-            <Plus className="mr-2 h-4 w-4" />
-            Nuevo Tutor
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={loadTutores} variant="ghost" size="sm">
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Actualizar
+            </Button>
+            <Button onClick={() => setShowAddModal(true)} size="sm">
+              <Plus className="mr-2 h-4 w-4" />
+              Nuevo Tutor
+            </Button>
+          </div>
         </div>
 
         {/* Error Alert */}
@@ -193,15 +219,31 @@ export default function TutoresTable() {
           />
         )}
 
-        {/* Buscador */}
+        {/* Buscador + Filtro estado */}
         <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <Input
-            placeholder="Buscar tutores..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            icon
-            disabled={loading}
-          />
+          <div className="flex flex-col sm:flex-row items-center gap-4">
+            <div className="flex-1 w-full">
+              <Input
+                placeholder="Buscar tutores..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                icon
+                disabled={loading}
+              />
+            </div>
+            <div className="w-full sm:w-56">
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                disabled={loading}
+                className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+              >
+                <option value="todos">Estado</option>
+                <option value="activos">Activos</option>
+                <option value="inactivos">Inactivos</option>
+              </select>
+            </div>
+          </div>
         </div>
 
         {/* Tabla */}
@@ -285,7 +327,7 @@ export default function TutoresTable() {
                               className="text-gray-600 hover:text-red-600 p-1 disabled:opacity-50"
                               disabled={actionLoading}
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <RotateCcw className="h-4 w-4" />
                             </button>
                           </div>
                         </td>
@@ -319,8 +361,8 @@ export default function TutoresTable() {
 
       {showDeleteModal && selectedTutor && (
         <DeleteConfirmModal
-          title="Eliminar Tutor"
-          message={`¿Estás seguro de que deseas eliminar al tutor ${selectedTutor.nombre} ${selectedTutor.apellido_paterno}? Esta acción no se puede deshacer.`}
+          title="Cambiar estado del Tutor"
+          message={`¿Estás seguro de que deseas cambiarle el estado al tutor ${selectedTutor.nombre} ${selectedTutor.apellido}?`}
           onClose={() => setShowDeleteModal(false)}
           onConfirm={handleConfirmDelete}
           loading={actionLoading}

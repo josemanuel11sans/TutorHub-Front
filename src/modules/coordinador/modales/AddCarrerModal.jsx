@@ -1,14 +1,15 @@
 "use client"
 
 import { useState } from "react"
-import { X, BookOpen, Target } from "lucide-react"
+import { X, BookOpen, MapPin } from "lucide-react"
 
-export function AddMateriaModal({ onClose, onAdd, carreras = [] }) {
+const DIVISION_OPTIONS = ["DATIC", "DAMI", "TALLER PESADO"]
+
+export function AddCarrerModal({ onClose, onAdd }) {
     const [formData, setFormData] = useState({
-        nombre: "",
-        objetivo: "",
+        nombre_carrera: "",
+        division: "",
         estado: true,
-        carrera_id: "",
     })
     const [loading, setLoading] = useState(false)
 
@@ -22,13 +23,12 @@ export function AddMateriaModal({ onClose, onAdd, carreras = [] }) {
 
     const handleSubmit = async (e) => {
         e.preventDefault()
-        setLoading(true)
-
-        // Simulación de guardado
-        setTimeout(() => {
-            onAdd(formData)
+        try {
+            setLoading(true)
+            await onAdd(formData)
+        } finally {
             setLoading(false)
-        }, 500)
+        }
     }
 
     return (
@@ -47,8 +47,8 @@ export function AddMateriaModal({ onClose, onAdd, carreras = [] }) {
                             <BookOpen className="h-5 w-5 text-white" />
                         </div>
                         <div>
-                            <h2 className="text-lg font-bold text-gray-900">Nueva Materia</h2>
-                            <p className="text-gray-500 text-xs">Registra una nueva materia en el sistema</p>
+                            <h2 className="text-lg font-bold text-gray-900">Nueva Carrera</h2>
+                            <p className="text-gray-500 text-xs">Registra una nueva carrera en el sistema</p>
                         </div>
                     </div>
                     <button
@@ -65,55 +65,41 @@ export function AddMateriaModal({ onClose, onAdd, carreras = [] }) {
                     <div className="space-y-1.5">
                         <label className="flex items-center gap-2 text-xs font-medium text-gray-700">
                             <BookOpen className="h-3.5 w-3.5 text-gray-400" />
-                            Nombre de la materia
+                            Nombre de la carrera
                         </label>
                         <input
                             type="text"
-                            name="nombre"
-                            value={formData.nombre}
+                            name="nombre_carrera"
+                            value={formData.nombre_carrera}
                             onChange={handleChange}
                             className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-gray-900 placeholder:text-gray-400"
-                            placeholder="Ej: Matemáticas I"
+                            placeholder="Ej: Ingeniería en Software"
                             required
                         />
                     </div>
 
-                    {/* Objetivo */}
+                    {/* División */}
                     <div className="space-y-1.5">
                         <label className="flex items-center gap-2 text-xs font-medium text-gray-700">
-                            <Target className="h-3.5 w-3.5 text-gray-400" />
-                            Objetivo
+                            <MapPin className="h-3.5 w-3.5 text-gray-400" />
+                            División
                         </label>
-                        <textarea
-                            name="objetivo"
-                            value={formData.objetivo}
-                            onChange={handleChange}
-                            className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all resize-none text-gray-900 placeholder:text-gray-400"
-                            placeholder="Describe el objetivo de la materia"
-                            rows={3}
-                            required
-                        />
-                    </div>
-
-                    {/* Carrera */}
-                    <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-gray-700">Carrera</label>
                         <select
-                            name="carrera_id"
-                            value={formData.carrera_id}
+                            name="division"
+                            value={formData.division}
                             onChange={handleChange}
-                            required
                             className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-gray-900"
+                            required
                         >
-                            <option value="" disabled>Selecciona una carrera</option>
-                            {carreras.map(c => (
-                                <option key={c.id_carrera} value={c.id_carrera}>{c.nombre_carrera}</option>
+                            <option value="" disabled>Selecciona una división</option>
+                            {DIVISION_OPTIONS.map(div => (
+                                <option key={div} value={div}>{div}</option>
                             ))}
                         </select>
                     </div>
 
-                    {/* Estado */}
-                    <div className="items-center gap-2 hidden">
+                    {/* Estado oculto (siempre activo por defecto) */}
+                    <div className="hidden items-center gap-2">
                         <input
                             type="checkbox"
                             name="estado"

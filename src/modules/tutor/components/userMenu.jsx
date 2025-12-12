@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import { User, FileText, Lock, LogOut } from "lucide-react"
 import { useAuth } from "../hooks/useAuth"
+import { useToast } from "../../../context/ToastContext"
 import { ChangePasswordModal } from "./ChangePasswordModal"
 
 export function UserMenu({ user }) {
@@ -10,6 +11,7 @@ export function UserMenu({ user }) {
   const [showPasswordModal, setShowPasswordModal] = useState(false)
   const menuRef = useRef(null)
   const { logout } = useAuth()
+  const toast = useToast()
 
   // Obtener la inicial del nombre
   const getInitial = () => {
@@ -39,8 +41,9 @@ export function UserMenu({ user }) {
   const handleDownloadManual = () => {
     // Aquí va la lógica para descargar el PDF
     const link = document.createElement("a")
-    link.href = "/manuals/manual-usuario.pdf"
+    link.href = "/ManualDeUsuario_TutorHub.pdf"
     link.download = "Manual_de_Usuario.pdf"
+    link.target = "_blank"
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
@@ -53,6 +56,7 @@ export function UserMenu({ user }) {
   }
 
   const handleLogout = () => {
+    try { toast?.showToast?.("Sesión cerrada correctamente", "success") } catch (e) { console.warn(e) }
     logout()
     setIsOpen(false)
   }
@@ -84,7 +88,7 @@ export function UserMenu({ user }) {
               onClick={handleDownloadManual}
               className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left"
             >
-              <FileText className="h-4 w-4 text-gray-400 flex-shrink-0" />
+              <FileText className="h-4 w-4 text-gray-400 shrink-0" />
               <span>Manual de Usuario</span>
             </button>
 
@@ -92,7 +96,7 @@ export function UserMenu({ user }) {
               onClick={handleChangePassword}
               className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left"
             >
-              <Lock className="h-4 w-4 text-gray-400 flex-shrink-0" />
+              <Lock className="h-4 w-4 text-gray-400 shrink-0" />
               <span>Cambiar Contraseña</span>
             </button>
 
@@ -102,7 +106,7 @@ export function UserMenu({ user }) {
               onClick={handleLogout}
               className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors text-left"
             >
-              <LogOut className="h-4 w-4 flex-shrink-0" />
+              <LogOut className="h-4 w-4 shrink-0" />
               <span>Cerrar Sesión</span>
             </button>
           </div>

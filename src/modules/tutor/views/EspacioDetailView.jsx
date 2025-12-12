@@ -14,6 +14,7 @@ import {
   BookOpen,
   FolderOpen,
   Eye,
+  Archive,
 } from "lucide-react"
 import { AddMaterialModal } from "../modales/AddMaterialModal"
 import { DeleteMaterialModal } from "../modales/DeleteMaterialModal"
@@ -33,7 +34,7 @@ const Button = ({ children, onClick, variant = "default", size = "default", clas
   }
   const sizes = {
     default: "px-4 py-2",
-    sm: "px-2 py-1 text-sm",
+    sm: "px-2 py-1 text-xs",
   }
 
   return (
@@ -93,7 +94,7 @@ export default function EspacioDetailView({ espacio, onBack, initialOpenAddMater
             nombre: f.originalName || f.publicId || "Archivo",
             espacioId: f.espacioId ?? f.espacio ?? espacio.id,
             tipo_archivo,
-            estado: true,
+            estado: Boolean(f.status ?? f.estado ?? true),
             fecha: f.createdAt ? f.createdAt.split("T")[0] : new Date().toISOString().split("T")[0],
             url: f.url,
             _raw: f,
@@ -106,14 +107,49 @@ export default function EspacioDetailView({ espacio, onBack, initialOpenAddMater
       }
     }
 
+    // Obtener asesorías del espacio desde la API
+    const fetchAsesorias = async () => {
+      try {
+        if (!espacio?.id) return
+        const { getAsesoriasEspacio } = await import("../../../api/asesorias.api")
+        const data = await getAsesoriasEspacio(espacio.id)
+        // Normalizar a la estructura usada localmente
+        const normalized = (Array.isArray(data) ? data : []).map((a) => ({
+          id: a.id_asesoria,
+          titulo: `Asesoría con ${a.tutor?.nombre || 'Tutor'} ${a.tutor?.apellido || ''}`,
+          estado: a.asistencia ? "completada" : "programada",
+          fecha: a.fecha_asesoria ? a.fecha_asesoria.split("T")[0] : "",
+          hora: a.fecha_asesoria ? a.fecha_asesoria.split("T")[1]?.substring(0, 5) : "",
+          duracion: "1h",
+          lugar: a.espacio_id ? `Espacio ${a.espacio_id}` : "Por confirmar",
+          asistentes: 1,
+          espacioId: a.espacio_id,
+          comentarios: a.comentarios,
+          estudiante: a.estudiante,
+          tutor: a.tutor,
+          carrera: a.carrera,
+          asistencia: a.asistencia,
+          _raw: a,
+        }))
+
+        setAsesorias(normalized)
+      } catch (err) {
+        console.error('Error al obtener asesorías del espacio:', err)
+      }
+    }
+
     fetchMateriales()
+    fetchAsesorias()
   }, [espacio])
 
   // Material modals
   const [showAddMaterialModal, setShowAddMaterialModal] = useState(initialOpenAddMaterial)
   const [showEditMaterialModal, setShowEditMaterialModal] = useState(false)
   const [showDeleteMaterialModal, setShowDeleteMaterialModal] = useState(false)
+  const [showDeletedMaterialsModal, setShowDeletedMaterialsModal] = useState(false)
   const [selectedMaterial, setSelectedMaterial] = useState(null)
+  const [deletedMateriales, setDeletedMateriales] = useState([])
+  const [loadingDeletedMateriales, setLoadingDeletedMateriales] = useState(false)
 
   // Asesoria modals
   const [showAddAsesoriaModal, setShowAddAsesoriaModal] = useState(false)
@@ -238,10 +274,48 @@ export default function EspacioDetailView({ espacio, onBack, initialOpenAddMater
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-gray-900">Materiales</h2>
-            <Button onClick={() => { console.log('Abrir AddMaterialModal desde detalle, espacioId:', espacio.id); setShowAddMaterialModal(true) }}>
-              <Plus className="mr-2 h-4 w-4" />
-              Publicar Material
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={async () => {
+                  setLoadingDeletedMateriales(true)
+                  try {
+                    const { getFilesByEspacio } = await import("../../../api/claudinary.api")
+                    const allFiles = await getFilesByEspacio(espacio.id, { includeDeleted: true })
+                    const deleted = (Array.isArray(allFiles) ? allFiles : []).filter((f) => {
+                      const st = f.status ?? f.estado
+                      return st === false || st === 0 || String(st) === '0'
+                    })
+                    setDeletedMateriales(deleted.map(f => ({
+                      id: f.id,
+                      nombre: f.originalName || f.publicId || 'Archivo',
+                      fecha: f.createdAt ? f.createdAt.split('T')[0] : '',
+                      url: f.url,
+                      status: f.status ?? f.estado ?? false,
+                    })))
+                  } catch (err) {
+                    console.error('Error cargando materiales borrados:', err)
+                    setDeletedMateriales([])
+                  } finally {
+                    setLoadingDeletedMateriales(false)
+                  }
+                  setShowDeletedMaterialsModal(true)
+                }}
+                variant="ghost"
+                size="sm"
+                className="shrink-0"
+              >
+                <Archive className="mr-2 h-4 w-4" />
+                Materiales borrados
+              </Button>
+              <Button
+                onClick={() => { console.log('Abrir AddMaterialModal desde detalle, espacioId:', espacio.id); setShowAddMaterialModal(true) }}
+                size="sm"
+                className="shrink-0"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Publicar Material
+              </Button>
+            </div>
           </div>
 
           <div className="space-y-3">
@@ -275,31 +349,23 @@ export default function EspacioDetailView({ espacio, onBack, initialOpenAddMater
                     </div>
 
                     <div className="flex items-center gap-1">
-                      {/* Visualizar si es PDF o imagen */}
-                      {(material.tipo_archivo === "PDF" || material.tipo_archivo === "IMG") && (
-                        <a
-                          href={material.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          title="Visualizar"
-                          className="text-gray-600 hover:text-gray-900 p-2 hover:bg-gray-100 rounded transition-colors"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </a>
-                      )}
+                      {/* Descargar archivo */}
+                      <a
+                        href={material.url}
+                        download={material.nombre || 'archivo'}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          try { toast?.showToast?.('Descargando archivo...', 'success') } catch (ex) { console.warn(ex) }
+                        }}
+                        title="Descargar"
+                        className="text-gray-600 hover:text-gray-900 p-2 hover:bg-gray-100 rounded transition-colors inline-flex items-center justify-center"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </a>
                       <button
-                        onClick={async () => {
-                          // eliminar el archivo en backend
-                          try {
-                            const { deleteFile } = await import("../../../api/claudinary.api")
-                            await deleteFile(material.id)
-                            setMateriales((prev) => prev.filter((m) => m.id !== material.id))
-                            try { toast?.showToast?.('Archivo eliminado', 'success') } catch (e) { console.warn(e) }
-                          } catch (err) {
-                            console.error('Error eliminando archivo:', err)
-                            try { toast?.showToast?.('No se pudo eliminar el archivo', 'error') } catch (e) { console.warn(e) }
-                          }
+                        onClick={() => {
+                          setSelectedMaterial(material)
+                          setShowDeleteMaterialModal(true)
                         }}
                         className="text-gray-600 hover:text-red-600 p-2 hover:bg-gray-100 rounded transition-colors"
                       >
@@ -317,10 +383,10 @@ export default function EspacioDetailView({ espacio, onBack, initialOpenAddMater
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-gray-900">Asesorías</h2>
-            <Button onClick={() => setShowAddAsesoriaModal(true)}>
+            {/* <Button onClick={() => setShowAddAsesoriaModal(true)}>
               <Plus className="mr-2 h-4 w-4" />
               Nueva Asesoría
-            </Button>
+            </Button> */}
           </div>
 
           <div className="space-y-3">
@@ -340,7 +406,17 @@ export default function EspacioDetailView({ espacio, onBack, initialOpenAddMater
                     <div className="flex-1">
                       <div className="flex items-start justify-between mb-2">
                         <div>
-                          <h3 className="font-semibold text-gray-900 mb-1">{asesoria.titulo}</h3>
+                          <h3 className="font-semibold text-gray-900 mb-1">
+                            {asesoria.estudiante?.nombre} {asesoria.estudiante?.apellido}
+                          </h3>
+                          <p className="text-xs text-gray-500 mb-1">
+                            Tutor: {asesoria.tutor?.nombre} {asesoria.tutor?.apellido}
+                          </p>
+                          {asesoria.carrera && (
+                            <p className="text-xs text-gray-500">
+                              {asesoria.carrera.nombre_carrera}
+                            </p>
+                          )}
                         </div>
                         <Badge variant={asesoria.estado}>
                           {asesoria.estado === "programada"
@@ -351,50 +427,75 @@ export default function EspacioDetailView({ espacio, onBack, initialOpenAddMater
                         </Badge>
                       </div>
 
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3 text-sm text-gray-600">
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-3 text-sm text-gray-600">
                         <div className="flex items-center gap-1.5">
                           <Calendar className="h-4 w-4" />
                           <span>{asesoria.fecha}</span>
                         </div>
                         <div className="flex items-center gap-1.5">
                           <Clock className="h-4 w-4" />
-                          <span>
-                            {asesoria.hora} ({asesoria.duracion})
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <MapPin className="h-4 w-4" />
-                          <span>{asesoria.lugar}</span>
+                          <span>{asesoria.hora}</span>
                         </div>
                         <div className="flex items-center gap-1.5">
                           <Users className="h-4 w-4" />
-                          <span>{asesoria.asistentes} inscritos</span>
+                          <span>{asesoria.asistencia ? "Asistió" : "Sin asistencia"}</span>
                         </div>
                       </div>
+
+                      {asesoria.comentarios && (
+                        <p className="text-sm text-gray-600 mt-3 italic">
+                          "{asesoria.comentarios}"
+                        </p>
+                      )}
                     </div>
 
                     <div className="flex items-center gap-1">
                       {asesoria.estado === "programada" && (
                         <button
-                          onClick={() => {
-                            setSelectedAsesoria(asesoria)
-                            setShowAttendanceModal(true)
+                          onClick={async () => {
+                            try {
+                              const { confirmAsesoria } = await import("../../../api/asesorias.api")
+                              await confirmAsesoria(asesoria._raw.id_asesoria, true)
+                              // Actualizar el estado local
+                              setAsesorias(asesorias.map((a) =>
+                                a.id === asesoria.id ? { ...a, estado: "completada", aceptada: true } : a
+                              ))
+                              try { toast?.showToast?.('Asesoría confirmada', 'success') } catch (e) { console.warn(e) }
+                            } catch (err) {
+                              console.error('Error confirmando asesoría:', err)
+                              try { toast?.showToast?.('Error al confirmar la asesoría', 'error') } catch (e) { console.warn(e) }
+                            }
+                          }}
+                          className="text-gray-600 hover:text-green-600 p-2 hover:bg-gray-100 rounded transition-colors"
+                          title="Confirmar asesoría"
+                        >
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        </button>
+                      )}
+                      {asesoria.estado === "completada" && (
+                        <button
+                          onClick={async () => {
+                            try {
+                              const { registerAttendance } = await import("../../../api/asesorias.api")
+                              await registerAttendance(asesoria._raw.id_asesoria, true)
+                              // Actualizar el estado local
+                              setAsesorias(asesorias.map((a) =>
+                                a.id === asesoria.id ? { ...a, asistencia: true } : a
+                              ))
+                              try { toast?.showToast?.('Asistencia registrada', 'success') } catch (e) { console.warn(e) }
+                            } catch (err) {
+                              console.error('Error registrando asistencia:', err)
+                              try { toast?.showToast?.('Error al registrar asistencia', 'error') } catch (e) { console.warn(e) }
+                            }
                           }}
                           className="text-gray-600 hover:text-blue-600 p-2 hover:bg-gray-100 rounded transition-colors"
-                          title="Tomar asistencia"
+                          title="Registrar asistencia"
                         >
                           <Users className="h-4 w-4" />
                         </button>
                       )}
-                      <button
-                        onClick={() => {
-                          setSelectedAsesoria(asesoria)
-                          setShowEditAsesoriaModal(true)
-                        }}
-                        className="text-gray-600 hover:text-gray-900 p-2 hover:bg-gray-100 rounded transition-colors"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </button>
                       <button
                         onClick={() => {
                           setSelectedAsesoria(asesoria)
@@ -443,6 +544,7 @@ export default function EspacioDetailView({ espacio, onBack, initialOpenAddMater
                 url: file?.url,
               },
             ])
+            try { toast?.showToast?.('Material publicado', 'success') } catch (e) { console.warn(e) }
             setShowAddMaterialModal(false)
           }}
         />
@@ -461,11 +563,98 @@ export default function EspacioDetailView({ espacio, onBack, initialOpenAddMater
         <DeleteMaterialModal
           material={selectedMaterial}
           onClose={() => setShowDeleteMaterialModal(false)}
-          onConfirm={() => {
-            setMateriales(materiales.filter((m) => m.id !== selectedMaterial.id))
-            setShowDeleteMaterialModal(false)
+          onConfirm={async () => {
+            try {
+              const { deleteFile } = await import("../../../api/claudinary.api")
+              await deleteFile(selectedMaterial.id)
+              setMateriales((prev) => prev.filter((m) => m.id !== selectedMaterial.id))
+              try { toast?.showToast?.('Archivo eliminado', 'success') } catch (e) { console.warn(e) }
+            } catch (err) {
+              console.error('Error eliminando archivo:', err)
+              try { toast?.showToast?.('No se pudo eliminar el archivo', 'error') } catch (e) { console.warn(e) }
+            } finally {
+              setShowDeleteMaterialModal(false)
+              setSelectedMaterial(null)
+            }
           }}
         />
+      )}
+
+      {showDeletedMaterialsModal && (
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl mx-auto overflow-hidden border border-gray-200">
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
+              <div className="bg-blue-100 p-2 rounded-lg">
+                <Archive className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">Materiales borrados</h3>
+                <p className="text-sm text-gray-500">Materiales eliminados de este espacio</p>
+              </div>
+            </div>
+            <div className="max-h-96 overflow-y-auto divide-y divide-gray-200 px-6">
+              {loadingDeletedMateriales ? (
+                <p className="text-sm text-gray-500 py-6 text-center">Cargando...</p>
+              ) : deletedMateriales.length === 0 ? (
+                <p className="text-sm text-gray-500 py-6 text-center">No hay materiales borrados</p>
+              ) : (
+                deletedMateriales.map((m) => (
+                  <div key={m.id} className="py-3 flex items-start gap-3">
+                    <div className="w-10 h-10 rounded bg-gray-100 flex items-center justify-center text-gray-500 text-xs font-semibold">
+                      <FileText className="h-5 w-5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-900 line-clamp-1">{m.nombre}</p>
+                      <p className="text-xs text-gray-500">{m.fecha}</p>
+                    </div>
+                    <Button
+                      size="sm"
+                      className="shrink-0"
+                      onClick={async () => {
+                        try {
+                          const { restoreFile, getFilesByEspacio } = await import("../../../api/claudinary.api")
+                          await restoreFile(m.id)
+                          setDeletedMateriales((prev) => prev.filter((x) => x.id !== m.id))
+                          const files = await getFilesByEspacio(espacio.id)
+                          const normalized = (Array.isArray(files) ? files : []).map((f) => {
+                            const mt = (f.mimetype || "").toLowerCase()
+                            let tipo_archivo = "OTRO"
+                            if (mt.includes("pdf")) tipo_archivo = "PDF"
+                            else if (mt.includes("presentation") || mt.includes("powerpoint")) tipo_archivo = "PPT"
+                            else if (mt.includes("word")) tipo_archivo = "DOC"
+                            else if (mt.includes("image")) tipo_archivo = "IMG"
+                            return {
+                              id: f.id,
+                              nombre: f.originalName || f.publicId || "Archivo",
+                              espacioId: f.espacioId ?? espacio.id,
+                              tipo_archivo,
+                              estado: Boolean(f.status ?? f.estado ?? true),
+                              fecha: f.createdAt ? f.createdAt.split("T")[0] : new Date().toISOString().split("T")[0],
+                              url: f.url,
+                              _raw: f,
+                            }
+                          })
+                          setMateriales(normalized)
+                          try { toast?.showToast?.("Material restaurado", "success") } catch (e) { console.warn(e) }
+                        } catch (err) {
+                          console.error("Error restaurando material:", err)
+                          try { toast?.showToast?.("No se pudo restaurar el material", "error") } catch (e) { console.warn(e) }
+                        }
+                      }}
+                    >
+                      Restaurar
+                    </Button>
+                  </div>
+                ))
+              )}
+            </div>
+            <div className="mt-4 flex justify-end px-6 pb-5">
+              <Button onClick={() => setShowDeletedMaterialsModal(false)} variant="ghost" size="sm" className="shrink-0">
+                Cerrar
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Asesoria Modals */}

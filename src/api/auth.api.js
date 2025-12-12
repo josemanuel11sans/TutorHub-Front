@@ -63,3 +63,15 @@ export const logout = async () => {
   localStorage.removeItem("jwt");
   localStorage.removeItem("user");
 };
+
+export const changePassword = async (userId, newPassword) => {
+  try {
+    const response = await api.put(`/usuarios/update/${userId}`, {
+      password: newPassword,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error al cambiar contraseña:", error);
+    throw error;
+  }
+};

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
-import { Search, Plus, Edit, Trash2, AlertCircle, Loader2 } from "lucide-react"
+import { Search, Plus, Edit, Trash2, AlertCircle, Loader2, RefreshCw, RotateCcw } from "lucide-react"
+import { useToast } from "../../../context/ToastContext"
 import { AddCoordinadorModal } from "../modales/AddCoordinadorModal"
 import { EditCoordinadorModal } from "../modales/EditCoordinadorModal"
 import { DeleteConfirmModal } from "../modales/DeleteConfirmModal"
@@ -18,8 +19,8 @@ const Button = ({ children, onClick, variant = "default", size = "sm", className
     ghost: "hover:bg-gray-100 text-gray-700",
   }
   const sizes = {
-    sm: "px-3 py-2 text-sm",
-    xs: "px-2 py-1 text-xs",
+    sm: "px-2 py-1 text-xs",
+    xs: "px-1.5 py-0.5 text-[10px]",
   }
 
   return (
@@ -82,6 +83,8 @@ export default function CoordinadoresTable() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [actionLoading, setActionLoading] = useState(false)
+  const [statusFilter, setStatusFilter] = useState("todos") // todos | activos | inactivos
+  const toast = useToast()
 
   // Cargar coordinadores al montar el componente
   useEffect(() => {
@@ -102,15 +105,21 @@ export default function CoordinadoresTable() {
     }
   }
 
-  // Filtrar coordinadores
+  // Filtrar coordinadores (texto + estado)
   const filteredCoordinadores = coordinadores.filter(coord => {
     const searchLower = searchTerm.toLowerCase()
     const fullName = `${coord.nombre || ''} ${coord.apellido_paterno || ''} ${coord.apellido_materno || ''}`.toLowerCase()
-    return (
+    const matchesSearch = (
       fullName.includes(searchLower) ||
       (coord.email || '').toLowerCase().includes(searchLower) ||
       (coord.telefono || '').includes(searchTerm)
     )
+    const matchesStatus = (
+      statusFilter === 'todos' ||
+      (statusFilter === 'activos' && coord.estado === true) ||
+      (statusFilter === 'inactivos' && coord.estado === false)
+    )
+    return matchesSearch && matchesStatus
   })
 
   const handleEdit = (coordinador) => {
@@ -129,9 +138,11 @@ export default function CoordinadoresTable() {
       const newCoordinador = await createCoordinador(newCoordinadorData)
       setCoordinadores([...coordinadores, newCoordinador])
       setShowAddModal(false)
+      try { toast?.showToast?.("Coordinador agregado correctamente", "success") } catch (e) { console.warn(e) }
     } catch (err) {
       console.error("Error al crear coordinador:", err)
-      alert(err.response?.data?.message || "Error al crear coordinador")
+      const errorMsg = err.response?.data?.message || "Error al crear coordinador"
+      try { toast?.showToast?.(errorMsg, "error") } catch (e) { console.warn(e) }
     } finally {
       setActionLoading(false)
     }
@@ -145,9 +156,11 @@ export default function CoordinadoresTable() {
         c.id_usuario === selectedCoordinador.id_usuario ? updated : c
       ))
       setShowEditModal(false)
+      try { toast?.showToast?.("Coordinador actualizado correctamente", "success") } catch (e) { console.warn(e) }
     } catch (err) {
       console.error("Error al actualizar coordinador:", err)
-      alert(err.response?.data?.message || "Error al actualizar coordinador")
+      const errorMsg = err.response?.data?.message || "Error al actualizar coordinador"
+      try { toast?.showToast?.(errorMsg, "error") } catch (e) { console.warn(e) }
     } finally {
       setActionLoading(false)
     }
@@ -156,13 +169,20 @@ export default function CoordinadoresTable() {
   const handleConfirmDelete = async () => {
     try {
       setActionLoading(true)
+      // Alternar el estado: si está activo, desactivar; si está inactivo, activar
+      const nuevoEstado = !selectedCoordinador.estado
       await deleteCoordinador(selectedCoordinador.id_usuario)
-      setCoordinadores(coordinadores.filter(c => c.id_usuario !== selectedCoordinador.id_usuario))
+      setCoordinadores(coordinadores.map(c =>
+        c.id_usuario === selectedCoordinador.id_usuario ? { ...c, estado: nuevoEstado } : c
+      ))
       setShowDeleteModal(false)
       setSelectedCoordinador(null)
+      const mensaje = nuevoEstado ? "Coordinador reactivado correctamente" : "Coordinador desactivado correctamente"
+      try { toast?.showToast?.(mensaje, "success") } catch (e) { console.warn(e) }
     } catch (err) {
-      console.error("Error al eliminar coordinador:", err)
-      alert(err.response?.data?.message || "Error al eliminar coordinador")
+      console.error("Error al cambiar estado del coordinador:", err)
+      const errorMsg = err.response?.data?.message || "Error al cambiar estado del coordinador"
+      try { toast?.showToast?.(errorMsg, "error") } catch (e) { console.warn(e) }
     } finally {
       setActionLoading(false)
     }
@@ -178,13 +198,19 @@ export default function CoordinadoresTable() {
               Gestión de Coordinadores
             </h2>
             <p className="text-sm text-gray-500">
-              Administra los coordinadores del sistema
+              Administra los coordinadores del sistema 
             </p>
           </div>
-          <Button onClick={() => setShowAddModal(true)} disabled={loading}>
-            <Plus className="mr-2 h-4 w-4" />
-            Nuevo Coordinador
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={loadCoordinadores} variant="ghost" size="sm">
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Actualizar
+            </Button>
+            <Button onClick={() => setShowAddModal(true)} size="sm">
+              <Plus className="mr-2 h-4 w-4" />
+              Nuevo Coordinador
+            </Button>
+          </div>
         </div>
 
         {/* Error Alert */}
@@ -195,15 +221,31 @@ export default function CoordinadoresTable() {
           />
         )}
 
-        {/* Buscador */}
+        {/* Buscador + Filtro estado */}
         <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <Input
-            placeholder="Buscar coordinadores..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            icon
-            disabled={loading}
-          />
+          <div className="flex flex-col sm:flex-row items-center gap-4">
+            <div className="flex-1 w-full">
+              <Input
+                placeholder="Buscar coordinadores..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                icon
+                disabled={loading}
+              />
+            </div>
+            <div className="w-full sm:w-56">
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                disabled={loading}
+                className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+              >
+                <option value="todos">Estado</option>
+                <option value="activos">Activos</option>
+                <option value="inactivos">Inactivos</option>
+              </select>
+            </div>
+          </div>
         </div>
 
         {/* Tabla */}
@@ -287,7 +329,7 @@ export default function CoordinadoresTable() {
                               className="text-gray-600 hover:text-red-600 p-1 disabled:opacity-50"
                               disabled={actionLoading}
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <RotateCcw className="h-4 w-4" />
                             </button>
                           </div>
                         </td>
@@ -321,7 +363,8 @@ export default function CoordinadoresTable() {
 
       {showDeleteModal && selectedCoordinador && (
         <DeleteConfirmModal
-          coordinador={selectedCoordinador}
+          title="Cambiar estado del Coordinador"
+          message={`¿Estás seguro de que deseas cambiarle el estado al coordinador ${selectedCoordinador.nombre} ${selectedCoordinador.apellido}?`}
           onClose={() => setShowDeleteModal(false)}
           onConfirm={handleConfirmDelete}
           loading={actionLoading}

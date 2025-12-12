@@ -1,15 +1,10 @@
 import { useState, useEffect } from "react"
-import { Search, Plus, Edit, Trash2, AlertCircle, Loader2, RefreshCw, RotateCcw } from "lucide-react"
+import { Search, Plus, Edit, AlertCircle, Loader2, RefreshCw, RotateCcw } from "lucide-react"
 import { useToast } from "../../../context/ToastContext"
-import { AddAlumnoModal } from "../modales/AddAlumnoModal"
-import { EditAlumnoModal } from "../modales/EditAlumnoModal"
-import { DeleteConfirmModal } from "../modales/DeleteConfirmModal"
-import { 
-  getAlumnos, 
-  createAlumno, 
-  updateAlumno, 
-  deleteAlumno 
-} from "../../../api/alumnos.api"
+import { AddCarrerModal } from "../modales/AddCarrerModal"
+import { EditCarreraModal } from "../modales/EditCarreraModal"
+import { DeleteCarreraModal } from "../modales/DeleteCarreraModal"
+import { getCarreras, createCarrera, updateCarrera, deleteCarrera } from "../../../api/carreras.api"
 
 // Componentes UI reutilizables
 const Button = ({ children, onClick, variant = "default", size = "sm", className = "", disabled = false }) => {
@@ -48,9 +43,9 @@ const Input = ({ className = "", icon, ...props }) => (
 
 const ErrorAlert = ({ message, onRetry }) => (
   <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
-    <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+    <AlertCircle className="h-5 w-5 text-red-600 shrink-0 mt-0.5" />
     <div className="flex-1">
-      <h3 className="text-sm font-semibold text-red-800">Error al cargar alumnos</h3>
+      <h3 className="text-sm font-semibold text-red-800">Error al cargar carreras</h3>
       <p className="text-sm text-red-600 mt-1">{message}</p>
       {onRetry && (
         <button
@@ -67,97 +62,93 @@ const ErrorAlert = ({ message, onRetry }) => (
 const LoadingSpinner = () => (
   <div className="flex flex-col items-center justify-center py-12">
     <Loader2 className="h-8 w-8 text-blue-600 animate-spin" />
-    <p className="text-sm text-gray-500 mt-2">Cargando alumnos...</p>
+    <p className="text-sm text-gray-500 mt-2">Cargando carreras...</p>
   </div>
 )
 
-export default function AlumnosTable() {
-  const [alumnos, setAlumnos] = useState([])
+export default function CarreraTable() {
+  const [carreras, setCarreras] = useState([])
   const [searchTerm, setSearchTerm] = useState("")
   const [showAddModal, setShowAddModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
-  const [selectedAlumno, setSelectedAlumno] = useState(null)
+  const [selectedCarrera, setSelectedCarrera] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [actionLoading, setActionLoading] = useState(false)
   const [statusFilter, setStatusFilter] = useState("todos") // todos | activos | inactivos
   const toast = useToast()
 
-  // Cargar alumnos al montar el componente
+  // Cargar carreras al montar el componente
   useEffect(() => {
-    loadAlumnos()
+    loadCarreras()
   }, [])
 
-  const loadAlumnos = async () => {
+  const loadCarreras = async () => {
     try {
       setLoading(true)
       setError(null)
-      const data = await getAlumnos()
-      setAlumnos(data)
+      const data = await getCarreras()
+      setCarreras(data)
     } catch (err) {
-      console.error("Error al cargar alumnos:", err)
+      console.error("Error al cargar carreras:", err)
       setError(err.response?.data?.message || "Error al conectar con el servidor")
     } finally {
       setLoading(false)
     }
   }
 
-  // Filtrar alumnos (texto + estado)
-  const filteredAlumnos = alumnos.filter(alumno => {
+  // Filtrar carreras (texto + estado)
+  const filteredCarreras = carreras.filter(carrera => {
     const searchLower = searchTerm.toLowerCase()
-    const fullName = `${alumno.nombre || ''} ${alumno.apellido_paterno || ''} ${alumno.apellido_materno || ''}`.toLowerCase()
     const matchesSearch = (
-      fullName.includes(searchLower) ||
-      (alumno.email || '').toLowerCase().includes(searchLower) ||
-      (alumno.telefono || '').includes(searchTerm)
+      (carrera.nombre_carrera || '').toLowerCase().includes(searchLower) ||
+      (carrera.division || '').toLowerCase().includes(searchLower)
     )
     const matchesStatus = (
       statusFilter === 'todos' ||
-      (statusFilter === 'activos' && alumno.estado === true) ||
-      (statusFilter === 'inactivos' && alumno.estado === false)
+      (statusFilter === 'activos' && carrera.estado === true) ||
+      (statusFilter === 'inactivos' && carrera.estado === false)
     )
     return matchesSearch && matchesStatus
   })
 
-  const handleEdit = (alumno) => {
-    setSelectedAlumno(alumno)
+  const handleEdit = (carrera) => {
+    setSelectedCarrera(carrera)
     setShowEditModal(true)
   }
 
-  const handleDelete = (alumno) => {
-    setSelectedAlumno(alumno)
+  const handleDelete = (carrera) => {
+    setSelectedCarrera(carrera)
     setShowDeleteModal(true)
   }
 
-  const handleAddAlumno = async (newAlumnoData) => {
+  const handleAddCarrera = async (newCarreraData) => {
     try {
       setActionLoading(true)
-      const newAlumno = await createAlumno(newAlumnoData)
-      setAlumnos([...alumnos, newAlumno])
+      await createCarrera(newCarreraData)
+      await loadCarreras()
       setShowAddModal(false)
-      try { toast?.showToast?.("Alumno agregado correctamente", "success") } catch (e) { console.warn(e) }
+      try { toast?.showToast?.("Carrera agregada correctamente", "success") } catch (e) { console.warn(e) }
     } catch (err) {
-      console.error("Error al crear alumno:", err)
-      const errorMsg = err.response?.data?.message || "Error al crear alumno"
+      console.error("Error al crear carrera:", err)
+      const errorMsg = err.response?.data?.message || "Error al crear carrera"
       try { toast?.showToast?.(errorMsg, "error") } catch (e) { console.warn(e) }
     } finally {
       setActionLoading(false)
     }
   }
 
-  const handleUpdateAlumno = async (updatedAlumnoData) => {
+  const handleUpdateCarrera = async (updatedCarreraData) => {
     try {
       setActionLoading(true)
-      const updated = await updateAlumno(selectedAlumno.id_usuario, updatedAlumnoData)
-      setAlumnos(alumnos.map(a =>
-        a.id_usuario === selectedAlumno.id_usuario ? updated : a
-      ))
+      await updateCarrera(selectedCarrera.id_carrera, updatedCarreraData)
+      await loadCarreras()
       setShowEditModal(false)
-      try { toast?.showToast?.("Alumno actualizado correctamente", "success") } catch (e) { console.warn(e) }
+      try { toast?.showToast?.("Carrera actualizada correctamente", "success") } catch (e) { console.warn(e) }
     } catch (err) {
-      console.error("Error al actualizar alumno:", err)
-      const errorMsg = err.response?.data?.message || "Error al actualizar alumno"
+      console.error("Error al actualizar carrera:", err)
+      const errorMsg = err.response?.data?.message || "Error al actualizar carrera"
       try { toast?.showToast?.(errorMsg, "error") } catch (e) { console.warn(e) }
     } finally {
       setActionLoading(false)
@@ -167,19 +158,16 @@ export default function AlumnosTable() {
   const handleConfirmDelete = async () => {
     try {
       setActionLoading(true)
-      // Alternar el estado: si está activo, desactivar; si está inactivo, activar
-      const nuevoEstado = !selectedAlumno.estado
-      await deleteAlumno(selectedAlumno.id_usuario)
-      setAlumnos(alumnos.map(a =>
-        a.id_usuario === selectedAlumno.id_usuario ? { ...a, estado: nuevoEstado } : a
-      ))
+      const nuevoEstado = !selectedCarrera.estado
+      await deleteCarrera(selectedCarrera.id_carrera)
+      await loadCarreras()
       setShowDeleteModal(false)
-      setSelectedAlumno(null)
-      const mensaje = nuevoEstado ? "Alumno reactivado correctamente" : "Alumno desactivado correctamente"
+      setSelectedCarrera(null)
+      const mensaje = nuevoEstado ? "Carrera reactivada correctamente" : "Carrera desactivada correctamente"
       try { toast?.showToast?.(mensaje, "success") } catch (e) { console.warn(e) }
     } catch (err) {
-      console.error("Error al cambiar estado del alumno:", err)
-      const errorMsg = err.response?.data?.message || "Error al cambiar estado del alumno"
+      console.error("Error al cambiar estado de la carrera:", err)
+      const errorMsg = err.response?.data?.message || "Error al cambiar estado de la carrera"
       try { toast?.showToast?.(errorMsg, "error") } catch (e) { console.warn(e) }
     } finally {
       setActionLoading(false)
@@ -193,20 +181,20 @@ export default function AlumnosTable() {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-xl font-semibold text-gray-900">
-              Gestión de Alumnos
+              Gestión de Carreras
             </h2>
             <p className="text-sm text-gray-500">
-              Administra los alumnos del sistema 
+              Administra las carreras del sistema 
             </p>
           </div>
           <div className="flex gap-2">
-            <Button onClick={loadAlumnos} variant="ghost" size="sm">
+            <Button onClick={loadCarreras} variant="ghost" size="sm">
               <RefreshCw className="mr-2 h-4 w-4" />
               Actualizar
             </Button>
             <Button onClick={() => setShowAddModal(true)} size="sm">
               <Plus className="mr-2 h-4 w-4" />
-              Nuevo Alumno
+              Nueva Carrera
             </Button>
           </div>
         </div>
@@ -215,7 +203,7 @@ export default function AlumnosTable() {
         {error && (
           <ErrorAlert 
             message={error} 
-            onRetry={loadAlumnos}
+            onRetry={loadCarreras}
           />
         )}
 
@@ -224,7 +212,7 @@ export default function AlumnosTable() {
           <div className="flex flex-col sm:flex-row items-center gap-4">
             <div className="flex-1 w-full">
               <Input
-                placeholder="Buscar alumnos..."
+                placeholder="Buscar carreras..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 icon
@@ -259,10 +247,7 @@ export default function AlumnosTable() {
                       Nombre
                     </th>
                     <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">
-                      Correo
-                    </th>
-                    <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">
-                      Teléfono
+                      División
                     </th>
                     <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">
                       Estado
@@ -273,57 +258,54 @@ export default function AlumnosTable() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredAlumnos.length === 0 ? (
+                  {filteredCarreras.length === 0 ? (
                     <tr>
                       <td colSpan="5" className="px-6 py-12 text-center">
                         <div className="text-gray-500">
                           <p className="text-sm">
                             {searchTerm 
-                              ? "No se encontraron alumnos con esos criterios"
-                              : "No hay alumnos registrados"
+                              ? "No se encontraron carreras con esos criterios"
+                              : "No hay carreras registradas"
                             }
                           </p>
                           {!searchTerm && (
-                            <p className="text-xs mt-1">Agrega el primer alumno usando el botón superior</p>
+                            <p className="text-xs mt-1">Agrega la primera carrera usando el botón superior</p>
                           )}
                         </div>
                       </td>
                     </tr>
                   ) : (
-                    filteredAlumnos.map((alumno) => (
+                    filteredCarreras.map((carrera) => (
                       <tr
-                        key={alumno.id_usuario}
+                        key={carrera.id_carrera}
                         className="hover:bg-gray-50 transition-colors"
                       >
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {alumno.nombre} {alumno.apellido_paterno} {alumno.apellido_materno || ''}
+                          {carrera.nombre_carrera}
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-600">{alumno.email}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                          {alumno.telefono || 'N/A'}
-                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600">{carrera.division || 'N/A'}</td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span
                             className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${
-                              alumno.estado 
+                              carrera.estado 
                                 ? "bg-green-100 text-green-800" 
                                 : "bg-gray-100 text-gray-500"
                             }`}
                           >
-                            {alumno.estado ? "Activo" : "Inactivo"}
+                            {carrera.estado ? "Activo" : "Inactivo"}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-center">
                           <div className="flex items-center justify-center gap-2">
                             <button
-                              onClick={() => handleEdit(alumno)}
+                              onClick={() => handleEdit(carrera)}
                               className="text-gray-600 hover:text-gray-900 p-1 disabled:opacity-50"
                               disabled={actionLoading}
                             >
                               <Edit className="h-4 w-4" />
                             </button>
                             <button
-                              onClick={() => handleDelete(alumno)}
+                              onClick={() => handleDelete(carrera)}
                               className="text-gray-600 hover:text-red-600 p-1 disabled:opacity-50"
                               disabled={actionLoading}
                             >
@@ -343,29 +325,27 @@ export default function AlumnosTable() {
 
       {/* Modales */}
       {showAddModal && (
-        <AddAlumnoModal
+        <AddCarrerModal
           onClose={() => setShowAddModal(false)}
-          onAdd={handleAddAlumno}
+          onAdd={handleAddCarrera}
           loading={actionLoading}
         />
       )}
 
-      {showEditModal && selectedAlumno && (
-        <EditAlumnoModal
-          alumno={selectedAlumno}
+      {showEditModal && selectedCarrera && (
+        <EditCarreraModal
+          carrera={selectedCarrera}
           onClose={() => setShowEditModal(false)}
-          onUpdate={handleUpdateAlumno}
+          onUpdate={handleUpdateCarrera}
           loading={actionLoading}
         />
       )}
 
-      {showDeleteModal && selectedAlumno && (
-        <DeleteConfirmModal
-          title="Cambiar estado del Alumno"
-          message={`¿Estás seguro de que deseas cambiarle el estado al alumno ${selectedAlumno.nombre} ${selectedAlumno.apellido}?`}
+      {showDeleteModal && selectedCarrera && (
+        <DeleteCarreraModal
+          carrera={selectedCarrera}
           onClose={() => setShowDeleteModal(false)}
           onConfirm={handleConfirmDelete}
-          loading={actionLoading}
         />
       )}
     </>

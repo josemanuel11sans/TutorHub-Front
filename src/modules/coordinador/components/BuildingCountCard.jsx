@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Building } from 'lucide-react';
-import api from '../../../api/base.api';
+import { getEdificios } from '../../../api/edificios.api';
 
 function Card({ children, className = "" }) {
   return (
@@ -20,11 +20,11 @@ export default function BuildingsCountCard() {
       try {
         setLoading(true);
         setError(null);
-        const response = await api.get('/edificios');
-        setEdificios(response.data);
+        const data = await getEdificios();
+        setEdificios(data);
       } catch (err) {
         console.error("Error al obtener edificios:", err);
-        setError(err.response?.data?.message || "Error al conectar con el servidor");
+        setError(err.message || "Error al conectar con el servidor");
       } finally {
         setLoading(false);
       }
@@ -71,12 +71,7 @@ export default function BuildingsCountCard() {
         <div>
           <p className="text-sm font-medium text-gray-600">Edificios</p>
           <p className="text-3xl font-bold text-gray-900 mt-2">{totalEdificios}</p>
-          <p className="text-xs text-gray-500 mt-1">
-            {edificiosActivos === totalEdificios 
-              ? `${totalEdificios === 1 ? 'Activo' : 'Todos activos'}`
-              : `${edificiosActivos} ${edificiosActivos === 1 ? 'activo' : 'activos'}`
-            }
-          </p>
+
         </div>
         <Building className="h-8 w-8 text-gray-400" />
       </div>

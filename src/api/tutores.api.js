@@ -49,10 +49,10 @@ export const updateTutor = async (id, tutorData) => {
   }
 };
 
-// Eliminar un tutor
+// Eliminar un tutor (soft delete)
 export const deleteTutor = async (id) => {
   try {
-    const response = await api.delete(`${endpoint}/${id}`);
+    const response = await api.delete(`${endpoint}/delete/${id}`);
     return response.data;
   } catch (error) {
     console.error("Error al eliminar tutor:", error);

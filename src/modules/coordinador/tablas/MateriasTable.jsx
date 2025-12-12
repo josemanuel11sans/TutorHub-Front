@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react"
-import { Search, Plus, Edit, Trash2 } from "lucide-react"
+import { Search, Plus, Edit, Trash2, RefreshCw, RotateCcw } from "lucide-react"
 import { AddMateriaModal } from "../modales/AddMateriaModal"
 import { EditMateriaModal } from "../modales/EditMateriaModal"
 import { DeleteMateriaModal } from "../modales/DeleteMateriaModal"
 import * as materiasAPI from "../../../api/materias.api"
 import * as carrerasAPI from "../../../api/carreras.api"
+import { useToast } from "../../../context/ToastContext"
 
 // Botón compacto
 const Button = ({ children, onClick, variant = "default", size = "sm", className = "" }) => {
@@ -58,12 +59,14 @@ export default function MateriasTable() {
     const [materias, setMaterias] = useState([])
     const [carreras, setCarreras] = useState([])
     const [searchTerm, setSearchTerm] = useState("")
+    const [statusFilter, setStatusFilter] = useState("todos") // todos | activos | inactivos
     const [showAddModal, setShowAddModal] = useState(false)
     const [showEditModal, setShowEditModal] = useState(false)
     const [showDeleteModal, setShowDeleteModal] = useState(false)
     const [selectedMateria, setSelectedMateria] = useState(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
+    const toast = useToast()
 
     // Cargar datos iniciales
     useEffect(() => {
@@ -94,11 +97,20 @@ export default function MateriasTable() {
         }
     }
 
-    // Filtrar materias
-    const filteredMaterias = materias.filter(materia =>
-        materia.nombre_materia?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        materia.descripcion?.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+    // Filtrar materias (texto + estado)
+    const filteredMaterias = materias.filter(materia => {
+        const searchLower = searchTerm.toLowerCase()
+        const matchesSearch = (
+            (materia.nombre_materia || '').toLowerCase().includes(searchLower) ||
+            (materia.descripcion || '').toLowerCase().includes(searchLower)
+        )
+        const matchesStatus = (
+            statusFilter === 'todos' ||
+            (statusFilter === 'activos' && materia.activo === true) ||
+            (statusFilter === 'inactivos' && materia.activo === false)
+        )
+        return matchesSearch && matchesStatus
+    })
 
     const handleEdit = (materia) => {
         setSelectedMateria(materia)
@@ -112,17 +124,40 @@ export default function MateriasTable() {
 
     const handleAddMateria = async (newMateria) => {
         try {
+            // Validaciones según el modelo del backend
+            const nombre = (newMateria.nombre || '').trim()
+            const objetivo = (newMateria.objetivo || '').trim()
+            const carreraId = newMateria.carrera_id
+            if (nombre.length < 2 || nombre.length > 100) {
+                return toast?.showToast?.('El nombre debe tener entre 2 y 100 caracteres', 'error')
+            }
+            if (objetivo.length < 5 || objetivo.length > 255) {
+                return toast?.showToast?.('La descripción debe tener entre 5 y 255 caracteres', 'error')
+            }
+            if (!carreraId) {
+                return toast?.showToast?.('Selecciona una carrera', 'error')
+            }
             const created = await materiasAPI.createMateria({
-                nombre_materia: newMateria.nombre,
-                descripcion: newMateria.objetivo,
-                activo: newMateria.estado,
-                carrera_id: newMateria.carrera_id
+                nombre_materia: nombre,
+                descripcion: objetivo,
+                activo: !!newMateria.estado,
+                carrera_id: carreraId
             })
             setMaterias([...materias, created])
             setShowAddModal(false)
+            try {
+                toast?.showToast?.('Materia agregada correctamente', 'success')
+            } catch (e) {
+                console.warn(e)
+            }
         } catch (err) {
             console.error("Error al crear materia:", err)
-            alert("Error al crear la materia")
+            const errorMessage = err.response?.data?.message || err.message || 'Error al agregar materia'
+            try {
+                toast?.showToast?.(errorMessage, 'error')
+            } catch (e) {
+                console.warn(e)
+            }
         }
     }
 
@@ -138,21 +173,53 @@ export default function MateriasTable() {
                 m.id_materia === updated.id_materia ? updated : m
             ))
             setShowEditModal(false)
+            try {
+                toast?.showToast?.('Materia actualizada correctamente', 'success')
+            } catch (e) {
+                console.warn(e)
+            }
         } catch (err) {
             console.error("Error al actualizar materia:", err)
-            alert("Error al actualizar la materia")
+            const errorMessage = err.response?.data?.message || 'Error al actualizar materia'
+            try {
+                toast?.showToast?.(errorMessage, 'error')
+            } catch (e) {
+                console.warn(e)
+            }
         }
     }
 
     const handleConfirmDelete = async () => {
         try {
-            await materiasAPI.deleteMateria(selectedMateria.id_materia)
-            setMaterias(materias.filter(m => m.id_materia !== selectedMateria.id_materia))
+            // El backend realiza borrado lógico (toggle activo). Puede devolver { message, data } o solo la entidad.
+            const result = await materiasAPI.deleteMateria(selectedMateria.id_materia)
+            const updatedEntity = result?.data ?? result
+
+            // Si vino la entidad actualizada, reemplazamos en la lista; si no, recargamos.
+            if (updatedEntity && updatedEntity.id_materia) {
+                setMaterias(materias.map(m =>
+                    m.id_materia === updatedEntity.id_materia ? updatedEntity : m
+                ))
+            } else {
+                await loadMaterias()
+            }
+
             setShowDeleteModal(false)
             setSelectedMateria(null)
+            try {
+                const msg = (result && result.message) ? result.message : (updatedEntity?.activo ? 'Materia activada correctamente' : 'Materia desactivada correctamente')
+                toast?.showToast?.(msg, 'success')
+            } catch (e) {
+                console.warn(e)
+            }
         } catch (err) {
             console.error("Error al eliminar materia:", err)
-            alert("Error al eliminar la materia")
+            const errorMessage = err.response?.data?.message || 'Error al eliminar materia'
+            try {
+                toast?.showToast?.(errorMessage, 'error')
+            } catch (e) {
+                console.warn(e)
+            }
         }
     }
 
@@ -196,23 +263,44 @@ export default function MateriasTable() {
                             Gestión de Materias
                         </h2>
                         <p className="text-sm text-gray-500">
-                            Total: {materias.length} materias
+                            Administra las materias del sistema
                         </p>
                     </div>
-                    <Button onClick={() => setShowAddModal(true)}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        Nueva Materia
-                    </Button>
+                    <div className="flex gap-2">
+                        <Button onClick={loadMaterias} variant="ghost" size="sm">
+                            <RefreshCw className="mr-2 h-4 w-4" />
+                            Actualizar
+                        </Button>
+                        <Button onClick={() => setShowAddModal(true)} size="sm">
+                            <Plus className="mr-2 h-4 w-4" />
+                            Nueva Materia
+                        </Button>
+                    </div>
                 </div>
 
-                {/* Buscador */}
+                {/* Buscador + Filtro estado */}
                 <div className="bg-white rounded-lg border border-gray-200 p-4">
-                    <Input
-                        placeholder="Buscar por nombre o descripción..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        icon
-                    />
+                    <div className="flex flex-col sm:flex-row items-center gap-4">
+                        <div className="flex-1 w-full">
+                            <Input
+                                placeholder="Buscar por nombre o descripción..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                icon
+                            />
+                        </div>
+                        <div className="w-full sm:w-56">
+                            <select
+                                value={statusFilter}
+                                onChange={(e) => setStatusFilter(e.target.value)}
+                                className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                            >
+                                <option value="todos">Estado</option>
+                                <option value="activos">Activos</option>
+                                <option value="inactivos">Inactivos</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Tabla */}
@@ -282,7 +370,7 @@ export default function MateriasTable() {
                                                         className="text-gray-600 hover:text-red-600 p-1"
                                                         title="Eliminar"
                                                     >
-                                                        <Trash2 className="h-4 w-4" />
+                                                        <RotateCcw className="h-4 w-4" />
                                                     </button>
                                                 </div>
                                             </td>

@@ -2,7 +2,7 @@
 
 import { X, AlertTriangle } from "lucide-react"
 
-export function DeleteEdificioModal({ onClose, onDelete, edificio }) {
+export function DeleteCarreraModal({ carrera, onClose, onConfirm }) {
   return (
     <div 
       className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4"
@@ -19,8 +19,8 @@ export function DeleteEdificioModal({ onClose, onDelete, edificio }) {
               <AlertTriangle className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-gray-900">Cambiar el estado del Edificio</h2>
-              <p className="text-gray-500 text-xs">Esta acción se puede deshacer</p>
+              <h2 className="text-lg font-bold text-gray-900">Cambiar estado de Carrera</h2>
+              <p className="text-gray-500 text-xs">Desactiva o reactiva la carrera</p>
             </div>
           </div>
           <button
@@ -34,13 +34,12 @@ export function DeleteEdificioModal({ onClose, onDelete, edificio }) {
         {/* Content */}
         <div className="p-6">
           <p className="text-sm text-gray-700 mb-4">
-            ¿Estás seguro de que deseas cambiar el estado del edificio <span className="font-semibold">{edificio?.nombre}</span>?
+            ¿Estás seguro de que deseas cambiar el estado de la carrera <span className="font-semibold">{carrera?.nombre_carrera}</span>?
           </p>
           <div className="bg-red-50 border border-red-100 rounded-lg p-3 flex gap-2 mb-6">
-            <AlertTriangle className="h-4 w-4 text-red-600 flex-shrink-0 mt-0.5" />
+            <AlertTriangle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
             <p className="text-xs text-red-700">
-              En caso de cambiar el estado a "inactivo", este registro no estará disponible para su uso.
-            </p>
+En caso de cambiar el estado a "inactivo", este registro no estará disponible para su uso.            </p>
           </div>
 
           {/* Buttons */}
@@ -54,10 +53,10 @@ export function DeleteEdificioModal({ onClose, onDelete, edificio }) {
             </button>
             <button
               type="button"
-              onClick={() => onDelete(edificio)}
-              className="flex-1 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-red-600 to-red-700 rounded-lg hover:from-red-700 hover:to-red-800 transition-all shadow-md shadow-red-500/20"
+              onClick={onConfirm}
+              className="flex-1 px-4 py-2 text-sm font-medium text-white bg-linear-to-r from-red-600 to-red-700 rounded-lg hover:from-red-700 hover:to-red-800 transition-all shadow-md shadow-red-500/20"
             >
-              Eliminar
+              Confirmar
             </button>
           </div>
         </div>

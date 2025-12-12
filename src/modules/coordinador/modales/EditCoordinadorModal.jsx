@@ -10,14 +10,12 @@ export function EditCoordinadorModal({ coordinador, onClose, onUpdate }) {
     apellido: coordinador.apellido,
     email: coordinador.email,
     telefono: coordinador.telefono,
-    currentPassword: "",
     newPassword: "",
     confirmPassword: "",
     estado: coordinador.estado,
   })
 
   const [showPasswords, setShowPasswords] = useState({
-    current: false,
     new: false,
     confirm: false,
   })
@@ -146,31 +144,6 @@ export function EditCoordinadorModal({ coordinador, onClose, onUpdate }) {
               placeholder="123456789"
               required
             />
-          </div>
-
-          {/* Contraseña Actual */}
-          <div className="space-y-1.5">
-            <label className="flex items-center gap-2 text-xs font-medium text-gray-700">
-              <Lock className="h-3.5 w-3.5 text-gray-400" />
-              Contraseña Actual
-            </label>
-            <div className="relative">
-              <input
-                type={showPasswords.current ? "text" : "password"}
-                name="currentPassword"
-                value={formData.currentPassword}
-                onChange={handleChange}
-                className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-gray-900 placeholder:text-gray-400"
-                placeholder="Ingresa tu contraseña actual"
-              />
-              <button
-                type="button"
-                onClick={() => togglePasswordVisibility("current")}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                {showPasswords.current ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
-            </div>
           </div>
 
           {/* Nueva Contraseña */}

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
-import { Search, Plus, Edit, Trash2, RefreshCw } from "lucide-react"
+import { Search, Plus, Edit, Trash2, RefreshCw, RotateCcw } from "lucide-react"
+import { useToast } from "../../../context/ToastContext"
 import  AddEspacioModal  from "../modales/AddEspacioModal"
 import { EditEspacioModal } from "../modales/EditEspacioModal"
 import { DeleteEspacioModal } from "../modales/DeleteEspacioModal"
@@ -65,6 +66,8 @@ export default function EspaciosTable() {
     const [selectedEspacio, setSelectedEspacio] = useState(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
+    const [statusFilter, setStatusFilter] = useState("todos") // todos | activos | inactivos
+    const toast = useToast()
 
     // Cargar datos iniciales
     useEffect(() => {
@@ -97,15 +100,31 @@ export default function EspaciosTable() {
         }
     }
 
+    // Función para recargar solo los espacios (más rápido)
+    const fetchEspacios = async () => {
+        try {
+            const espaciosData = await getEspacios()
+            setEspacios(espaciosData)
+        } catch (err) {
+            console.error('Error al recargar espacios:', err)
+        }
+    }
+
     // Filtrar espacios
     const filteredEspacios = espacios.filter(espacio => {
         const searchLower = searchTerm.toLowerCase()
-        return (
+        const matchesSearch = (
             espacio.nombre?.toLowerCase().includes(searchLower) ||
             espacio.descripcion?.toLowerCase().includes(searchLower) ||
             espacio.tutor?.nombre?.toLowerCase().includes(searchLower) ||
             espacio.tutor?.apellido?.toLowerCase().includes(searchLower)
         )
+        const matchesStatus = (
+            statusFilter === 'todos' ||
+            (statusFilter === 'activos' && espacio.estado === true) ||
+            (statusFilter === 'inactivos' && espacio.estado === false)
+        )
+        return matchesSearch && matchesStatus
     })
 
     const handleEdit = (espacio) => {
@@ -129,13 +148,13 @@ export default function EspaciosTable() {
                 materia_id: parseInt(newEspacioData.materiaId)
             }
 
-            const response = await createEspacio(espacioToCreate)
+            await createEspacio(espacioToCreate)
             
-            // Recargar la lista de espacios
-            await fetchInitialData()
+            // Recargar espacios para obtener los datos completos con relaciones
+            await fetchEspacios()
             
             setShowAddModal(false)
-            alert('Espacio creado exitosamente')
+            toast?.showToast('Espacio creado exitosamente', 'success')
         } catch (err) {
             console.error('Error al crear espacio:', err)
             let errorMessage = 'Error al crear el espacio'
@@ -144,7 +163,7 @@ export default function EspaciosTable() {
                 errorMessage = err.response.data.message
             }
             
-            alert(errorMessage)
+            toast?.showToast(errorMessage, 'error')
         }
     }
 
@@ -159,12 +178,16 @@ export default function EspaciosTable() {
 
             await updateEspacio(selectedEspacio.id_espacio, espacioToUpdate)
             
-            // Recargar la lista
-            await fetchInitialData()
+            // Actualizar solo el espacio editado en el estado local
+            setEspacios(espacios.map(e =>
+                e.id_espacio === selectedEspacio.id_espacio 
+                    ? { ...e, nombre: espacioToUpdate.nombre, descripcion: espacioToUpdate.descripcion, portada: espacioToUpdate.portada } 
+                    : e
+            ))
             
             setShowEditModal(false)
             setSelectedEspacio(null)
-            alert('Espacio actualizado exitosamente')
+            toast?.showToast('Espacio actualizado exitosamente', 'success')
         } catch (err) {
             console.error('Error al actualizar espacio:', err)
             let errorMessage = 'Error al actualizar el espacio'
@@ -173,7 +196,7 @@ export default function EspaciosTable() {
                 errorMessage = err.response.data.message
             }
             
-            alert(errorMessage)
+            toast?.showToast(errorMessage, 'error')
         }
     }
 
@@ -181,12 +204,16 @@ export default function EspaciosTable() {
         try {
             await deleteEspacio(selectedEspacio.id_espacio)
             
-            // Recargar la lista
-            await fetchInitialData()
+            // Actualizar el estado local alternando el estado
+            const nuevoEstado = !selectedEspacio.estado
+            setEspacios(espacios.map(e =>
+                e.id_espacio === selectedEspacio.id_espacio ? { ...e, estado: nuevoEstado } : e
+            ))
             
             setShowDeleteModal(false)
             setSelectedEspacio(null)
-            alert('Espacio eliminado exitosamente')
+            const mensaje = nuevoEstado ? 'Espacio activado exitosamente' : 'Espacio desactivado exitosamente'
+            toast?.showToast(mensaje, 'success')
         } catch (err) {
             console.error('Error al eliminar espacio:', err)
             let errorMessage = 'Error al eliminar el espacio'
@@ -198,7 +225,7 @@ export default function EspaciosTable() {
                 errorMessage = err.response.data.message
             }
             
-            alert(errorMessage)
+            toast?.showToast(errorMessage, 'error')
             setShowDeleteModal(false)
             setSelectedEspacio(null)
         }
@@ -250,7 +277,7 @@ export default function EspaciosTable() {
                             Gestión de Espacios
                         </h2>
                         <p className="text-sm text-gray-500">
-                            Administra los espacios y aulas ({espacios.length} espacios)
+                            Administra los espacios del sistema
                         </p>
                     </div>
                     <div className="flex gap-2">
@@ -265,14 +292,29 @@ export default function EspaciosTable() {
                     </div>
                 </div>
 
-                {/* Buscador */}
+                {/* Buscador + Filtro estado */}
                 <div className="bg-white rounded-lg border border-gray-200 p-4">
-                    <Input
-                        placeholder="Buscar por nombre, descripción o tutor..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        icon
-                    />
+                    <div className="flex flex-col sm:flex-row items-center gap-4">
+                        <div className="flex-1 w-full">
+                            <Input
+                                placeholder="Buscar por nombre, descripción o tutor..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                icon
+                            />
+                        </div>
+                        <div className="w-full sm:w-56">
+                            <select
+                                value={statusFilter}
+                                onChange={(e) => setStatusFilter(e.target.value)}
+                                className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                            >
+                                <option value="todos">Estado</option>
+                                <option value="activos">Activos</option>
+                                <option value="inactivos">Inactivos</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Tabla */}
@@ -367,7 +409,7 @@ export default function EspaciosTable() {
                                                         className="text-gray-600 hover:text-red-600 p-1"
                                                         title="Eliminar espacio"
                                                     >
-                                                        <Trash2 className="h-4 w-4" />
+                                                        <RotateCcw className="h-4 w-4" />
                                                     </button>
                                                 </div>
                                             </td>
@@ -384,7 +426,7 @@ export default function EspaciosTable() {
             {showAddModal && (
                 <AddEspacioModal
                     onClose={() => setShowAddModal(false)}
-                    onAdd={handleAddEspacio}
+                    onCreated={handleAddEspacio}
                     tutores={tutores}
                     materias={materias}
                 />

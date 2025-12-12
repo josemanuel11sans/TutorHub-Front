@@ -10,14 +10,12 @@ export function EditAlumnoModal({ alumno, onClose, onUpdate }) {
     apellido: alumno.apellido,
     email: alumno.email,
     telefono: alumno.telefono,
-    currentPassword: "",
     newPassword: "",
     confirmPassword: "",
     estado: alumno.estado,
   })
 
   const [showPasswords, setShowPasswords] = useState({
-    current: false,
     new: false,
     confirm: false,
   })
@@ -147,17 +145,6 @@ export function EditAlumnoModal({ alumno, onClose, onUpdate }) {
               className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-gray-900 placeholder:text-gray-400"
             />
           </div>
-
-          {/* Contraseña Actual */}
-          <PasswordField
-            label="Contraseña Actual"
-            name="currentPassword"
-            value={formData.currentPassword}
-            show={showPasswords.current}
-            onToggle={() => togglePasswordVisibility("current")}
-            onChange={handleChange}
-            placeholder="Ingresa tu contraseña actual"
-          />
 
           {/* Nueva Contraseña */}
           <PasswordField
