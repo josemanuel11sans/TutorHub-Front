@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { X, BookOpen, Target } from "lucide-react"
 
-export function EditMateriaModal({ materia, carreras, onClose, onUpdate }) {
+export function EditMateriaModal({ materia, carreras = [], onClose, onUpdate }) {
   const [formData, setFormData] = useState({
     nombre: materia.nombre_materia || "",  
     objetivo: materia.descripcion || "",       
@@ -111,6 +111,23 @@ export function EditMateriaModal({ materia, carreras, onClose, onUpdate }) {
             </label>
           </div>
 
+          {/* Carrera */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-gray-700">Carrera</label>
+            <select
+              name="carrera_id"
+              value={formData.carrera_id}
+              onChange={handleChange}
+              required
+              className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-gray-900"
+            >
+              <option value="" disabled>Selecciona una carrera</option>
+              {carreras.map(c => (
+                <option key={c.id_carrera} value={c.id_carrera}>{c.nombre_carrera}</option>
+              ))}
+            </select>
+          </div>
+
           {/* Buttons */}
           <div className="flex gap-3 pt-2">
             <button
@@ -123,7 +140,7 @@ export function EditMateriaModal({ materia, carreras, onClose, onUpdate }) {
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+              className="flex-1 px-4 py-2 text-sm font-medium text-white bg-linear-to-r from-blue-600 to-blue-700 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
             >
               {loading ? "Actualizando..." : "Actualizar"}
             </button>

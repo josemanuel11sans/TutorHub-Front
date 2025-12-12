@@ -124,11 +124,24 @@ export default function MateriasTable() {
 
     const handleAddMateria = async (newMateria) => {
         try {
+            // Validaciones según el modelo del backend
+            const nombre = (newMateria.nombre || '').trim()
+            const objetivo = (newMateria.objetivo || '').trim()
+            const carreraId = newMateria.carrera_id
+            if (nombre.length < 2 || nombre.length > 100) {
+                return toast?.showToast?.('El nombre debe tener entre 2 y 100 caracteres', 'error')
+            }
+            if (objetivo.length < 5 || objetivo.length > 255) {
+                return toast?.showToast?.('La descripción debe tener entre 5 y 255 caracteres', 'error')
+            }
+            if (!carreraId) {
+                return toast?.showToast?.('Selecciona una carrera', 'error')
+            }
             const created = await materiasAPI.createMateria({
-                nombre_materia: newMateria.nombre,
-                descripcion: newMateria.objetivo,
-                activo: newMateria.estado,
-                carrera_id: newMateria.carrera_id
+                nombre_materia: nombre,
+                descripcion: objetivo,
+                activo: !!newMateria.estado,
+                carrera_id: carreraId
             })
             setMaterias([...materias, created])
             setShowAddModal(false)
@@ -139,7 +152,7 @@ export default function MateriasTable() {
             }
         } catch (err) {
             console.error("Error al crear materia:", err)
-            const errorMessage = err.response?.data?.message || 'Error al agregar materia'
+            const errorMessage = err.response?.data?.message || err.message || 'Error al agregar materia'
             try {
                 toast?.showToast?.(errorMessage, 'error')
             } catch (e) {
@@ -178,12 +191,24 @@ export default function MateriasTable() {
 
     const handleConfirmDelete = async () => {
         try {
-            await materiasAPI.deleteMateria(selectedMateria.id_materia)
-            setMaterias(materias.filter(m => m.id_materia !== selectedMateria.id_materia))
+            // El backend realiza borrado lógico (toggle activo). Puede devolver { message, data } o solo la entidad.
+            const result = await materiasAPI.deleteMateria(selectedMateria.id_materia)
+            const updatedEntity = result?.data ?? result
+
+            // Si vino la entidad actualizada, reemplazamos en la lista; si no, recargamos.
+            if (updatedEntity && updatedEntity.id_materia) {
+                setMaterias(materias.map(m =>
+                    m.id_materia === updatedEntity.id_materia ? updatedEntity : m
+                ))
+            } else {
+                await loadMaterias()
+            }
+
             setShowDeleteModal(false)
             setSelectedMateria(null)
             try {
-                toast?.showToast?.('Materia eliminada correctamente', 'success')
+                const msg = (result && result.message) ? result.message : (updatedEntity?.activo ? 'Materia activada correctamente' : 'Materia desactivada correctamente')
+                toast?.showToast?.(msg, 'success')
             } catch (e) {
                 console.warn(e)
             }
