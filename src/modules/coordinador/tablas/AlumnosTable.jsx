@@ -265,6 +265,9 @@ export default function AlumnosTable() {
                       Teléfono
                     </th>
                     <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">
+                      Carrera
+                    </th>
+                    <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">
                       Estado
                     </th>
                     <th className="px-6 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">
@@ -275,7 +278,7 @@ export default function AlumnosTable() {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredAlumnos.length === 0 ? (
                     <tr>
-                      <td colSpan="5" className="px-6 py-12 text-center">
+                      <td colSpan="6" className="px-6 py-12 text-center">
                         <div className="text-gray-500">
                           <p className="text-sm">
                             {searchTerm 
@@ -301,6 +304,9 @@ export default function AlumnosTable() {
                         <td className="px-6 py-4 text-sm text-gray-600">{alumno.email}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                           {alumno.telefono || 'N/A'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                          {alumno.Carrera?.nombre_carrera || 'Sin asignar'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span

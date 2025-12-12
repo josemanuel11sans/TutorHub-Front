@@ -67,6 +67,7 @@ export default function EspaciosTable() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
     const [statusFilter, setStatusFilter] = useState("todos") // todos | activos | inactivos
+    const [isSubmitting, setIsSubmitting] = useState(false) // Bandera para evitar double submit
     const toast = useToast()
 
     // Cargar datos iniciales
@@ -137,23 +138,33 @@ export default function EspaciosTable() {
         setShowDeleteModal(true)
     }
 
-    const handleAddEspacio = async (newEspacioData) => {
+    const handleAddEspacio = async (formData) => {
+        // Evitar doble submit
+        if (isSubmitting) {
+            console.warn('Ya hay una petición en proceso, ignorando...')
+            return
+        }
+
         try {
+            setIsSubmitting(true)
+            
             // Crear el espacio con la estructura correcta de la API
             const espacioToCreate = {
-                nombre: newEspacioData.nombre,
-                descripcion: newEspacioData.descripcion,
-                portada: newEspacioData.portada || null,
-                tutor_id: parseInt(newEspacioData.tutorId),
-                materia_id: parseInt(newEspacioData.materiaId)
+                nombre: formData.nombre,
+                descripcion: formData.descripcion,
+                portada: formData.portada || null,
+                tutor_id: parseInt(formData.tutorId),
+                materia_id: parseInt(formData.materiaId)
             }
 
             await createEspacio(espacioToCreate)
             
+            // Cerrar modal PRIMERO para evitar double submit
+            setShowAddModal(false)
+            
             // Recargar espacios para obtener los datos completos con relaciones
             await fetchEspacios()
             
-            setShowAddModal(false)
             toast?.showToast('Espacio creado exitosamente', 'success')
         } catch (err) {
             console.error('Error al crear espacio:', err)
@@ -164,6 +175,8 @@ export default function EspaciosTable() {
             }
             
             toast?.showToast(errorMessage, 'error')
+        } finally {
+            setIsSubmitting(false)
         }
     }
 

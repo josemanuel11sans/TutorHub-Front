@@ -4,6 +4,7 @@ import { AddAulaModal } from "../modales/AddAulaModal"
 import { EditAulaModal } from "../modales/EditAulaModal"
 import { DeleteAulaModal } from "../modales/DeleteAulaModal"
 import { getAulas, createAula, updateAula, deleteAula } from "../../../api/aulas.api" // Ajusta la ruta según tu estructura
+import { getEdificios } from "../../../api/edificios.api"
 import { useToast } from "../../../context/ToastContext"
 
 // Botón compacto
@@ -68,43 +69,34 @@ export default function AulasTable() {
     const [statusFilter, setStatusFilter] = useState("todos") // todos | activos | inactivos
     const toast = useToast()
 
-    // Cargar aulas al montar el componente
+    // Cargar aulas y edificios al montar el componente
     const fetchAulas = async () => {
         try {
             setLoading(true)
             setError(null)
-            const data = await getAulas()
+            
+            // Cargar aulas y edificios en paralelo
+            const [aulasData, edificiosData] = await Promise.all([
+                getAulas(),
+                getEdificios()
+            ])
             
             // Transformar los datos de la API al formato del componente
-            const aulasTransformadas = data.map(aula => ({
+            const aulasTransformadas = aulasData.map(aula => ({
                 id: aula.id,
                 nombre: aula.nombre,
                 descripcion: aula.descripcion,
                 edificioId: aula.edificioId,
                 edificioNombre: aula.Edificio?.nombre || 'Sin edificio',
-                estado: aula.estado ?? true, // Usamos el estado propio del aula
+                estado: aula.estado ?? true,
             }))
             
             setAulas(aulasTransformadas)
-            
-            // Extraer edificios únicos de los datos
-            const edificiosUnicos = data
-                .filter(aula => aula.Edificio)
-                .reduce((acc, aula) => {
-                    if (!acc.find(e => e.id === aula.Edificio.id)) {
-                        acc.push({
-                            id: aula.Edificio.id,
-                            nombre: aula.Edificio.nombre
-                        })
-                    }
-                    return acc
-                }, [])
-            
-            setEdificios(edificiosUnicos)
+            setEdificios(edificiosData)
         } catch (err) {
-            const msg = err?.message || "Error al cargar las aulas. Por favor, intenta de nuevo."
+            const msg = err?.message || "Error al cargar los datos. Por favor, intenta de nuevo."
             setError(msg)
-            console.error("Error al cargar aulas:", err)
+            console.error("Error al cargar datos:", err)
         } finally {
             setLoading(false)
         }

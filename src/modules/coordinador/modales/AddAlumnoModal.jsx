@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
-import { X, User, Mail, Phone, Lock, Eye, EyeOff } from "lucide-react"
+import { useState, useEffect } from "react"
+import { X, User, Mail, Phone, Lock, Eye, EyeOff, BookOpen } from "lucide-react"
+import { getCarreras } from "../../../api/carreras.api"
 
 export function AddAlumnoModal({ onClose, onAdd }) {
   const [formData, setFormData] = useState({
@@ -10,13 +11,32 @@ export function AddAlumnoModal({ onClose, onAdd }) {
     email: "",
     telefono: "",
     password: "",
+    carrera_id: "",
     estado: true,
   })
+  const [carreras, setCarreras] = useState([])
+  const [carrerasLoading, setCarrerasLoading] = useState(false)
 
   const [showPasswords, setShowPasswords] = useState({
     current: false,
   })
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    loadCarreras()
+  }, [])
+
+  const loadCarreras = async () => {
+    try {
+      setCarrerasLoading(true)
+      const data = await getCarreras()
+      setCarreras(data)
+    } catch (err) {
+      console.error("Error al cargar carreras:", err)
+    } finally {
+      setCarrerasLoading(false)
+    }
+  }
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target
@@ -123,6 +143,28 @@ export function AddAlumnoModal({ onClose, onAdd }) {
               placeholder="123456789"
               required
             />
+          </div>
+
+          {/* Carrera */}
+          <div className="space-y-1.5">
+            <label className="flex items-center gap-2 text-xs font-medium text-gray-700">
+              <BookOpen className="h-3.5 w-3.5 text-gray-400" />
+              Carrera
+            </label>
+            <select
+              name="carrera_id"
+              value={formData.carrera_id}
+              onChange={handleChange}
+              className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-gray-900"
+              disabled={carrerasLoading}
+            >
+              <option value="">Selecciona una carrera</option>
+              {carreras.map(carrera => (
+                <option key={carrera.id_carrera} value={carrera.id_carrera}>
+                  {carrera.nombre_carrera}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Correo */}

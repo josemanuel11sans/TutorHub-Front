@@ -137,13 +137,15 @@ export default function MateriasTable() {
             if (!carreraId) {
                 return toast?.showToast?.('Selecciona una carrera', 'error')
             }
-            const created = await materiasAPI.createMateria({
+            await materiasAPI.createMateria({
                 nombre_materia: nombre,
                 descripcion: objetivo,
                 activo: !!newMateria.estado,
                 carrera_id: carreraId
             })
-            setMaterias([...materias, created])
+            
+            // Recargar materias desde la API para obtener las relaciones completas
+            await loadMaterias()
             setShowAddModal(false)
             try {
                 toast?.showToast?.('Materia agregada correctamente', 'success')
@@ -163,15 +165,15 @@ export default function MateriasTable() {
 
     const handleUpdateMateria = async (updatedMateria) => {
         try {
-            const updated = await materiasAPI.updateMateria(selectedMateria.id_materia, {
+            await materiasAPI.updateMateria(selectedMateria.id_materia, {
                 nombre_materia: updatedMateria.nombre,
                 descripcion: updatedMateria.objetivo,
                 activo: updatedMateria.estado,
                 carrera_id: updatedMateria.carrera_id
             })
-            setMaterias(materias.map(m =>
-                m.id_materia === updated.id_materia ? updated : m
-            ))
+            
+            // Recargar materias desde la API para obtener las relaciones completas
+            await loadMaterias()
             setShowEditModal(false)
             try {
                 toast?.showToast?.('Materia actualizada correctamente', 'success')

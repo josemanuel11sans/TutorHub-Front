@@ -48,25 +48,16 @@ export default function AddEspacioModal({ onClose, onCreated }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setLoading(true)
-
-    try {
-      // Convertir IDs a números antes de enviar
-      const espacioData = {
-        ...formData,
-        tutor_id: Number(formData.tutor_id),
-        materia_id: Number(formData.materia_id)
-      }
-
-      const res = await createEspacio(espacioData)
-
-      if (onCreated) onCreated(res)
-      onClose()
-    } catch (error) {
-      console.error("Error al crear espacio:", error)
-      alert("Error al crear el espacio")
-    } finally {
-      setLoading(false)
+    
+    // Pasar los datos al componente padre (no crear aquí)
+    if (onCreated) {
+      onCreated({
+        nombre: formData.nombre,
+        descripcion: formData.descripcion,
+        portada: formData.portada || null,
+        tutorId: Number(formData.tutor_id),
+        materiaId: Number(formData.materia_id)
+      })
     }
   }
 

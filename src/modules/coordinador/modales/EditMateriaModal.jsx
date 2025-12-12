@@ -97,7 +97,8 @@ export function EditMateriaModal({ materia, carreras = [], onClose, onUpdate }) 
           </div>
 
           {/* Estado */}
-          <div className="flex items-center gap-2">
+          {/* Estado - Oculto */}
+          <div className="hidden items-center gap-2">
             <input
               type="checkbox"
               name="estado"
