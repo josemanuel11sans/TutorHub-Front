@@ -136,8 +136,13 @@ export default function EspaciosView({ onSelectEspacio, tutorId: propStudentId }
             <p className="text-sm text-gray-500 mt-1">Selecciona un espacio para ver sus materiales</p>
           </div>
 
-          <div className="flex items-center gap-3">
-            <Button onClick={() => fetchEspacios()} variant="ghost" className="mr-2">
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() => fetchEspacios()}
+              variant="ghost"
+              size="sm"
+              className="mr-2 px-3 py-1 text-xs"
+            >
               Actualizar
             </Button>
           </div>

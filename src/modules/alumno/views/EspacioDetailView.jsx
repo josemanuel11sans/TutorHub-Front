@@ -262,7 +262,11 @@ export default function EspacioDetailView({ espacio, onBack, initialOpenAddMater
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-gray-900">Asesorías</h2>
-            <Button onClick={() => setShowAddAsesoriaModal(true)}>
+            <Button
+              onClick={() => setShowAddAsesoriaModal(true)}
+              size="sm"
+              className="px-3 py-1 text-xs"
+            >
               <Plus className="mr-2 h-4 w-4" />
               Nueva Asesoría
             </Button>
