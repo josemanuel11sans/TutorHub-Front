@@ -2,11 +2,15 @@ import api from "./base.api";
 
 const endpoint = "/carreras";
 
-// Obtener todas las carreras
+// Obtener todas las carreras (activas e inactivas)
 export const getCarreras = async () => {
   try {
     const response = await api.get(endpoint);
-    return response.data;
+    // Mapear 'activo' a 'estado' para consistencia con el frontend
+    return response.data.map(carrera => ({
+      ...carrera,
+      estado: carrera.activo !== undefined ? carrera.activo : true
+    }));
   } catch (error) {
     console.error("Error al obtener carreras:", error);
     throw error;

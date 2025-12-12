@@ -31,8 +31,8 @@ export default function PanelCoordinador() {
     { id: "espacios", label: "Espacios", icon: Computer },
     { id: "edificios", label: "Edificios", icon: Building },
     { id: "aulas", label: "Aulas", icon: GraduationCap },
-    { id: "materias", label: "Materias", icon: BookOpen },
     { id: "carreras", label: "Carreras", icon: FolderTree },
+    { id: "materias", label: "Materias", icon: BookOpen },
   ]
 
   return (
@@ -90,8 +90,8 @@ export default function PanelCoordinador() {
             {activeTab === "edificios" && <EdificiosTable />}
             {activeTab === "aulas" && <AulaTable />}
             {activeTab === "espacios" && <EspaciosTable />}
-            {activeTab === "materias" && <MateriasTable />}
             {activeTab === "carreras" && <CarreraTable />}
+            {activeTab === "materias" && <MateriasTable />}
           </div>
         </div>
       </div>
