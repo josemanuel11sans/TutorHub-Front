@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useContext } from "react"
 import {
   ArrowLeft,
   Plus,
@@ -15,9 +15,11 @@ import {
   Eye,
   MessageCircle,
 } from "lucide-react"
-import {AddAsesoriaModal}  from "../modales/AddAsesoriaModal"
+import { AddAsesoriaModal }  from "../modales/AddAsesoriaModal"
 import { EditAsesoriaModal } from "../modales/EditAsesoriaModal"
 import { useToast } from "../../../context/ToastContext"
+import { AuthContext } from "../../../context/AuthContext"
+import { getAsesoriasEspacio, createAsesoriaForStudent } from "../../../api/asesorias.api"
 
 const Button = ({ children, onClick, variant = "default", size = "default", className = "" }) => {
   const baseStyles = "inline-flex items-center justify-center rounded-md font-medium transition-colors"
@@ -46,6 +48,7 @@ const Badge = ({ children, variant = "default" }) => {
     ppt: "bg-orange-100 text-orange-800",
     doc: "bg-blue-100 text-blue-800",
     programada: "bg-blue-100 text-blue-800",
+    "en curso": "bg-green-100 text-green-800",
     completada: "bg-green-100 text-green-800",
     cancelada: "bg-red-100 text-red-800",
     default: "bg-gray-200 text-gray-700",
@@ -61,6 +64,7 @@ const Badge = ({ children, variant = "default" }) => {
 // NOTE: removed local mock data — materiales and asesorias should come from backend
 
 export default function EspacioDetailView({ espacio, onBack, initialOpenAddMaterial = false }) {
+  const { user } = useContext(AuthContext)
   const [materiales, setMateriales] = useState([])
   const [asesorias, setAsesorias] = useState([])
   const toast = useToast()
@@ -101,7 +105,30 @@ export default function EspacioDetailView({ espacio, onBack, initialOpenAddMater
       }
     }
 
+    const fetchAsesorias = async () => {
+      try {
+        if (!espacio?.id) return
+        const data = await getAsesoriasEspacio(espacio.id)
+        const list = Array.isArray(data) ? data : []
+        setAsesorias(list.map((a) => ({
+          id: a.id_asesoria ?? a.id,
+          espacioId: a.espacio_id ?? espacio.id,
+          motivo: a.comentarios ?? a.motivo ?? "",
+          fecha: a.fecha_asesoria ? String(a.fecha_asesoria).split("T")[0] : "",
+          estado: (a.asistencia === true || a.asistencia === 1 || a.asistencia === "1") 
+            ? "completada"
+            : (a.activo === true || a.activo === 1 || a.activo === "1") 
+              ? "en curso" 
+              : "programada",
+          _raw: a,
+        })))
+      } catch (err) {
+        console.error('Error al obtener asesorías del espacio:', err)
+      }
+    }
+
     fetchMateriales()
+    fetchAsesorias()
   }, [espacio])
 
   // Asesoria modals
@@ -148,7 +175,7 @@ export default function EspacioDetailView({ espacio, onBack, initialOpenAddMater
                 </svg>
               </div>
             )}
-            <div className="absolute inset-0 bg-gradient-to-br from-black/20 to-transparent" />
+            <div className="absolute inset-0 bg-linear-to-br from-black/20 to-transparent" />
           </div>
           <div className="p-6">
             <div className="flex items-start justify-between">
@@ -197,7 +224,7 @@ export default function EspacioDetailView({ espacio, onBack, initialOpenAddMater
                 return (
                   <div key={k} className="flex items-start gap-2">
                     <div className="w-36 text-gray-500 capitalize">{k.replace(/_/g, " ")}</div>
-                    <div className="flex-1 break-words">{display}</div>
+                    <div className="flex-1 wrap-break-word">{display}</div>
                   </div>
                 )
               })}
@@ -307,7 +334,7 @@ export default function EspacioDetailView({ espacio, onBack, initialOpenAddMater
                     <div className="flex items-center gap-1">
                       <Badge variant={asesoria.estado}>
                           {asesoria.estado === "programada"
-                            ? "Programada": asesoria.estado === "completada"? "Completada": "Cancelada"}
+                            ? "Programada": asesoria.estado === "en curso"? "En curso": asesoria.estado === "completada"? "Completada": "Cancelada"}
                       </Badge>
                       <button
                         onClick={() => {
@@ -331,12 +358,38 @@ export default function EspacioDetailView({ espacio, onBack, initialOpenAddMater
       {showAddAsesoriaModal && (
         <AddAsesoriaModal
           onClose={() => setShowAddAsesoriaModal(false)}
-          onAdd={(newAsesoria) => {
-            setAsesorias([
-              ...asesorias,
-              { ...newAsesoria, id: Date.now(), espacioId: espacio.id, asistentes: 0, estado: "programada" },
-            ])
-            setShowAddAsesoriaModal(false)
+          onAdd={async (newAsesoria) => {
+            try {
+              if (!user?.id) throw new Error('No hay usuario autenticado')
+              const payload = {
+                comentarios: newAsesoria.motivo,
+                tutor_id: espacio?.tutor_id ?? espacio?._raw?.tutor_id,
+                espacio_id: espacio.id,
+                fecha_asesoria: newAsesoria.fecha,
+                carrera_id: espacio?.carrera_id ?? espacio?._raw?.carrera_id ?? null,
+              }
+
+              await createAsesoriaForStudent(user.id, payload)
+              const refreshed = await getAsesoriasEspacio(espacio.id)
+              const list = Array.isArray(refreshed) ? refreshed : []
+              setAsesorias(list.map((a) => ({
+                id: a.id_asesoria ?? a.id,
+                espacioId: a.espacio_id ?? espacio.id,
+                motivo: a.comentarios ?? a.motivo ?? "",
+                fecha: a.fecha_asesoria ? String(a.fecha_asesoria).split("T")[0] : "",
+                estado: (a.asistencia === true || a.asistencia === 1 || a.asistencia === "1") 
+                  ? "completada"
+                  : (a.activo === true || a.activo === 1 || a.activo === "1") 
+                    ? "en curso" 
+                    : "programada",
+                _raw: a,
+              })))
+              toast?.showToast?.('Asesoría creada', 'success')
+            } catch (err) {
+              console.error('Error al crear asesoria:', err)
+              toast?.showToast?.(err.response?.data?.message || err.message || 'Error al crear asesoría', 'error')
+              throw err
+            }
           }}
         />
       )}

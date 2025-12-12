@@ -1,19 +1,13 @@
 "use client"
 
 import { useState } from "react"
-import { X, BookOpen, User2, CalendarDays, Clock } from "lucide-react"
+import { X, BookOpen, CalendarDays, MessageCircle } from "lucide-react"
 
 export function EditAsesoriaModal({ asesoria, onClose, onUpdate }) {
-  const materiasMock = ["Arquitecturas de Software", "Bases de Datos", "Desarrollo Web"]
-  const alumnosMock = ["Juan Carlos García", "María López", "Ana Torres"]
-
   const [formData, setFormData] = useState({
     id: asesoria.id,
-    materia: asesoria.materia,
-    alumno: asesoria.alumno,
     fecha: asesoria.fecha,
-    hora: asesoria.hora,
-    estado: asesoria.estado,
+    motivo: asesoria.motivo ?? asesoria.comentarios ?? "",
   })
 
   const [loading, setLoading] = useState(false)
@@ -26,14 +20,19 @@ export function EditAsesoriaModal({ asesoria, onClose, onUpdate }) {
     })
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
-
-    setTimeout(() => {
-      onUpdate(formData)
+    try {
+      await onUpdate?.({
+        id: formData.id,
+        fecha: formData.fecha,
+        motivo: formData.motivo,
+      })
+      onClose?.()
+    } finally {
       setLoading(false)
-    }, 500)
+    }
   }
 
   return (
@@ -69,26 +68,6 @@ export function EditAsesoriaModal({ asesoria, onClose, onUpdate }) {
         {/* FORM */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
 
-          {/* Materia */}
-          <FieldSelect
-            label="Materia"
-            icon={<BookOpen className="h-3.5 w-3.5 text-gray-400" />}
-            name="materia"
-            value={formData.materia}
-            onChange={handleChange}
-            options={materiasMock}
-          />
-
-          {/* Alumno */}
-          <FieldSelect
-            label="Alumno"
-            icon={<User2 className="h-3.5 w-3.5 text-gray-400" />}
-            name="alumno"
-            value={formData.alumno}
-            onChange={handleChange}
-            options={alumnosMock}
-          />
-
           {/* Fecha */}
           <FieldInput
             label="Fecha"
@@ -97,16 +76,18 @@ export function EditAsesoriaModal({ asesoria, onClose, onUpdate }) {
             name="fecha"
             value={formData.fecha}
             onChange={handleChange}
+            required
           />
 
-          {/* Hora */}
+          {/* Motivo */}
           <FieldInput
-            label="Hora"
-            icon={<Clock className="h-3.5 w-3.5 text-gray-400" />}
-            type="time"
-            name="hora"
-            value={formData.hora}
+            label="Motivo"
+            icon={<MessageCircle className="h-3.5 w-3.5 text-gray-400" />}
+            type="text"
+            name="motivo"
+            value={formData.motivo}
             onChange={handleChange}
+            required
           />
 
           {/* BUTTONS */}
@@ -123,8 +104,8 @@ export function EditAsesoriaModal({ asesoria, onClose, onUpdate }) {
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 px-4 py-2 text-sm font-medium text-white 
-              bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg 
+                className="flex-1 px-4 py-2 text-sm font-medium text-white 
+                bg-linear-to-r from-blue-600 to-blue-700 rounded-lg 
               hover:from-blue-700 hover:to-blue-800 transition-all shadow-md 
               shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -133,34 +114,6 @@ export function EditAsesoriaModal({ asesoria, onClose, onUpdate }) {
           </div>
         </form>
       </div>
-    </div>
-  )
-}
-
-/* ---------- COMPONENTES AUXILIARES ---------- */
-
-function FieldSelect({ label, icon, name, value, onChange, options }) {
-  return (
-    <div className="space-y-1.5">
-      <label className="flex items-center gap-2 text-xs font-medium text-gray-700">
-        {icon}
-        {label}
-      </label>
-
-      <select
-        name={name}
-        value={value}
-        onChange={onChange}
-        className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg
-        focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none 
-        transition-all text-gray-900"
-      >
-        {options.map((op, idx) => (
-          <option key={idx} value={op}>
-            {op}
-          </option>
-        ))}
-      </select>
     </div>
   )
 }

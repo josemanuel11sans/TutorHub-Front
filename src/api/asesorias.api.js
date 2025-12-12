@@ -35,14 +35,14 @@ export const getAsesoriaById = async (id) => {
   }
 };
 
-// Crear una nueva asesoría
-export const createAsesoria = async (asesoriaData) => {
+// Crear una nueva asesoría para un estudiante
+export const createAsesoriaForStudent = async (estudianteId, asesoriaData) => {
   try {
-    const response = await api.post(endpoint, asesoriaData);
-    return response.data;
+    const response = await api.post(`${endpoint}/student/${estudianteId}/create`, asesoriaData)
+    return response.data
   } catch (error) {
-    console.error("Error al crear asesoría:", error);
-    throw error;
+    console.error("Error al crear asesoría:", error)
+    throw error
   }
 };
 

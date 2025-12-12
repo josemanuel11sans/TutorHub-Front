@@ -5,29 +5,14 @@ import { X, BookOpen, Calendar, Clock, User, MessageCircle } from "lucide-react"
 
 export function AddAsesoriaModal({ onClose, onAdd }) {
   const [formData, setFormData] = useState({
-    materia: "",
     fecha: "",
-    hora: "",
-    alumno: "",
-    estado: true,
+    motivo: "",
   })
 
   const [loading, setLoading] = useState(false)
 
   // Opciones mock — puedes reemplazar por props después
-  const materiasMock = [
-    "Arquitecturas de Software",
-    "Cálculo Integral",
-    "Programación Web",
-    "Bases de Datos",
-  ]
-
-  const alumnosMock = [
-    "Juan Carlos García",
-    "María López",
-    "Daniela Rodríguez",
-    "Carlos Pérez",
-  ]
+  // Sin selects: solo fecha y motivo
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -37,14 +22,18 @@ export function AddAsesoriaModal({ onClose, onAdd }) {
     })
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
-
-    setTimeout(() => {
-      onAdd(formData)
+    try {
+      await onAdd?.({
+        fecha: formData.fecha,
+        motivo: formData.motivo,
+      })
+      onClose?.()
+    } finally {
       setLoading(false)
-    }, 500)
+    }
   }
 
   return (
@@ -97,23 +86,6 @@ export function AddAsesoriaModal({ onClose, onAdd }) {
             />
           </div>
 
-          {/* Hora */}
-          <div className="space-y-1.5">
-            <label className="flex items-center gap-2 text-xs font-medium text-gray-700">
-              <Clock className="h-3.5 w-3.5 text-gray-400" />
-              Hora
-            </label>
-            <input
-              type="time"
-              name="hora"
-              value={formData.hora}
-              onChange={handleChange}
-              className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg 
-              focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-              required
-            />
-          </div>
-
           {/* Motivo */}
           <div className="space-y-1.5">
             <label className="flex items-center gap-2 text-xs font-medium text-gray-700">
@@ -152,7 +124,7 @@ export function AddAsesoriaModal({ onClose, onAdd }) {
               type="submit"
               disabled={loading}
               className="flex-1 px-4 py-2 text-sm font-medium text-white 
-              bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg 
+              bg-linear-to-r from-blue-600 to-blue-700 rounded-lg 
               hover:from-blue-700 hover:to-blue-800 transition-all shadow-md 
               shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
             >

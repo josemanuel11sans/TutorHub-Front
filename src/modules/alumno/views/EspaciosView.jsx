@@ -73,21 +73,20 @@ export default function EspaciosView({ onSelectEspacio, tutorId: propStudentId }
 
       const normalized = raw.map((r) => {
 
-        // materiales: puede venir como array, como files, en _count o en filesCount/materialCount
+        // materiales: usa la misma lógica del listado de tutor (prioriza materialesCount)
         let materialesCount = 0
-        if (Array.isArray(r.materiales)) materialesCount = r.materiales.length
+        if (typeof r.materialesCount === 'number') materialesCount = r.materialesCount
+        else if (typeof r.materialesCount === 'string') materialesCount = Number(r.materialesCount)
+        else if (Array.isArray(r.materiales)) materialesCount = r.materiales.length
         else if (Array.isArray(r.files)) materialesCount = r.files.length
         else if (typeof r.materiales === 'number') materialesCount = r.materiales
-        else if (typeof r.filesCount === 'number') materialesCount = r.filesCount
-        else if (typeof r.materialCount === 'number') materialesCount = r.materialCount
-        else if (r._count && typeof r._count.files === 'number') materialesCount = r._count.files
-        else if (r._count && typeof r._count.materiales === 'number') materialesCount = r._count.materiales
-        else if (r.materiales && typeof r.materiales === 'string' && !isNaN(Number(r.materiales))) materialesCount = Number(r.materiales)
 
         return {
           id: r.id_espacio ?? r.id ?? r._id ?? null,
           nombre: r.nombre ?? r.name ?? "",
-          materiaNombre:typeof r.materia === "object" ? r.materia.nombre_materia : "", materiaObj: r.materia ?? null,
+          materiaNombre: typeof r.materia === "object" ? r.materia.nombre_materia : (r.materiaNombre || r.materia || ""),
+          materia: typeof r.materia === "object" ? r.materia.nombre_materia : (r.materiaNombre || r.materia || ""),
+          materiaObj: r.materia ?? null,
           descripcion: r.descripcion ?? r.descripcion_corta ?? r.description ?? "",
           portada: r.portada ?? r.cover ?? r.image ?? null,
           materiales: Number(materialesCount ?? 0),
@@ -114,7 +113,7 @@ export default function EspaciosView({ onSelectEspacio, tutorId: propStudentId }
 
   const filteredEspacios = espacios.filter((e) => {
     const nombre = (e.nombre || "").toString().toLowerCase()
-    const materia = (e.materia || "").toString().toLowerCase()
+    const materia = (e.materia || e.materiaNombre || "").toString().toLowerCase()
     const descripcion = (e.descripcion || "").toString().toLowerCase()
     const term = (searchTerm || "").toLowerCase()
     return nombre.includes(term) || materia.includes(term) || descripcion.includes(term)
@@ -217,12 +216,7 @@ export default function EspaciosView({ onSelectEspacio, tutorId: propStudentId }
                   <p className="text-xs text-gray-500 mb-2">{espacio.materia}</p>
                   <p className="text-sm text-gray-600 mb-4 line-clamp-2">{espacio.descripcion}</p>
 
-                  <div className="flex items-center gap-4 text-sm text-gray-600 border-t pt-3">
-                    <div className="flex items-center gap-1.5">
-                      <FolderOpen className="h-4 w-4" />
-                      <span>{espacio.materiales} materiales</span>
-                    </div>
-                  </div>
+                  {/* Se ocultó el contador de materiales porque no se recibe un valor confiable en esta vista */}
                 </div>
               </div>
             ))
