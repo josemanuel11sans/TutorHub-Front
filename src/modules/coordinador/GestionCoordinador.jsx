@@ -8,6 +8,7 @@ import TutoresTable from "./tablas/tutoresTable"
 import AlumnosTable from "./tablas/AlumnosTable"
 import EspaciosTable from "./tablas/EspaciosTable"
 import EdificiosTable from "./tablas/EdificiosTable"
+import CarreraTable from "./tablas/CarreraTable"
 import AulaTable from "./tablas/AulaTable"
 import MateriasTable from "./tablas/MateriasTable"
 import UsersCountCard from "./components/UsersCountCard"
@@ -31,6 +32,7 @@ export default function PanelCoordinador() {
     { id: "edificios", label: "Edificios", icon: Building },
     { id: "aulas", label: "Aulas", icon: GraduationCap },
     { id: "materias", label: "Materias", icon: BookOpen },
+    { id: "carreras", label: "Carreras", icon: FolderTree },
   ]
 
   return (
@@ -89,6 +91,7 @@ export default function PanelCoordinador() {
             {activeTab === "aulas" && <AulaTable />}
             {activeTab === "espacios" && <EspaciosTable />}
             {activeTab === "materias" && <MateriasTable />}
+            {activeTab === "carreras" && <CarreraTable />}
           </div>
         </div>
       </div>

@@ -23,3 +23,36 @@ export const getCarreraById = async (id) => {
     throw error;
   }
 };
+
+// Crear una nueva carrera
+export const createCarrera = async (carreraData) => {
+  try {
+    const response = await api.post(`${endpoint}/create`, carreraData);
+    return response.data;
+  } catch (error) {
+    console.error("Error al crear carrera:", error);
+    throw error;
+  }
+};
+
+// Actualizar una carrera
+export const updateCarrera = async (id, carreraData) => {
+  try {
+    const response = await api.put(`${endpoint}/update/${id}`, carreraData);
+    return response.data;
+  } catch (error) {
+    console.error("Error al actualizar carrera:", error);
+    throw error;
+  }
+};
+
+// Cambiar estado (toggle) o eliminar lógicamente una carrera
+export const deleteCarrera = async (id) => {
+  try {
+    const response = await api.delete(`${endpoint}/delete/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error al eliminar carrera:", error);
+    throw error;
+  }
+};
