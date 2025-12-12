@@ -37,6 +37,39 @@ export const inscribirAlumnoEnEspacio = async (espacioId, alumnoId) => {
   }
 };
 
+// Listar alumnos de un espacio
+export const listarAlumnosDeEspacio = async (espacioId) => {
+  try {
+    const response = await api.get(`${endpoint}/${espacioId}/alumnos`);
+    return response.data;
+  } catch (error) {
+    console.error("Error al listar alumnos de un espacio:", error);
+    throw error;
+  }
+};
+
+// Listar espacios de un alumno
+export const listarEspaciosDeAlumno = async (alumnoId) => {
+  try {
+    const response = await api.get(`${endpoint}/alumno/${alumnoId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error al listar espacios de un alumno:", error);
+    throw error;
+  }
+};
+
+// Listar espacios de un alumno por carrera
+export const listarEspaciosPorCarreraDeAlumno = async (alumnoId) => {
+  try {
+    const response = await api.get(`${endpoint}/alumno/${alumnoId}/carrera`);
+    return response.data;
+  } catch (error) {
+    console.error("Error al listar espacios por carrera de un alumno:", error);
+    throw error;
+  }
+};
+
 // Desinscribir alumno de un espacio
 export const desinscribirAlumnoDeEspacio = async (espacioId, alumnoId) => {
   try {
@@ -45,7 +78,7 @@ export const desinscribirAlumnoDeEspacio = async (espacioId, alumnoId) => {
     );
     return response.data;
   } catch (error) {
-    console.error("Error al desinscribir alumno del espacio:", error);
+    console.error("Error al desinscribir alumno de un espacio:", error);
     throw error;
   }
 };
