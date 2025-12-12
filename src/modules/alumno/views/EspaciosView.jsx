@@ -1,10 +1,9 @@
 "use client"
 
 import { useState, useEffect, useContext } from "react"
-import { Search, Users, FolderOpen, Trash2 } from "lucide-react"
-import { DeleteEspacioModal } from "../modales/DeleteEspacioModal"
+import { Search, Plus, Edit, Trash2, Users, FolderOpen, CheckCircle, Building2, DoorOpen } from "lucide-react"
 import { AuthContext } from "../../../context/AuthContext"
-import { getEspaciosByTutor } from "../../../api/espacios.api"
+import { getEspaciosBySCarrera } from "../../../api/espacios.api"
 
 const Button = ({ children, onClick, variant = "default", size = "default", className = "" }) => {
   const baseStyles = "inline-flex items-center justify-center rounded-md font-medium transition-colors"
@@ -34,14 +33,84 @@ const Input = ({ className = "", icon, ...props }) => (
   </div>
 )
 
-// NOTE: removed local mock data — espacios now come from backend via getEspaciosByTutor
+const Badge = ({ children, variant = "default" }) => {
+  const variants = {
+    active: "bg-green-100 text-green-800",
+    inactive: "bg-gray-100 text-gray-500",
+    default: "bg-gray-200 text-gray-700",
+  }
 
-export default function EspaciosView({ onSelectEspacio, tutorId: propTutorId }) {
+  return (
+    <span className={`inline-flex items-center rounded px-2.5 py-0.5 text-xs font-medium ${variants[variant]}`}>
+      {children}
+    </span>
+  )
+}
+
+// NOTE: removed local mock data — espacios now come from backend via getEspaciosBySCarrera
+
+export default function EspaciosView({ onSelectEspacio, tutorId: propStudentId }) {
   const { user } = useContext(AuthContext)
   const [espacios, setEspacios] = useState([])
   const [searchTerm, setSearchTerm] = useState("")
-  const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [selectedEspacio, setSelectedEspacio] = useState(null)
+
+  // fetchEspacios moved to component scope so we can call it on demand
+  const fetchEspacios = async () => {
+    try {
+      const id = propStudentId ?? user?.id
+      if (!id) return
+      const data = await getEspaciosBySCarrera(id)
+
+      // Normalizar la respuesta a un arreglo y mapear campos esperados
+      let raw = []
+      if (Array.isArray(data)) raw = data
+      else if (Array.isArray(data.espacios)) raw = data.espacios
+      else if (Array.isArray(data.data)) raw = data.data
+      else {
+        console.warn('Respuesta inesperada al obtener espacios:', data)
+      }
+
+      const normalized = raw.map((r) => {
+
+        // materiales: puede venir como array, como files, en _count o en filesCount/materialCount
+        let materialesCount = 0
+        if (Array.isArray(r.materiales)) materialesCount = r.materiales.length
+        else if (Array.isArray(r.files)) materialesCount = r.files.length
+        else if (typeof r.materiales === 'number') materialesCount = r.materiales
+        else if (typeof r.filesCount === 'number') materialesCount = r.filesCount
+        else if (typeof r.materialCount === 'number') materialesCount = r.materialCount
+        else if (r._count && typeof r._count.files === 'number') materialesCount = r._count.files
+        else if (r._count && typeof r._count.materiales === 'number') materialesCount = r._count.materiales
+        else if (r.materiales && typeof r.materiales === 'string' && !isNaN(Number(r.materiales))) materialesCount = Number(r.materiales)
+
+        return {
+          id: r.id_espacio ?? r.id ?? r._id ?? null,
+          nombre: r.nombre ?? r.name ?? "",
+          materiaNombre:typeof r.materia === "object" ? r.materia.nombre_materia : "", materiaObj: r.materia ?? null,
+          descripcion: r.descripcion ?? r.descripcion_corta ?? r.description ?? "",
+          portada: r.portada ?? r.cover ?? r.image ?? null,
+          materiales: Number(materialesCount ?? 0),
+          color: r.color ?? r.bgColor ?? "bg-blue-500",
+          _raw: r,
+        }
+      })
+
+      console.log('Espacios (normalizados):', normalized.map((x) => ({ id: x.id, nombre: x.nombre, alumnos: x.alumnos, materiales: x.materiales })))
+      setEspacios(normalized)
+
+      // Guardar ids de espacios en localStorage para referencia posterior
+      try {
+        const ids = normalized.map((e) => e.id)
+        console.log('Espacios obtenidos:', ids)
+        if (ids.length) localStorage.setItem('espaciosIds', JSON.stringify(ids))
+      } catch (err) {
+        console.warn('No se pudo guardar espaciosIds en localStorage', err)
+      }
+    } catch (err) {
+      console.error('Error al obtener espacios:', err)
+    }
+  }
 
   const filteredEspacios = espacios.filter((e) => {
     const nombre = (e.nombre || "").toString().toLowerCase()
@@ -51,77 +120,11 @@ export default function EspaciosView({ onSelectEspacio, tutorId: propTutorId }) 
     return nombre.includes(term) || materia.includes(term) || descripcion.includes(term)
   })
 
-  const handleDelete = (espacio) => {
-    console.log('Abrir DeleteEspacioModal para espacio:', espacio)
-    setSelectedEspacio(espacio)
-    setShowDeleteModal(true)
-  }
+  // handleAddEspacio now se define más abajo y recibe la respuesta del API
 
   useEffect(() => {
-    const fetchEspacios = async () => {
-      try {
-        const id = propTutorId ?? user?.id
-        if (!id) return
-        const data = await getEspaciosByTutor(id)
-
-        // Normalizar la respuesta a un arreglo y mapear campos esperados
-        let raw = []
-        if (Array.isArray(data)) raw = data
-        else if (Array.isArray(data.espacios)) raw = data.espacios
-        else if (Array.isArray(data.data)) raw = data.data
-        else {
-          console.warn('Respuesta inesperada al obtener espacios:', data)
-        }
-
-        const normalized = raw.map((r) => ({
-          id: r.id_espacio ?? r.id ?? r._id ?? null,
-          nombre: r.nombre ?? r.name ?? "",
-          materia: r.materia ?? r.subject ?? "",
-          descripcion: r.descripcion ?? r.descripcion_corta ?? r.description ?? "",
-          portada: r.portada ?? r.cover ?? r.image ?? null,
-          alumnos: Number(r.alumnos ?? r.alumnosCount ?? r.studentCount ?? 0),
-          capacidad: Number(r.capacidad ?? r.capacity ?? 0),
-          materiales: Number(r.materiales ?? r.materialCount ?? r.filesCount ?? 0),
-          color: r.color ?? r.bgColor ?? "bg-blue-500",
-          _raw: r,
-        }))
-
-        console.log('Espacios (normalizados):', normalized.map((x) => ({ id: x.id, nombre: x.nombre, alumnos: x.alumnos, materiales: x.materiales })))
-        setEspacios(normalized)
-
-        // Guardar ids de espacios en localStorage para referencia posterior
-        try {
-          const ids = normalized.map((e) => e.id)
-          console.log('Espacios obtenidos:', ids)
-          if (ids.length) localStorage.setItem('espaciosIds', JSON.stringify(ids))
-        } catch (err) {
-          console.warn('No se pudo guardar espaciosIds en localStorage', err)
-        }
-      } catch (err) {
-        console.error('Error al obtener espacios:', err)
-      }
-    }
-
     fetchEspacios()
-  }, [user?.id, propTutorId])
-
-  const handleConfirmDelete = () => {
-    const doDelete = async () => {
-      try {
-        // Llamar a la API para eliminar el espacio
-        const { deleteEspacio } = await import("../../../api/espacios.api")
-        await deleteEspacio(selectedEspacio.id)
-        setEspacios(espacios.filter((e) => e.id !== selectedEspacio.id))
-      } catch (err) {
-        console.error('Error eliminando espacio:', err)
-        // seguir removiendo localmente como fallback? por ahora mostramos en consola
-      } finally {
-        setShowDeleteModal(false)
-      }
-    }
-
-    doDelete()
-  }
+  }, [user?.id, propStudentId])
 
   return (
     <>
@@ -131,6 +134,12 @@ export default function EspaciosView({ onSelectEspacio, tutorId: propTutorId }) 
           <div>
             <h2 className="text-3xl font-bold text-gray-900">Mis Espacios</h2>
             <p className="text-sm text-gray-500 mt-1">Selecciona un espacio para ver sus materiales y asesorías</p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Button onClick={() => fetchEspacios()} variant="ghost" className="mr-2">
+              Actualizar
+            </Button>
           </div>
         </div>
 
@@ -183,16 +192,17 @@ export default function EspaciosView({ onSelectEspacio, tutorId: propTutorId }) 
                       </svg>
                     </div>
                   )}
+
                   <div className="absolute top-3 right-3 flex gap-1">
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleDelete(espacio)
-                      }}
-                      className="bg-white/90 hover:bg-white p-1.5 rounded-full shadow-sm transition-colors"
-                    >
-                      <Trash2 className="h-4 w-4 text-gray-700" />
-                    </button>
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleEnroll(espacio)
+                        }}
+                        className="bg-white/90 hover:bg-white p-1.5 rounded-full shadow-sm transition-colors"
+                      >
+                        <CheckCircle className="h-4 w-4 text-gray-700" />
+                      </button>
                   </div>
                 </div>
 
@@ -203,12 +213,6 @@ export default function EspaciosView({ onSelectEspacio, tutorId: propTutorId }) 
                   <p className="text-sm text-gray-600 mb-4 line-clamp-2">{espacio.descripcion}</p>
 
                   <div className="flex items-center gap-4 text-sm text-gray-600 border-t pt-3">
-                    <div className="flex items-center gap-1.5">
-                      <Users className="h-4 w-4" />
-                      <span>
-                        {espacio.alumnos}/{espacio.capacidad}
-                      </span>
-                    </div>
                     <div className="flex items-center gap-1.5">
                       <FolderOpen className="h-4 w-4" />
                       <span>{espacio.materiales} materiales</span>
@@ -221,14 +225,7 @@ export default function EspaciosView({ onSelectEspacio, tutorId: propTutorId }) 
         </div>
       </div>
 
-      {/* Modal de Borrar */}
-      {showDeleteModal && selectedEspacio && (
-        <DeleteEspacioModal
-          espacio={selectedEspacio}
-          onClose={() => setShowDeleteModal(false)}
-          onConfirm={handleConfirmDelete}
-        />
-      )}
+      {/* Modales */}
     </>
   )
 }

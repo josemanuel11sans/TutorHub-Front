@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { X, BookOpen, Calendar, Clock, User } from "lucide-react"
+import { X, BookOpen, Calendar, Clock, User, MessageCircle } from "lucide-react"
 
 export function AddAsesoriaModal({ onClose, onAdd }) {
   const [formData, setFormData] = useState({
@@ -79,26 +79,6 @@ export function AddAsesoriaModal({ onClose, onAdd }) {
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
 
           {/* Materia (Select) */}
-          <div className="space-y-1.5">
-            <label className="flex items-center gap-2 text-xs font-medium text-gray-700">
-              <BookOpen className="h-3.5 w-3.5 text-gray-400" />
-              Materia
-            </label>
-            <select
-              name="materia"
-              value={formData.materia}
-              onChange={handleChange}
-              className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg 
-              focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none 
-              transition-all text-gray-900"
-              required
-            >
-              <option value="" disabled>Selecciona una materia</option>
-              {materiasMock.map((mat, idx) => (
-                <option key={idx} value={mat}>{mat}</option>
-              ))}
-            </select>
-          </div>
 
           {/* Fecha */}
           <div className="space-y-1.5">
@@ -134,26 +114,25 @@ export function AddAsesoriaModal({ onClose, onAdd }) {
             />
           </div>
 
-          {/* Alumno (Select) */}
+          {/* Motivo */}
           <div className="space-y-1.5">
             <label className="flex items-center gap-2 text-xs font-medium text-gray-700">
-              <User className="h-3.5 w-3.5 text-gray-400" />
-              Alumno
+              <MessageCircle className="h-3.5 w-3.5 text-gray-400" />
+              Motivo
             </label>
-            <select
-              name="alumno"
-              value={formData.alumno}
+            <input
+              type="text"
+              name="motivo"
+              value={formData.motivo}
               onChange={handleChange}
               className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg 
               focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
               required
-            >
-              <option value="" disabled>Selecciona un alumno</option>
-              {alumnosMock.map((alumno, idx) => (
-                <option key={idx} value={alumno}>{alumno}</option>
-              ))}
-            </select>
+            />
           </div>
+
+
+          {/* Alumno (Select) */}
 
           {/* Hidden estado */}
           <input type="hidden" name="estado" value={formData.estado} />

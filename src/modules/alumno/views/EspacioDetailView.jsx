@@ -5,7 +5,6 @@ import {
   ArrowLeft,
   Plus,
   Edit,
-  Trash2,
   FileText,
   Calendar,
   Clock,
@@ -14,11 +13,10 @@ import {
   BookOpen,
   FolderOpen,
   Eye,
+  MessageCircle,
 } from "lucide-react"
-import { AddAsesoriaModal } from "../modales/AddAsesoriaModal"
-import { DeleteAsesoriaModal } from "../modales/DeleteAsesoriaModal"
+import {AddAsesoriaModal}  from "../modales/AddAsesoriaModal"
 import { EditAsesoriaModal } from "../modales/EditAsesoriaModal"
-import { AttendanceAsesoriaModal } from "../modales/AttendanceAsesoriaModal"
 import { useToast } from "../../../context/ToastContext"
 
 const Button = ({ children, onClick, variant = "default", size = "default", className = "" }) => {
@@ -66,6 +64,7 @@ export default function EspacioDetailView({ espacio, onBack, initialOpenAddMater
   const [materiales, setMateriales] = useState([])
   const [asesorias, setAsesorias] = useState([])
   const toast = useToast()
+  const [showDetails, setShowDetails] = useState(false)
 
   useEffect(() => {
     console.log('EspacioDetailView mounted or espacio changed:', espacio)
@@ -108,8 +107,6 @@ export default function EspacioDetailView({ espacio, onBack, initialOpenAddMater
   // Asesoria modals
   const [showAddAsesoriaModal, setShowAddAsesoriaModal] = useState(false)
   const [showEditAsesoriaModal, setShowEditAsesoriaModal] = useState(false)
-  const [showDeleteAsesoriaModal, setShowDeleteAsesoriaModal] = useState(false)
-  const [showAttendanceModal, setShowAttendanceModal] = useState(false)
   const [selectedAsesoria, setSelectedAsesoria] = useState(null)
 
   // Filtrar por espacio actual
@@ -160,16 +157,12 @@ export default function EspacioDetailView({ espacio, onBack, initialOpenAddMater
                 <p className="text-sm text-gray-500 mb-4">{espacio.materia}</p>
                 <p className="text-gray-600">{espacio.descripcion}</p>
               </div>
-              <div className="text-right">
-                <div className="text-2xl font-bold text-gray-900">{espacio.alumnos}</div>
-                <div className="text-xs text-gray-500">de {espacio.capacidad} alumnos</div>
-              </div>
             </div>
           </div>
         </div>
 
         {/* Stats cards */}
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-1">
           <div className="bg-white rounded-lg border border-gray-200 p-4">
             <div className="flex items-center gap-3">
               <div className="p-3 bg-blue-100 rounded-lg">
@@ -181,59 +174,44 @@ export default function EspacioDetailView({ espacio, onBack, initialOpenAddMater
               </div>
             </div>
           </div>
+        </div>
 
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-purple-100 rounded-lg">
-                <BookOpen className="h-6 w-6 text-purple-600" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-gray-900">{espacioAsesorias.length}</div>
-                <div className="text-sm text-gray-500">Asesorías programadas</div>
-              </div>
+        {/* Detalles (mantenido en el DOM pero oculto por defecto) */}
+        {showDetails && (
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">Detalles del espacio</h2>
+            <div className="grid gap-2 grid-cols-1 md:grid-cols-2 text-sm text-gray-700">
+              {Object.entries(espacio._raw || espacio).map(([k, v]) => {
+                let display = v
+                try {
+                  if (v === null || v === undefined) display = "-"
+                  else if (typeof v === "object") display = JSON.stringify(v)
+                  else display = String(v)
+                } catch (err) {
+                  display = "(no disponible)"
+                }
+
+                // Truncar si es muy largo
+                if (typeof display === "string" && display.length > 200) display = display.slice(0, 200) + "..."
+
+                return (
+                  <div key={k} className="flex items-start gap-2">
+                    <div className="w-36 text-gray-500 capitalize">{k.replace(/_/g, " ")}</div>
+                    <div className="flex-1 break-words">{display}</div>
+                  </div>
+                )
+              })}
             </div>
           </div>
-        </div>
-
-        {/* Detalles (muestra todos los datos del espacio) */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-3">Detalles del espacio</h2>
-          <div className="grid gap-2 grid-cols-1 md:grid-cols-2 text-sm text-gray-700">
-            {Object.entries(espacio._raw || espacio).map(([k, v]) => {
-              let display = v
-              try {
-                if (v === null || v === undefined) display = "-"
-                else if (typeof v === "object") display = JSON.stringify(v)
-                else display = String(v)
-              } catch (err) {
-                display = "(no disponible)"
-              }
-
-              // Truncar si es muy largo
-              if (typeof display === "string" && display.length > 200) display = display.slice(0, 200) + "..."
-
-              return (
-                <div key={k} className="flex items-start gap-2">
-                  <div className="w-36 text-gray-500 capitalize">{k.replace(/_/g, " ")}</div>
-                  <div className="flex-1 break-words">{display}</div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
+        )}
 
         {/* Sección de Materiales */}
         <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-900">Materiales</h2>
-          </div>
-
           <div className="space-y-3">
             {espacioMateriales.length === 0 ? (
               <div className="text-center py-12 text-gray-500">
                 <FolderOpen className="h-12 w-12 mx-auto mb-3 text-gray-300" />
                 <p className="text-sm">No hay materiales publicados</p>
-                <p className="text-xs mt-1">Publica el primer material para este espacio</p>
               </div>
             ) : (
               espacioMateriales.map((material) => (
@@ -272,23 +250,6 @@ export default function EspacioDetailView({ espacio, onBack, initialOpenAddMater
                           <Eye className="h-4 w-4" />
                         </a>
                       )}
-                      <button
-                        onClick={async () => {
-                          // eliminar el archivo en backend
-                          try {
-                            const { deleteFile } = await import("../../../api/claudinary.api")
-                            await deleteFile(material.id)
-                            setMateriales((prev) => prev.filter((m) => m.id !== material.id))
-                            try { toast?.showToast?.('Archivo eliminado', 'success') } catch (e) { console.warn(e) }
-                          } catch (err) {
-                            console.error('Error eliminando archivo:', err)
-                            try { toast?.showToast?.('No se pudo eliminar el archivo', 'error') } catch (e) { console.warn(e) }
-                          }
-                        }}
-                        className="text-gray-600 hover:text-red-600 p-2 hover:bg-gray-100 rounded transition-colors"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
                     </div>
                   </div>
                 </div>
@@ -312,7 +273,7 @@ export default function EspacioDetailView({ espacio, onBack, initialOpenAddMater
               <div className="text-center py-12 text-gray-500">
                 <BookOpen className="h-12 w-12 mx-auto mb-3 text-gray-300" />
                 <p className="text-sm">No hay asesorías programadas</p>
-                <p className="text-xs mt-1">Programa la primera asesoría para este espacio</p>
+                <p className="text-xs mt-1">Programa tu primera asesoria</p>
               </div>
             ) : (
               espacioAsesorias.map((asesoria) => (
@@ -322,19 +283,6 @@ export default function EspacioDetailView({ espacio, onBack, initialOpenAddMater
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
-                          <h3 className="font-semibold text-gray-900 mb-1">{asesoria.titulo}</h3>
-                        </div>
-                        <Badge variant={asesoria.estado}>
-                          {asesoria.estado === "programada"
-                            ? "Programada"
-                            : asesoria.estado === "completada"
-                              ? "Completada"
-                              : "Cancelada"}
-                        </Badge>
-                      </div>
-
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3 text-sm text-gray-600">
                         <div className="flex items-center gap-1.5">
                           <Calendar className="h-4 w-4" />
@@ -343,33 +291,20 @@ export default function EspacioDetailView({ espacio, onBack, initialOpenAddMater
                         <div className="flex items-center gap-1.5">
                           <Clock className="h-4 w-4" />
                           <span>
-                            {asesoria.hora} ({asesoria.duracion})
+                            {asesoria.hora}
                           </span>
                         </div>
                         <div className="flex items-center gap-1.5">
-                          <MapPin className="h-4 w-4" />
-                          <span>{asesoria.lugar}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <Users className="h-4 w-4" />
-                          <span>{asesoria.asistentes} inscritos</span>
+                          <MessageCircle className="h-4 w-4" />
+                          <span>{asesoria.motivo}</span>
                         </div>
                       </div>
                     </div>
-
                     <div className="flex items-center gap-1">
-                      {asesoria.estado === "programada" && (
-                        <button
-                          onClick={() => {
-                            setSelectedAsesoria(asesoria)
-                            setShowAttendanceModal(true)
-                          }}
-                          className="text-gray-600 hover:text-blue-600 p-2 hover:bg-gray-100 rounded transition-colors"
-                          title="Tomar asistencia"
-                        >
-                          <Users className="h-4 w-4" />
-                        </button>
-                      )}
+                      <Badge variant={asesoria.estado}>
+                          {asesoria.estado === "programada"
+                            ? "Programada": asesoria.estado === "completada"? "Completada": "Cancelada"}
+                      </Badge>
                       <button
                         onClick={() => {
                           setSelectedAsesoria(asesoria)
@@ -378,15 +313,6 @@ export default function EspacioDetailView({ espacio, onBack, initialOpenAddMater
                         className="text-gray-600 hover:text-gray-900 p-2 hover:bg-gray-100 rounded transition-colors"
                       >
                         <Edit className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => {
-                          setSelectedAsesoria(asesoria)
-                          setShowDeleteAsesoriaModal(true)
-                        }}
-                        className="text-gray-600 hover:text-red-600 p-2 hover:bg-gray-100 rounded transition-colors"
-                      >
-                        <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
                   </div>
@@ -410,8 +336,7 @@ export default function EspacioDetailView({ espacio, onBack, initialOpenAddMater
           }}
         />
       )}
-      {showEditAsesoriaModal && selectedAsesoria && (
-        <EditAsesoriaModal
+      {showEditAsesoriaModal && selectedAsesoria && (<EditAsesoriaModal
           asesoria={selectedAsesoria}
           onClose={() => setShowEditAsesoriaModal(false)}
           onUpdate={(updated) => {
@@ -420,19 +345,7 @@ export default function EspacioDetailView({ espacio, onBack, initialOpenAddMater
           }}
         />
       )}
-      {showDeleteAsesoriaModal && selectedAsesoria && (
-        <DeleteAsesoriaModal
-          asesoria={selectedAsesoria}
-          onClose={() => setShowDeleteAsesoriaModal(false)}
-          onConfirm={() => {
-            setAsesorias(asesorias.filter((a) => a.id !== selectedAsesoria.id))
-            setShowDeleteAsesoriaModal(false)
-          }}
-        />
-      )}
-      {showAttendanceModal && selectedAsesoria && (
-        <AttendanceAsesoriaModal asesoria={selectedAsesoria} onClose={() => setShowAttendanceModal(false)} />
-      )}
     </>
   )
 }
+

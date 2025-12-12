@@ -85,3 +85,26 @@ export const deleteEspacio = async (id) => {
     throw error;
   }
 };
+
+
+// Obtener espacios de un alumno específico
+export const getEspaciosByStudent = async (alumnoId) => {
+  try {
+    const response = await api.get(`${endpoint}/alumno/${alumnoId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error al obtener espacios del alumno:", error);
+    throw error;
+  }
+};
+
+// Obtener espacios de un carrera específico
+export const getEspaciosBySCarrera = async (alumnoId) => {
+  try {
+    const response = await api.get(`${endpoint}/alumno/${alumnoId}/carrera`);
+    return response.data;
+  } catch (error) {
+    console.error("Error al obtener espacios de la carrera:", error);
+    throw error;
+  }
+};
